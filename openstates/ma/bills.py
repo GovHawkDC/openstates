@@ -247,8 +247,8 @@ class MABillScraper(Scraper):
                 if action_name.strip().startswith('Item'):
                     breakdown_str = action_name_content[2]
 
-                y = int(breakdown_str.split('YEAS')[0])
-                n = int(action_name.strip().split('YEAS to')[1].split('NAYS')[0])
+                y = int(re.findall(r'(\d+)\s*YEAS', action_name)[0])
+                n = int(re.findall(r'(\d+)\s*NAYS', action_name)[0])
 
                 # get supplement number
                 n_supplement = int(action_name.strip().split('No. ')[1].split(r')')[0])
