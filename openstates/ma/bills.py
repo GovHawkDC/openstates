@@ -238,8 +238,7 @@ class MABillScraper(Scraper):
             # House votes
             if "Supplement" in action_name:
                 actor = "lower"
-                action_name_content = re.split(r'[A-z0-9]\s?-\s*', action_name.strip())
-                vote_action = action_name_content[0]
+                vote_action = re.findall('(.+)-\s*\d+\s*YEAS', action_name)[0].strip()
 
                 y = int(re.findall(r'(\d+)\s*YEAS', action_name)[0])
                 n = int(re.findall(r'(\d+)\s*NAYS', action_name)[0])
