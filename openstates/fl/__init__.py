@@ -4,7 +4,7 @@ from pupa.scrape import Jurisdiction, Organization
 from .bills import FlBillScraper
 # from .people import FlPersonScraper
 # from .committees import FlCommitteeScraper
-# from .events import FlEventScraper
+from .events import FlEventScraper
 from openstates.utils import url_xpath
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -20,7 +20,7 @@ class Florida(Jurisdiction):
         "bills": FlBillScraper,
         # "people": FlPersonScraper,
         # "committees": FlCommitteeScraper,
-        # "events": FlEventScraper,
+        "events": FlEventScraper,
     }
     legislative_sessions = [
         {'name': '2011 Regular Session', 'identifier': '2011',
