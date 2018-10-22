@@ -103,6 +103,9 @@ class NYEventScraper(Scraper, LXMLMixin):
                 title
             )
 
+            # TODO: Why doesn't the regex work?
+            title = title.replace('Click here to view public hearing notice', '')
+
             # If event was postponed, add a warning to the title.
             if postponed:
                 title = 'POSTPONED: %s' % title
