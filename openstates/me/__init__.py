@@ -2,8 +2,8 @@ from pupa.scrape import Jurisdiction, Organization
 from openstates.utils import url_xpath
 
 from .bills import MEBillScraper
-from .people import MEPersonScraper
-from .committees import MECommitteeScraper
+# from .people import MEPersonScraper
+# from .committees import MECommitteeScraper
 
 
 class Maine(Jurisdiction):
@@ -13,8 +13,8 @@ class Maine(Jurisdiction):
     url = "http://legislature.maine.gov"
     scrapers = {
         'bills': MEBillScraper,
-        'people': MEPersonScraper,
-        'committees': MECommitteeScraper,
+        # 'people': MEPersonScraper,
+        # 'committees': MECommitteeScraper,
     }
     legislative_sessions = [
         {
@@ -60,7 +60,9 @@ class Maine(Jurisdiction):
             "end_date": "2017-06-14",
         }
     ]
-    ignored_scraped_sessions = []
+    ignored_scraped_sessions = [
+        '2001-2002'
+    ]
 
     def get_organizations(self):
         legislature_name = "Maine Legislature"
@@ -95,6 +97,4 @@ class Maine(Jurisdiction):
     def get_session_list(self):
         sessions = url_xpath('http://www.mainelegislature.org/LawMakerWeb/advancedsearch.asp',
                              '//select[@name="LegSession"]/option/text()')
-        sessions.remove('jb-Test')
-        sessions.remove('2001-2002')
         return sessions

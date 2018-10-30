@@ -25,9 +25,10 @@ class PALegislatorScraper(Scraper):
         contact_page = lxml.html.fromstring(contact_page)
 
         for link in page.xpath("//a[contains(@href, '_bio.cfm')]"):
-            full_name = link.text
+            full_name = ' '.join(link.text.split(', ')[::-1])
+            full_name = re.sub(r'\s+', ' ', full_name)
             district = link.getparent().getnext().tail.strip()
-            district = re.search("District (\d+)", district).group(1)
+            district = re.search(r"District (\d+)", district).group(1)
 
             party = link.getparent().tail.strip()[-2]
             if party == 'R':

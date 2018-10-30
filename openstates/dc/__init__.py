@@ -1,11 +1,11 @@
 import requests
 from pupa.scrape import Jurisdiction, Organization
 
-from .people import DCPersonScraper
-from .committees import DCCommitteeScraper
+# from .people import DCPersonScraper
+# from .committees import DCCommitteeScraper
 from .bills import DCBillScraper
 # from .events import DCEventScraper
-from .utils import decode_json
+from .utils import api_request
 
 
 class DistrictOfColumbia(Jurisdiction):
@@ -14,8 +14,8 @@ class DistrictOfColumbia(Jurisdiction):
     name = "District of Columbia"
     url = "https://dc.gov"
     scrapers = {
-        'people': DCPersonScraper,
-        'committees': DCCommitteeScraper,
+        # 'people': DCPersonScraper,
+        # 'committees': DCCommitteeScraper,
         # 'events': DCEventScraper,
         'bills': DCBillScraper,
     }
@@ -73,8 +73,5 @@ class DistrictOfColumbia(Jurisdiction):
         yield council
 
     def get_session_list(self):
-        r = requests.post(
-            'http://lims.dccouncil.us/_layouts/15/uploader/AdminProxy.aspx/LIMSLookups',
-            headers={'content-type': 'application/json'})
-        data = decode_json(r.json())
+        data = api_request('/LIMSLookups')
         return [c['Prefix'] for c in data['d']['CouncilPeriods']]

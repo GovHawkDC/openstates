@@ -2,8 +2,8 @@ import re
 from openstates.utils import url_xpath
 
 from pupa.scrape import Jurisdiction, Organization
-from .people import COLegislatorScraper
-from .committees import COCommitteeScraper
+# from .people import COLegislatorScraper
+# from .committees import COCommitteeScraper
 from .bills import COBillScraper
 # from .events import COEventScraper
 
@@ -14,8 +14,8 @@ class Colorado(Jurisdiction):
     name = "Colorado"
     url = "http://leg.colorado.gov/"
     scrapers = {
-        'people': COLegislatorScraper,
-        'committees': COCommitteeScraper,
+        # 'people': COLegislatorScraper,
+        # 'committees': COCommitteeScraper,
         'bills': COBillScraper,
         # 'events': COEventScraper,
     }
@@ -146,7 +146,7 @@ class Colorado(Jurisdiction):
 
     def get_session_list(self):
         sessions = []
-        regex = "2[0-9][0-9][0-9]\ .*\ Session"
+        regex = r"2[0-9][0-9][0-9]\ .*\ Session"
 
         tags = url_xpath(
             'http://www.leg.state.co.us/clics/cslFrontPages.nsf/PrevSessionInfo?OpenForm',

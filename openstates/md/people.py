@@ -48,11 +48,11 @@ class MDPersonScraper(Scraper):
             fax = None
             for line in addr_lines:
                 if 'Phone:' in line:
-                    phone = re.findall('Phone: (\d{3}-\d{3}-\d{4})', line)[0]
+                    phone = re.findall(r'Phone: (\d{3}-\d{3}-\d{4})', line)[0]
                 elif 'Fax:' in line:
                     # Number oddities: one has two dashes, one has a dash and then a space.
                     line = line.replace('--', '-').replace('- ', '-')
-                    fax = re.findall('Fax: (\d{3}-\d{3}-\d{4})', line)[0]
+                    fax = re.findall(r'Fax: (\d{3}-\d{3}-\d{4})', line)[0]
                 else:
                     address.append(line)
             address = '\n'.join(address)
@@ -68,6 +68,8 @@ class MDPersonScraper(Scraper):
             img_src = ldoc.xpath('//img[@class="sponimg"]/@src')
             if img_src:
                 photo_url = img_src[0]
+
+            name = ' '.join(name.split(', ')[::-1])
 
             leg = Person(
                 primary_org=chamber,
