@@ -101,13 +101,13 @@ class SCBillScraper(Scraper):
     """
     urls = {
         'lower': {
-            'daily-bill-index': "http://www.scstatehouse.gov/hintro/hintros.php",
-            'prefile-index': "http://www.scstatehouse.gov/sessphp/prefil"
+            'daily-bill-index': "https://www.scstatehouse.gov/hintro/hintros.php",
+            'prefile-index': "https://www.scstatehouse.gov/sessphp/prefil"
                              "{last_two_digits_of_session_year}.php",
         },
         'upper': {
-            'daily-bill-index': "http://www.scstatehouse.gov/sintro/sintros.php",
-            'prefile-index': "http://www.scstatehouse.gov/sessphp/prefil"
+            'daily-bill-index': "https://www.scstatehouse.gov/sintro/sintros.php",
+            'prefile-index': "https://www.scstatehouse.gov/sessphp/prefil"
                              "{last_two_digits_of_session_year}.php",
         }
     }
@@ -139,7 +139,7 @@ class SCBillScraper(Scraper):
             '2017-2018': '122',
         }[session]
 
-        subject_search_url = 'http://www.scstatehouse.gov/subjectsearch.php'
+        subject_search_url = 'https://www.scstatehouse.gov/subjectsearch.php'
         data = self.post(subject_search_url,
                          data=dict((
                              ('GETINDEX', 'Y'),
