@@ -116,7 +116,9 @@ class OHBillScraper(Scraper):
                 # add title if no short title
                 if not bill.title:
                     bill.title = data['items'][0]['longtitle']
-                bill.add_title(data['items'][0]['longtitle'], 'long title')
+
+                if bill.title:
+                    bill.add_title(data['items'][0]['longtitle'], 'long title')
 
                 # this stuff is version-specific
                 for version in data['items']:
