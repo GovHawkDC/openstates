@@ -146,7 +146,8 @@ class Maryland(Jurisdiction):
         "2004 Special Session 1",
         "2005 Regular Session",
         "2006 Regular Session",
-        "2006 Special Session 1"
+        "2006 Special Session 1",
+        "2019 Regular Session",
     ]
 
     def get_organizations(self):
