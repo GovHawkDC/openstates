@@ -174,10 +174,48 @@ class MABillScraper(Scraper):
             version_url = "https://malegislature.gov{}".format(version[0])
             bill.add_version_link('Bill Text', version_url, media_type='application/pdf')
 
+        if page.xpath('//li[@id="Amendments"]'):
+            self.scrape_amendments(bill, bill_url)
+
         # yield back votes and bill
         # XXX  yield from
         self.scrape_actions(bill, bill_url, session)
         yield bill
+
+    # It's possible for MA bills to have thousands of amendments,
+    # but they group the successful ones into "Consolidated Amendments"
+    # identified by numbers, so just scrape those
+    # we can get away w/ only scraping the first page, because
+    # they sort those first
+    def scrape_amendments(self, bill, bill_url):
+        house_url = '{}/Amendments/House'.format(bill_url)
+        house_html = self.get_as_ajax(house_url).text
+
+        senate_url = '{}/Amendments/Senate'.format(bill_url)
+        senate_html = self.get_as_ajax(senate_url).text
+
+        for html in house_html, senate_html:
+            if 'not filed any' not in html:
+                page = lxml.html.fromstring(html)
+                page.make_links_absolute(bill_url)
+                self.scrape_amendments_table(bill, page)
+
+    def scrape_amendments_table(self, bill, page):
+        # tr containing a td.text-center avoids headers/other
+        rows = page.xpath('//tr[./td[contains(@class, "text-center")]]')
+        for row in rows:
+            amd_name = row.xpath('td[1]/div/a/text()')[0]
+            if amd_name.isalpha():
+                # Linked url with a mini iframe preview is
+                # https://malegislature.gov/Bills/GetAmendmentContent/190/H4400/A/House/Preview
+                # permalink is
+                # https://malegislature.gov/Bills/GetAmendmentContent/190/H4400/A/House/Content
+                amd_url = row.xpath('td[1]/div/a/@href')[0].replace('/Preview', '/Content')
+                amd_name = 'Consolidated Amendment '+amd_name
+                bill.add_version_link(note=amd_name,
+                                      url=amd_url,
+                                      media_type='text/html',
+                                      on_duplicate='ignore')
 
     def scrape_cosponsors(self, bill, bill_url):
         # https://malegislature.gov/Bills/189/S1194/CoSponsor
