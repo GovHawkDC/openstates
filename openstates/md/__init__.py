@@ -135,7 +135,7 @@ class Maryland(Jurisdiction):
         # {
         #     "_scraped_name": "2019 Regular Session",
         #     "classification": "primary",
-        #     "end_date": "2018-05-08",
+        #     "end_date": "2019-04-11",
         #     "identifier": "2019",
         #     "name": "2019 Regular Session",
         #     "start_date": "2019-01-09"
