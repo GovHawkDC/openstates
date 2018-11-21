@@ -145,6 +145,14 @@ class Arkansas(Jurisdiction):
             "name": "2018 Second Extraordinary Session",
             "start_date": "2018-03-13"
         },
+        {
+            "_scraped_name": "Regular Session, 2019",
+            "classification": "primary",
+            "end_date": "2019-01-19",
+            "identifier": "2019",
+            "name": "2019 Regular Session",
+            "start_date": "2019-03-30"
+        },
     ]
     ignored_scraped_sessions = [
         "Regular Session, 2009",
