@@ -62,6 +62,7 @@ class Florida(Jurisdiction):
         '2014O',
         '2016O',
         '2018',
+        '2018O',
     ]
     def get_organizations(self):
         legis = Organization(name="Florida Legislature",
