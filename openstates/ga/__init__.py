@@ -2,6 +2,7 @@ from pupa.scrape import Jurisdiction, Organization
 
 from .util import get_client, backoff
 from .bills import GABillScraper
+from .events import GAEventScraper
 # from .people import GAPersonScraper
 # from .committees import GACommitteeScraper
 
@@ -13,6 +14,7 @@ class Georgia(Jurisdiction):
     url = "http://www.legis.ga.gov/"
     scrapers = {
         'bills': GABillScraper,
+        'events': GAEventScraper,
         # 'people': GAPersonScraper,
         # 'committee': GACommitteeScraper,
     }
