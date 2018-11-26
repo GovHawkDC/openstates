@@ -53,8 +53,6 @@ ENV LANG 'en_US.UTF-8'
 ENV BILLY_ENV /opt/openstates/venv-billy/
 ENV PUPA_ENV /opt/openstates/venv-pupa/
 
-ADD . /opt/openstates/openstates
-
 RUN apk add --no-cache --virtual .build-dependencies \
     wget \
     build-base \
@@ -79,12 +77,23 @@ RUN apk add --no-cache --virtual .build-dependencies \
     libxslt-dev \
     poppler-utils \
     postgresql-dev \
+<<<<<<< HEAD
     mariadb-dev && \
+=======
+    mongodb-tools \
+    postgresql-client \
+    mariadb-dev \
+    mysql-client && \
+>>>>>>> 3aff70336ea7b7ca410ef168cb4ab26a84d1db88
   apk add --no-cache \
     --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
     libressl2.7-libcrypto && \
   apk add --no-cache \
     --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+<<<<<<< HEAD
+=======
+    aws-cli \
+>>>>>>> 3aff70336ea7b7ca410ef168cb4ab26a84d1db88
     gdal-dev \
     geos-dev && \
   cd /tmp && \
@@ -94,12 +103,15 @@ RUN apk add --no-cache --virtual .build-dependencies \
     autoreconf -i -f && \
     ./configure --disable-man && make && make install && \
     cd /tmp && \
-    rm -rf mdbtools-0.7.1 && \
-  virtualenv -p $(which python2) /opt/openstates/venv-billy/ && \
+    rm -rf mdbtools-0.7.1
+
+ADD . /opt/openstates/openstates
+
+RUN virtualenv -p $(which python2) /opt/openstates/venv-billy/ && \
     /opt/openstates/venv-billy/bin/pip install -e git+https://github.com/openstates/billy.git#egg=billy && \
     /opt/openstates/venv-billy/bin/pip install python-dateutil && \
   virtualenv -p $(which python3) /opt/openstates/venv-pupa/ && \
-    /opt/openstates/venv-pupa/bin/pip install -e git+https://github.com/opencivicdata/python-opencivicdata-django.git#egg=python-opencivicdata && \
+    /opt/openstates/venv-pupa/bin/pip install -e git+https://github.com/opencivicdata/python-opencivicdata-django.git#egg=opencivicdata && \
     /opt/openstates/venv-pupa/bin/pip install -e git+https://github.com/opencivicdata/pupa.git#egg=pupa && \
     /opt/openstates/venv-pupa/bin/pip install -r /opt/openstates/openstates/requirements.txt && \
   apk del .build-dependencies
@@ -110,5 +122,9 @@ RUN git config --global user.name "Example User"
 RUN git config --global core.mergeoptions --no-edit
 
 WORKDIR /opt/openstates/openstates/
+<<<<<<< HEAD
 RUN git remote set-url origin https://github.com/GovHawkDC/openstates.git
 ENTRYPOINT ["/opt/openstates/openstates/pupa-scrape.sh"]
+=======
+ENTRYPOINT ["/opt/openstates/openstates/pupa-scrape.sh"]
+>>>>>>> 3aff70336ea7b7ca410ef168cb4ab26a84d1db88
