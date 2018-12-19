@@ -101,6 +101,14 @@ class Kentucky(Jurisdiction):
             "start_date": "2017-01-03"
         },
         {
+            "_scraped_name": "2018 Regular Session",
+            "classification": "primary",
+            "end_date": "2018-04-13",
+            "identifier": "2018RS",
+            "name": "2018 Regular Session",
+            "start_date": "2018-01-02"
+        },
+        {
             "_scraped_name": "2019 Regular Session",
             "classification": "primary",
             "identifier": "2019RS",
@@ -108,11 +116,11 @@ class Kentucky(Jurisdiction):
             "start_date": "2019-01-08"
         },
         {
-            "_scraped_name": "2018 Regular Session",
-            "classification": "primary",
+            "_scraped_name": "2018 Special Session",
+            "classification": "special",
             "end_date": "2018-04-13",
-            "identifier": "2018RS",
-            "name": "2018 Regular Session",
+            "identifier": "2018SS",
+            "name": "2018 Special Session",
             "start_date": "2018-01-02"
         },
     ]
