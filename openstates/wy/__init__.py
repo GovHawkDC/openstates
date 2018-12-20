@@ -1,7 +1,7 @@
 from pupa.scrape import Jurisdiction, Organization
 
 from .bills import WYBillScraper
-# from .people import WYPersonScraper
+from .people import WYPersonScraper
 # from .committees import WYCommitteeScraper
 
 import requests
@@ -15,7 +15,7 @@ class Wyoming(Jurisdiction):
     url = "http://legisweb.state.wy.us/"
     scrapers = {
         'bills': WYBillScraper,
-        # 'people': WYPersonScraper,
+        'people': WYPersonScraper,
         # 'committees': WYCommitteeScraper,
     }
     legislative_sessions = [
@@ -70,6 +70,14 @@ class Wyoming(Jurisdiction):
             "name": "2018",
             "start_date": "2018-02-12",
             "end_date": "2018-03-16",
+        },
+        {
+            "_scraped_name": "2019",
+            "classification": "primary",
+            "identifier": "2019",
+            "name": "2019",
+            "start_date": "2019-02-12",
+            "end_date": "2019-03-16",
         },
     ]
     ignored_scraped_sessions = [
