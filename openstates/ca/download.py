@@ -334,13 +334,15 @@ def get_current_year(contents):
     newest_file_date = datetime(2000, 1, 1)
     files_to_get = []
 
-    # get file for latest year
-    for filename, date in contents.items():
-        date_part = filename.replace('pubinfo_', '').replace('.zip', '')
-        if date_part.startswith('20') and filename > newest_file:
-            newest_file = filename
-            newest_file_date = date
-    files_to_get.append(newest_file)
+    files_to_get.append('pubinfo_2019.zip')
+
+    # # get file for latest year
+    # for filename, date in contents.items():
+    #     date_part = filename.replace('pubinfo_', '').replace('.zip', '')
+    #     if date_part.startswith('20') and filename > newest_file:
+    #         newest_file = filename
+    #         newest_file_date = date
+    # files_to_get.append(newest_file)
 
     # get files for days since last update
     days = ('pubinfo_Mon.zip', 'pubinfo_Tue.zip', 'pubinfo_Wed.zip', 'pubinfo_Thu.zip',
@@ -350,6 +352,7 @@ def get_current_year(contents):
             files_to_get.append(dayfile)
 
     for file in files_to_get:
+        print("Fetching {}".format(file))
         dirname = get_zip(file)
         load(dirname)
 
