@@ -105,8 +105,18 @@ class WestVirginia(Jurisdiction):
             "name": "2018 Second Special Session",
             "start_date": "2018-08-12",
         },
+        # TODO: Uncomment when WV starts filing
+        # http://www.wvlegislature.gov/Bill_Status/Bills_all_bills.cfm?year=2019&sessiontype=RS&btype=bill&orig=h
+        # {
+        #     "_scraped_name": "2019",
+        #     "classification": "primary",
+        #     "identifier": "2019",
+        #     "name": "2019 Regular Session",
+        #     "start_date": "2019-01-14",
+        # },
     ]
     ignored_scraped_sessions = [
+        "2019",
         "2010",
         "2009",
         "2008",
