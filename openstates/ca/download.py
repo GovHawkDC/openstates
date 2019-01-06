@@ -24,7 +24,7 @@ import _mysql_exceptions
 
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
-MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+MYSQL_USER = os.environ.get('MYSQL_USER', 'mysql')
 MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '')
 
 BASE_URL = 'https://downloads.leginfo.legislature.ca.gov/'
@@ -269,6 +269,7 @@ def db_create():
         sql_statements = f.read().split(';')
 
     connection = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD)
+    print(f'mysql connection host={MYSQL_HOST}, user={MYSQL_USER}, password={MYSQL_PASSWORD}')
     connection.autocommit(True)
     cursor = connection.cursor()
 
