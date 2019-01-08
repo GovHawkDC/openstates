@@ -11,6 +11,10 @@ RUN apt-get update && apt-get install -y \
     mdbtools \
     python-dev \
     python3-dev \
+    py-virtualenv \
+    libxml2-dev \
+    libxslt-dev \
+    yaml-dev \
     poppler-utils \
     python-virtualenv \
     python3.5 \
