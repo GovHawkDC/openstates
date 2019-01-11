@@ -287,6 +287,7 @@ class MNBillScraper(Scraper, LXMLMixin):
             for bill in opt_doc.xpath('//table/tbody/tr/td[2]/a/text()'):
                 bill = self.make_bill_id(bill)
                 self._subject_mapping[bill].append(subject)
+
     def extract_actions(self, bill, doc, current_chamber):
         """
         Extract the actions taken on a bill.
@@ -444,9 +445,6 @@ class MNBillScraper(Scraper, LXMLMixin):
 
     #     TODO: Follow links for Houses and get votes for individuals.
     #     Above todo done in votes.py
-
-    #     About votes:
-    #     https://billy.readthedocs.org/en/latest/scrapers.html#billy.scrape.votes.Vote
     #     """
 
     #     # Check if there is vote at all
