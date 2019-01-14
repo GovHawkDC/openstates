@@ -1,5 +1,6 @@
 import re
 import datetime
+import pytz
 
 import lxml.html
 
@@ -7,6 +8,9 @@ from pupa.scrape import Scraper, Bill, VoteEvent
 
 
 class AKBillScraper(Scraper):
+    bill_list_page = None
+    _TZ = pytz.timezone('US/Alaska')
+
     _fiscal_dept_mapping = {
         'ADM': 'Administration',
         'CED': 'Commerce, Community & Economic Development',
@@ -83,150 +87,220 @@ class AKBillScraper(Scraper):
         bill_types = {'B': 'bill', 'R': 'resolution', 'JR': 'joint resolution',
                       'CR': 'concurrent resolution'}
 
-        for abbr in bill_abbrs:
-            bill_type = bill_types[abbr[1:]]
-            bill_list_url = (
-                'http://www.legis.state.ak.us/basis/range_multi'
-                '.asp?session=%s&bill1=%s1&bill2=%s9999'
-            ) % (session, abbr, abbr)
-            doc = lxml.html.fromstring(self.get(bill_list_url).text)
-            doc.make_links_absolute(bill_list_url)
-            for bill_link in doc.xpath('//table[@align="center"]//tr/td[1]//a'):
-                bill_url = bill_link.get('href')
-                bill_id = bill_link.text.replace(' ', '')
-                yield from self.scrape_bill(chamber, session, bill_id, bill_type,
-                                            bill_url)
+        if self.bill_list_page is None:
+            # putting H1 -> H999 returns all the bills, even senate
+            bill_list_url = 'http://www.akleg.gov/basis/Bill/Range/{}?session=&billH1=1&bill2=H9999'.format(session)
+            page = lxml.html.fromstring(self.get(bill_list_url).text)
+            page.make_links_absolute('http://www.akleg.gov/')
+            self.bill_list_page = page
 
-    def scrape_bill(self, chamber, session, bill_id, bill_type, url):
-        doc = lxml.html.fromstring(self.get(url).text)
-        doc.make_links_absolute(url)
+        if chamber == 'upper':
+            bill_type_xpath = '//div[contains(@class, "content-page")]/div/table/tr[contains(@class, "Senate")]/td[1]/nobr/a/@href'
+        elif chamber == 'lower':
+            bill_type_xpath = '//div[contains(@class, "content-page")]/div/table/tr[contains(@class, "House")]/td[1]/nobr/a/@href'
 
-        title = doc.xpath('//b[text()="TITLE:"]')
-        if title:
-            title = title[0].tail.strip().strip('"')
+        for bill_link in self.bill_list_page.xpath(bill_type_xpath):
+            yield from self.scrape_bill(chamber, session, bill_link)
+
+    def classify_bill(self, bill_id):
+        bill_types = {'B': 'bill', 'R': 'resolution', 'JR': 'joint resolution',
+                      'CR': 'concurrent resolution'}
+        for abbr in bill_types:
+            if abbr in bill_id:
+                return bill_types[abbr]
         else:
-            self.warning("skipping bill %s, no information" % url)
-            return
+            raise AssertionError("Could not categorize bill ID")
+
+    def extract_ak_field(self, page, field):
+        # AK bill page has the same structure for lots of fields
+        # <li><span>Field</span><strong>Content</strong>
+        # Careful, how they appear styled and the page source are different
+        return page.xpath('//li[./span[text()="{}"]]/strong/text()'.format(field))[0]
+
+    def scrape_bill(self, chamber, session, bill_link):
+        page = lxml.html.fromstring(self.get(bill_link).text)
+        page.make_links_absolute('http://www.akleg.gov')
+
+        bill_id = self.extract_ak_field(page, 'Bill ').replace('   ', ' ')
+        bill_id = bill_id.strip()
+        short_title = self.extract_ak_field(page, 'Short Title ')
+        long_title = self.extract_ak_field(page, 'Title')
+
+        sponsors = self.extract_ak_field(page, 'Sponsor(S) ')
+        classification = self.classify_bill(bill_id)
 
         bill = Bill(
             bill_id,
-            title=title,
+            title=short_title,
             chamber=chamber,
-            classification=bill_type,
+            classification=classification,
             legislative_session=session,
         )
-        bill.add_source(url)
+        bill.add_source(bill_link)
 
-        # Get sponsors
-        spons_str = doc.xpath('//b[contains(text(), "SPONSOR")]')[0].tail.strip()
-        sponsors_match = re.match(
-            r'(SENATOR|REPRESENTATIVE)\([Ss]\) ([^,]+(,[^,]+){0,})',
-            spons_str)
-        if sponsors_match:
-            sponsors = sponsors_match.group(2).split(',')
-            sponsor = sponsors[0].strip()
+        senate_sponsors = ''
+        house_sponsors = ''
 
-            if sponsor:
+        match = re.match(r'SENATOR[\(S\)]*\s*(?P<names>.*)', sponsors)
+        if match:
+            senate_sponsors = match.group('names')
+        match = re.match(r'REPRESENTATIVE[\(S\)]*\s*(?P<names>.*)', sponsors)
+        if match:
+            house_sponsors = match.group('names')
+
+        house_com_regex = r'HOUSE*\s*(?P<names>.*)\<br\>'
+        senate_com_regex = r'SENATE*\s*(?P<names>.*)\<br\>'
+
+        senate_sponsors = senate_sponsors.strip().split(',')
+        house_sponsors = house_sponsors.strip().split(',')
+
+        senate_sponsors = filter(None, senate_sponsors)
+        house_sponsors = filter(None, house_sponsors)
+
+        for sponsor in senate_sponsors:
+            if sponsor.isupper():
                 bill.add_sponsorship(
-                    sponsors[0],
+                    sponsor.strip(),
                     entity_type='person',
                     classification='primary',
                     primary=True,
                 )
+            else:
+                bill.add_sponsorship(
+                    sponsor.strip(),
+                    entity_type='person',
+                    classification='cosponsor',
+                    primary=False,
+                )
 
-            for sponsor in sponsors[1:]:
-                sponsor = sponsor.strip()
-                if sponsor:
+        for sponsor in house_sponsors:
+            if sponsor.isupper():
+                bill.add_sponsorship(
+                    sponsor.strip(),
+                    entity_type='person',
+                    classification='primary',
+                    primary=True,
+                )
+            else:
+                bill.add_sponsorship(
+                    sponsor.strip(),
+                    entity_type='person',
+                    classification='cosponsor',
+                    primary=False,
+                )
+
+        self.parse_actions(bill, page)
+        self.parse_versions(bill, page)
+        self.parse_fiscal_notes(bill, page)
+        self.parse_amendments(bill, page)
+        self.parse_subjects(bill, page)
+
+        yield bill
+
+    def parse_subjects(self, bill, page):
+        subjects = page.xpath('//ul[contains(@class,"list-links")]/li[position()>1]/a/text()')
+        for subject in subjects:
+            bill.add_subject(subject.strip())
+
+    def parse_actions(self, bill, page):
+        action_rows = page.xpath('//tr[contains(@class,"floorAction") or contains(@class,"committeeAction")]')
+        for row in action_rows:
+            action_date = row.xpath('td[1]/time')[0].attrib['datetime']
+            action_date = datetime.datetime.strptime(action_date,'%Y-%m-%d')
+            action_date = self._TZ.localize(action_date)
+            action = row.xpath('td[3]/span/text()')[0].strip()
+            chamber = None
+            if '(S)' in action:
+                chamber = 'upper'
+            elif '(H)' in action:
+                chamber = 'lower'
+            else:
+                self.warning("Unable to determine chamber for {}, skipping".format(chamber))
+
+            action, atype = self.clean_action(action)
+
+            bill.add_action(action,action_date, chamber=chamber, classification=atype)
+            # if re.match(r"\w+ Y(\d+)", action):
+            #     vote_href = row.xpath('.//a/@href')
+            #     if vote_href:
+            #         yield from self.parse_vote(bill, action, act_chamber, act_date,
+            #                                 vote_href[0])
+
+
+    def parse_versions(self, bill, page):
+        # Version urls are in 3 formats:
+        # http://www.akleg.gov/basis/Bill/Text/31?Hsid=HB0001A
+        # http://www.akleg.gov/basis/Bill/Plaintext/31?Hsid=HB0001A
+        # http://www.legis.state.ak.us/PDF/31/Bills/HB0001A.PDF
+
+        version_rows = page.xpath('//tr[td[@data-label="Version"]]')
+        for row in version_rows:
+            link = row.xpath('td[@data-label="Version"]/span/a')[0]
+            version_name = link.text_content().strip()
+            html_url = link.attrib['href']
+            plain_url = html_url.replace('Text', 'Plaintext')
+            amended_name = row.xpath('td[@data-label="Amended Name"]/span/text()')[0]
+            pdf_url = row.xpath('td[@data-label="PDF"]/span/a/@href')[0]
+
+            name = '{} ({})'.format(amended_name, version_name)
+            bill.add_version_link(name, html_url, media_type='text/html')
+            bill.add_version_link(name, plain_url, media_type='text/plain')
+            bill.add_version_link(name, pdf_url, media_type='application/pdf')
+
+    def parse_fiscal_notes(self, bill, page):
+        version_rows = page.xpath('//tr[td[@data-label="Fiscal Note"]]')
+        for row in version_rows:
+            pdf_url = row.xpath('td[@data-label="Fiscal Note"]/span/a/@href')[0]
+            name = row.xpath('td[@data-label="Fiscal Note"]/span')[0].text_content().strip()
+            name = name.replace('pdf ','')
+            bill.add_document_link(name, pdf_url, media_type='application/pdf')
+
+    def parse_amendments(self, bill, page):
+        version_rows = page.xpath('//tr[td[@data-label="Amendment"]]')
+        for row in version_rows:
+            # not all amendments get text posted
+            if not row.xpath('td/a[contains(@class,"pdf")]/@href'):
+                continue
+            pdf_url = row.xpath('td/a[contains(@class,"pdf")]/@href')[0]
+            name = row.xpath('td[@data-label="Amendment"]/span')[0].text_content().strip()
+            chamber = row.xpath('td[@data-label="Chamber"]/span')[0].text_content().strip()
+            chamber = chamber.replace('H', 'House').replace('S', 'Senate')
+            name = '{} {}'.format(chamber, name)
+            bill.add_version_link(name, pdf_url, media_type='application/pdf', on_duplicate='ignore')
+
+    def parse_sponsors(self, bill, sponsor_str):
+
+        regexes = [
+            # senators
+            ('S', r'SENATOR[\(S\)]*\s*(?P<names>.*)\<br\>'),
+            ('H', r'REPRESENTATIVE[\(S\)]*\s*(?P<names>.*)\<br\>'),
+        ]
+
+        com_regexes = [
+            ('S', r'SENATE*\s*(?P<names>.*)\<br\>'),
+            ('H', r'HOUSE*\s*(?P<names>.*)\<br\>')
+        ]
+
+        for chamber_code, regex in regexes:
+            sponsors = re.match(regex, sponsor_str).group('names')
+            sponsors = ','.split(sponsors)
+
+            for sponsor in sponsors:
+                sponsor_name = '{} ({})'.format(sponsor_name.strip(), chamber_code)
+                if sponsor.isupper(): # primary in uppercase
+                    bill.add_sponsorship(
+                        sponsor,
+                        entity_type='person',
+                        classification='primary',
+                        primary=True,
+                    )
+                else:
                     bill.add_sponsorship(
                         sponsor,
                         entity_type='person',
                         classification='cosponsor',
                         primary=False,
                     )
-        else:
-            # Committee sponsorship
-            spons_str = spons_str.strip()
-
-            if re.match(r' BY REQUEST OF THE GOVERNOR$', spons_str):
-                spons_str = re.sub(r' BY REQUEST OF THE GOVERNOR$',
-                                   '', spons_str).title()
-                spons_str = (spons_str +
-                             " Committee (by request of the governor)")
-
-            if spons_str:
-                bill.add_sponsorship(
-                    spons_str,
-                    entity_type='person',
-                    classification='primary',
-                    primary=True,
-                )
-
-        # Get actions from second myth table
-        self._current_comm = None
-        act_rows = doc.xpath('(//table[@class="myth"])[2]//tr')[1:]
-        for row in act_rows:
-            date, journal, raw_chamber, action = row.xpath('td')
-
-            act_date = datetime.datetime.strptime(date.text_content().strip(),
-                                                  '%m/%d/%y')
-            raw_chamber = raw_chamber.text_content().strip()
-            action = action.text_content().strip()
-
-            if raw_chamber == "(H)":
-                act_chamber = "lower"
-            elif raw_chamber == "(S)":
-                act_chamber = "upper"
-
-            if re.match(r"\w+ Y(\d+)", action):
-                vote_href = journal.xpath('.//a/@href')
-                if vote_href:
-                    yield from self.parse_vote(bill, action, act_chamber, act_date,
-                                               vote_href[0])
-
-            action, atype = self.clean_action(action)
-
-            match = re.match(r'^Prefile released (\d+/\d+/\d+)$', action)
-            if match:
-                action = 'Prefile released'
-                act_date = datetime.datetime.strptime(match.group(1), '%m/%d/%y')
-
-            bill.add_action(
-                action, chamber=act_chamber, date=act_date.strftime('%Y-%m-%d'),
-                classification=atype)
-
-        # Get subjects
-        for subj in doc.xpath('//a[contains(@href, "subject")]/text()'):
-            bill.add_subject(subj.strip())
-
-        # Get versions
-        text_list_url = (
-            "http://www.legis.state.ak.us/"
-            "basis/get_fulltext.asp?session=%s&bill=%s"
-        ) % (session, bill_id)
-        bill.add_source(text_list_url)
-
-        text_doc = lxml.html.fromstring(self.get(text_list_url).text)
-        text_doc.make_links_absolute(text_list_url)
-        for link in text_doc.xpath('//a[contains(@href, "get_bill_text")]'):
-            name = link.xpath('../preceding-sibling::td/text()')[0].strip()
-            text_url = link.get('href')
-            bill.add_version_link(name, text_url, media_type="text/html")
-
-        # Get documents
-        doc_list_url = (
-            "http://www.legis.state.ak.us/"
-            "basis/get_documents.asp?session=%s&bill=%s"
-        ) % (session, bill_id)
-        doc_list = lxml.html.fromstring(self.get(doc_list_url).text)
-        doc_list.make_links_absolute(doc_list_url)
-        bill.add_source(doc_list_url)
-        for href in doc_list.xpath('//a[contains(@href, "get_documents")][@onclick]'):
-            h_name = href.text_content()
-            h_href = href.attrib['href']
-            if h_name.strip():
-                bill.add_document_link(h_name, h_href)
-
-        yield bill
 
     def parse_vote(self, bill, action, act_chamber, act_date, url):
         re_vote_text = re.compile(r'The question (?:being|to be reconsidered):\s*"(.*?\?)"', re.S)
