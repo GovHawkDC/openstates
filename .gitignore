@@ -40,3 +40,5 @@ tmp.*
 *.accdb
 billydata
 .idea
+
+Dockerfile
