@@ -71,9 +71,12 @@ class Alaska(Jurisdiction):
     def get_organizations(self):
         legislature_name = "Alaska State Legislature"
 
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification='upper', parent_id=legislature._id)
-        lower = Organization("House", classification='lower', parent_id=legislature._id)
+        legislature = Organization(name=legislature_name,
+                                   classification="legislature")
+        upper = Organization("Senate", classification='upper',
+                             parent_id=legislature._id)
+        lower = Organization("House", classification='lower',
+                             parent_id=legislature._id)
 
         yield legislature
         yield upper
