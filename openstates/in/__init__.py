@@ -7,6 +7,8 @@ from .people import INPersonScraper
 # from .committees import INCommitteeScraper
 from .bills import INBillScraper
 
+settings = dict(SCRAPELIB_TIMEOUT=600)
+
 
 class Indiana(Jurisdiction):
     division_id = "ocd-division/country:us/state:in"

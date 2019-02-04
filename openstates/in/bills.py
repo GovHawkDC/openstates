@@ -11,6 +11,7 @@ from pupa.utils.generic import convert_pdf
 
 from .apiclient import ApiClient
 
+settings = dict(SCRAPELIB_TIMEOUT=600)
 
 class INBillScraper(Scraper):
     jurisdiction = 'in'
