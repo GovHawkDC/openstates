@@ -38,6 +38,7 @@ dump/
 tmp.*
 *.mdb
 *.accdb
+pubinfo_*/
 billydata
 .idea
 
