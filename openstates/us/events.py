@@ -75,10 +75,16 @@ class USEventScraper(Scraper, LXMLMixin):
 
             agenda = row.xpath('string(matter)')
 
-            event_date = datetime.datetime.strptime(
-                row.xpath('string(date)'),
-                '%d-%b-%Y %H:%M %p'
-            )
+            try:
+                event_date = datetime.datetime.strptime(
+                    row.xpath('string(date)'),
+                    '%d-%b-%Y %H:%M %p'
+                )
+            except ValueError:
+                event_date = datetime.datetime.strptime(
+                    row.xpath('string(date)'),
+                    '%d-%b-%Y'
+                )
 
             event_date = self._TZ.localize(event_date)
 
