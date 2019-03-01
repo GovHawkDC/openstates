@@ -25,7 +25,7 @@ class USEventScraper(Scraper, LXMLMixin):
     buildings = {
         'LHOB' : 'Longworth House Office Building, 9 Independence Ave SE, Washington, DC 20515',
         'RSOB' : 'Russell Senate Office Building, 2 Constitution Ave NE, Washington, DC 20002',
-        'SD' : 'Russell Senate Office Building, 2 Constitution Ave NE, Washington, DC 20002',
+        'SR' : 'Russell Senate Office Building, 2 Constitution Ave NE, Washington, DC 20002',
         'DSOB' : 'Dirksen Senate Office Building, 100 Constitution Ave NE, Washington, DC 20002',
         'SD' : 'Dirksen Senate Office Building, 100 Constitution Ave NE, Washington, DC 20002',
         'HSOB' : 'Hart Senate Office Building, 150 Constitution Ave NE, Washington, DC 20510',
@@ -49,10 +49,51 @@ class USEventScraper(Scraper, LXMLMixin):
         # todo: yield from
         if chamber is None:
             yield from self.scrape_house()
+            yield from self.scrape_senate()
         elif chamber == 'lower':
             yield from self.scrape_house()
         elif chamber == 'upper':
-            pass
+            yield from self.scrape_senate()
+
+    def scrape_senate(self):
+        url = 'https://www.senate.gov/general/committee_schedules/hearings.xml'
+
+        page = self.get(url).content
+        page = lxml.etree.fromstring(page)
+
+        rows = page.xpath('//meeting')
+
+        for row in rows:
+            com = row.xpath('string(committee)')
+            com = 'Senate {}'.format(com)
+
+            address = row.xpath('string(room)')
+            parts = address.split('-')
+            building_code = parts[0]
+
+            if self.buildings.get(building_code):
+                address = '{}, Room {}'.format(self.buildings.get(building_code), parts[1])
+
+            agenda = row.xpath('string(matter)')
+
+            event_date = datetime.datetime.strptime(
+                row.xpath('string(date)'),
+                '%d-%b-%Y %H:%M %p'
+            )
+
+            event_date = self._TZ.localize(event_date)
+
+            event = Event(
+                start_date=event_date,
+                name=com,
+                location_name=address
+            )
+
+            event.add_agenda_item(description=agenda)
+
+            event.add_source('https://www.senate.gov/committees/hearings_meetings.htm')
+
+            yield event
 
     # window is an int of how many days out to scrape
     # todo: start, end options
@@ -69,7 +110,7 @@ class USEventScraper(Scraper, LXMLMixin):
         dtdelta = datetime.timedelta(days=1)
 
         if window is None:
-            window = 15
+            window = 30
 
         for i in range(0, window):
             day_id = dt.strftime("%m%d%Y")
@@ -159,7 +200,6 @@ class USEventScraper(Scraper, LXMLMixin):
                     doc_name = self.hearing_document_types[doc.get('type')]
 
                 event.add_document(doc_name, url, media_type=media_type, on_duplicate='ignore')
-                print(doc_name, url, media_type)
 
         yield event
 
