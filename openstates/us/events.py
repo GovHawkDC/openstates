@@ -64,6 +64,10 @@ class USEventScraper(Scraper, LXMLMixin):
 
         for row in rows:
             com = row.xpath('string(committee)')
+
+            if com == '':
+                continue
+
             com = 'Senate {}'.format(com)
 
             address = row.xpath('string(room)')
