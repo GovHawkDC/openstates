@@ -13,6 +13,15 @@ class USEventScraper(Scraper, LXMLMixin):
     _TZ = pytz.timezone('America/New_York')
     s = requests.Session()
 
+    media_types = {
+        'PDF': 'application/pdf',
+    }
+
+    hearing_document_types = {
+        "HW": "Witness List",
+        "HC": "Hearing Notice",
+    }
+
     buildings = {
         'LHOB' : 'Longworth House Office Building, 9 Independence Ave SE, Washington, DC 20515',
         'RSOB' : 'Russell Senate Office Building, 2 Constitution Ave NE, Washington, DC 20002',
@@ -38,13 +47,21 @@ class USEventScraper(Scraper, LXMLMixin):
             self.info('no session specified, using %s', session)
 
         # todo: yield from
-        yield from self.scrape_house()
+        if chamber is None:
+            yield from self.scrape_house()
+        elif chamber == 'lower':
+            yield from self.scrape_house()
+        elif chamber == 'upper':
+            pass
 
+    # window is an int of how many days out to scrape
+    # todo: start, end options
     def scrape_house(self, window=None):
 
         # https://docs.house.gov/Committee/Calendar/ByDay.aspx?DayID=02272019
-        # https://docs.house.gov/Committee/Calendar/ByDay.aspx?DayID=030219
         url_base = 'https://docs.house.gov/Committee/Calendar/ByDay.aspx?DayID={}'
+
+        # individual event page
         # https://docs.house.gov/Committee/Calendar/ByEvent.aspx?EventID=108976
         xml_base = 'https://docs.house.gov/Committee/Calendar/ByEvent.aspx?EventID={}'
 
@@ -56,7 +73,6 @@ class USEventScraper(Scraper, LXMLMixin):
 
         for i in range(0, window):
             day_id = dt.strftime("%m%d%Y")
-            print(day_id)
 
             dt = dt + dtdelta
             page = self.lxmlize(url_base.format(day_id))
@@ -64,6 +80,7 @@ class USEventScraper(Scraper, LXMLMixin):
             rows = page.xpath('//a[contains(@href, "ByEvent.aspx")]')
 
             for row in rows:
+                # links look like
                 # https://docs.house.gov/Committee/Calendar/ByEvent.aspx?EventID=108976
 
                 params = {
@@ -118,6 +135,31 @@ class USEventScraper(Scraper, LXMLMixin):
         )
 
         event.add_source(source_url)
+
+
+        coms = xml.xpath('//committees/committee-name | //subcommittees/committee-name')
+        for com in coms:
+            com_name = com.xpath('string(.)')
+            com_name = 'House {}'.format(com_name)
+            event.add_participant(
+                com_name,
+                type='committee',
+                note='host',
+            )
+
+        docs = xml.xpath('//meeting-documents/meeting-document')
+        for doc in docs:
+            doc_name = doc.xpath('string(description)')
+            doc_files = doc.xpath('files/file')
+            for doc_file in doc_files:
+                media_type = self.media_types[doc_file.get('doc-type')]
+                url = doc_file.get('doc-url')
+
+                if doc_name == '':
+                    doc_name = self.hearing_document_types[doc.get('type')]
+
+                event.add_document(doc_name, url, media_type=media_type, on_duplicate='ignore')
+                print(doc_name, url, media_type)
 
         yield event
 
