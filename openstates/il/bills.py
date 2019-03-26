@@ -385,14 +385,14 @@ class IlBillScraper(Scraper):
             url = link.get('href')
             url = '{}&print=true'.format(url)
             mimetype = 'text/html'
-            if name in VERSION_TYPES:
+            if name in VERSION_TYPES or 'Amendment' in name:
                 if pdf_only:
                     pdf_link = doc.xpath('//a[text()="PDF"]')[0]
                     url = pdf_link.get('href')
                     mimetype = 'application/pdf'
 
                 bill.add_version_link(name, url, media_type=mimetype)
-            elif 'Amendment' in name or name in FULLTEXT_DOCUMENT_TYPES:
+            elif name in FULLTEXT_DOCUMENT_TYPES:
                 bill.add_document_link(name, url)
             elif 'Printer-Friendly' in name:
                 pass
