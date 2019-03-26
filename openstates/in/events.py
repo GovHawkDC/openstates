@@ -76,7 +76,6 @@ class INEventScraper(Scraper, LXMLMixin):
 
         if end_date is not None:
             event = Event(
-                session=session
                 start_date=start_date,
                 end_date=end_date,
                 name=name,
