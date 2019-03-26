@@ -101,7 +101,7 @@ class NCBillScraper(Scraper):
             version_url = row.xpath('@href')[0]
             version_name = row.xpath('string(.)').strip()
             bill.add_version_link(version_name, version_url, media_type='application/pdf',
-                        on_duplicate='ignore')
+                                  on_duplicate='ignore')
 
         # sponsors
         spon_row = doc.xpath('//div[contains(text(), "Sponsors")]/following-sibling::div')[0]
