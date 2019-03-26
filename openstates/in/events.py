@@ -14,9 +14,7 @@ from .apiclient import ApiClient
 class INEventScraper(Scraper, LXMLMixin):
     _TZ = pytz.timezone('US/Eastern')
 
-    # date_filter argument can give you just one day;
-    # format is "2/28/2019" per AK's site
-    def scrape(self, chamber=None, session=None, date_filter=None):
+    def scrape(self, session=None):
         if not session:
             session = self.latest_session()
             self.info('no session specified, using %s', session)
@@ -78,6 +76,7 @@ class INEventScraper(Scraper, LXMLMixin):
 
         if end_date is not None:
             event = Event(
+                session=session
                 start_date=start_date,
                 end_date=end_date,
                 name=name,
