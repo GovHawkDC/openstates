@@ -9,6 +9,7 @@ from .bills import INBillScraper
 
 settings = dict(SCRAPELIB_TIMEOUT=600)
 
+from .events import INEventScraper
 
 class Indiana(Jurisdiction):
     division_id = "ocd-division/country:us/state:in"
@@ -18,8 +19,8 @@ class Indiana(Jurisdiction):
     scrapers = {
         'people': INPersonScraper,
         # 'committees': INCommitteeScraper,
-        'bills': INBillScraper
-
+        'bills': INBillScraper,
+        'events': INEventScraper
     }
     legislative_sessions = [
         {
