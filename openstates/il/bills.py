@@ -391,7 +391,7 @@ class IlBillScraper(Scraper):
                     url = pdf_link.get('href')
                     mimetype = 'application/pdf'
 
-                bill.add_version_link(name, url, media_type=mimetype)
+                bill.add_version_link(name, url, media_type=mimetype, on_duplicate='ignore')
             elif name in FULLTEXT_DOCUMENT_TYPES:
                 bill.add_document_link(name, url)
             elif 'Printer-Friendly' in name:
