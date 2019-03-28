@@ -227,6 +227,28 @@ class MEBillScraper(Scraper):
         else:
             if ver_html:
                 vdoc = lxml.html.fromstring(ver_html)
+                vdoc.make_links_absolute(ver_url)
+
+                amd_xpath = '//p/span[contains(text(),"Adopted Amendments") or ' \
+                    'contains(text(),"Adopted by House & Senate")]' \
+                    '/following-sibling::span[contains(@class,"tlnk-amdblk")]'
+                for row in vdoc.xpath(amd_xpath):
+                    version_name = row.xpath(
+                        'string(.//span[@class="story_subhead"])')
+                    pdf_url = row.xpath('.//a[@class="pdf_btn"]/@href')
+
+                    if pdf_url:
+                        bill.add_version_link(
+                            version_name,
+                            pdf_url[0],
+                            media_type='application/pdf')
+
+                    word_url = row.xpath('.//a[@class="doc_btn"]/@href')
+                    if word_url:
+                        bill.add_version_link(
+                            version_name,
+                            word_url[0],
+                            media_type='application/msword')
 
                 # Check whether the bill text is missing.
                 is_bill_text_missing = vdoc.xpath('boolean(//div[@id = "sec0" \
