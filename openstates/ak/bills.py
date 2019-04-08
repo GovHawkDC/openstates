@@ -240,12 +240,14 @@ class AKBillScraper(Scraper):
             html_url = link.attrib['href']
             plain_url = html_url.replace('Text', 'Plaintext')
             amended_name = row.xpath('td[@data-label="Amended Name"]/span/text()')[0]
-            pdf_url = row.xpath('td[@data-label="PDF"]/span/a/@href')[0]
 
             name = '{} ({})'.format(amended_name, version_name)
             bill.add_version_link(name, html_url, media_type='text/html')
             bill.add_version_link(name, plain_url, media_type='text/plain')
-            bill.add_version_link(name, pdf_url, media_type='application/pdf')
+
+            if row.xpath('td[@data-label="PDF"]/span/a'):
+                pdf_url = row.xpath('td[@data-label="PDF"]/span/a/@href')[0]
+                bill.add_version_link(name, pdf_url, media_type='application/pdf')
 
     def parse_fiscal_notes(self, bill, page):
         version_rows = page.xpath('//tr[td[@data-label="Fiscal Note"]]')
