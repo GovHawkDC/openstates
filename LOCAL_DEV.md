@@ -53,3 +53,14 @@ To remove venv, assuming having used steps above:
 # Assuming root of repo
 rm -rf venv
 ```
+
+## notes
+
+By default, `pupa` is fetched remotely; however, for
+local testing, can run the following (assuming from
+within venv):
+
+```shell
+pip uninstall pupa -y
+pip install local/path/to/pupa
+```
