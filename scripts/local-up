@@ -24,6 +24,7 @@ source "${govhawk_repo_root}/venv/bin/activate"
 
 # Deps
 pip install -r requirements.txt
+pip install flake8
 pip install opencivicdata
 pip install pupa
 
