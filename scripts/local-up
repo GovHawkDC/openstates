@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+# Helper script to set up local dev environment
+
+govhawk_repo_root="$(git rev-parse --show-toplevel)"
+
+# Store the original PYTHONPATH var for virtualenv deactivation
+export GOVHAWK_TMP_ORIGINAL_PYTHON_PATH="${PYTHONPATH}"
+
+# Set PYTHONPATH path to repo subdirectory containing
+# jurisdiction scrapers
+export PYTHONPATH="${govhawk_repo_root}/openstates"
+
+# Init virtualenv if not already set up
+if [ ! -f "${govhawk_repo_root}/venv/bin/activate" ]; then
+    virtualenv venv
+fi
+
+# Source virtualenv
+# shellcheck source=/dev/null
+source "${govhawk_repo_root}/venv/bin/activate"
+
+# Deps
+pip install -r requirements.txt
+pip install opencivicdata
+pip install pupa
+
+echo ""
+echo ""
+echo " <> GovHawk venv ready :)"
+echo "   ==> PYTHONPATH=${PYTHONPATH}"
+echo "   ==> Try running 'pupa update vt bills --scrape'"
+echo ""
+echo ""

@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Helper script to bring down local dev environment
+
+# Virtualenv
+deactivate
+
+# Reset PYTHONPATH var
+export PYTHONPATH="${GOVHAWK_TMP_ORIGINAL_PYTHON_PATH}"
+unset GOVHAWK_TMP_ORIGINAL_PYTHON_PATH
+
+echo ""
+echo ""
+echo " <> GovHawk venv down; byebye"
+echo ""
+echo ""
