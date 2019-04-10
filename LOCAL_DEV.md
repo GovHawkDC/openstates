@@ -47,7 +47,7 @@ source scripts/local-down
 
 ### remove
 
-To remove venv, assuming using steps above:
+To remove venv, assuming having used steps above:
 
 ```shell
 # Assuming root of repo
