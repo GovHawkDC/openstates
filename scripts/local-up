@@ -2,9 +2,11 @@
 #
 # Helper script to set up local dev environment
 
+# @see https://stackoverflow.com/a/957978/1858091
 govhawk_repo_root="$(git rev-parse --show-toplevel)"
 
 # Store the original PYTHONPATH var for virtualenv deactivation
+# @see https://stackoverflow.com/a/4758351/1858091
 export GOVHAWK_TMP_ORIGINAL_PYTHON_PATH="${PYTHONPATH}"
 
 # Set PYTHONPATH path to repo subdirectory containing
