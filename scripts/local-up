@@ -2,6 +2,13 @@
 #
 # Helper script to set up local dev environment
 
+if ! command -v python3 &> /dev/null; then
+    echo " <> Oops, we need python3 installed"
+fi
+
+# Stash path to python3 interpreter
+python_int_path="$(which python3)"
+
 # @see https://stackoverflow.com/a/957978/1858091
 govhawk_repo_root="$(git rev-parse --show-toplevel)"
 
@@ -15,7 +22,7 @@ export PYTHONPATH="${govhawk_repo_root}/openstates"
 
 # Init virtualenv if not already set up
 if [ ! -f "${govhawk_repo_root}/venv/bin/activate" ]; then
-    virtualenv venv
+    virtualenv --python="${python_int_path}" venv
 fi
 
 # Source virtualenv
@@ -31,6 +38,7 @@ pip install pupa
 echo ""
 echo ""
 echo " <> GovHawk venv ready :)"
+echo "   ==> Venv via ${python_int_path}"
 echo "   ==> PYTHONPATH=${PYTHONPATH}"
 echo "   ==> Try running 'pupa update vt bills --scrape'"
 echo ""
