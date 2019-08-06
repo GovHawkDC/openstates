@@ -39,6 +39,9 @@ pip3 --version
 pip3 install virtualenv
 ```
 
+Note: you may have to re-source `~/.profile` depending on your `$PATH`, if `virtualenv`
+can't be found.
+
 ### resources
 
 - https://docs.python-guide.org/dev/virtualenvs/
