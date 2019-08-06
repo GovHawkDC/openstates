@@ -1,8 +1,6 @@
 #!/bin/bash
 #
 # Helper script to set up local dev environment
-set -e
-
 if ! command -v python3 &> /dev/null; then
     echo " <> Oops, we need python3 installed"
 fi
