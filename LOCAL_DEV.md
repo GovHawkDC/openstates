@@ -25,6 +25,20 @@ pip3 --version
 pip3 install virtualenv
 ```
 
+### via apt
+
+```shell
+# Pip, if not already installed
+sudo apt install python3-pip
+
+# Verify python and pip versions
+python3 --version
+pip3 --version
+
+# Install virtualenv
+pip3 install virtualenv
+```
+
 ### resources
 
 - https://docs.python-guide.org/dev/virtualenvs/
