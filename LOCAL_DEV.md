@@ -78,6 +78,6 @@ local testing, can run the following (assuming from
 within venv):
 
 ```shell
-pip uninstall pupa -y
-pip install local/path/to/pupa
+pip3 uninstall pupa -y
+pip3 install local/path/to/pupa
 ```
