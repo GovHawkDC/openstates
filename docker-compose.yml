@@ -1,7 +1,7 @@
 version: "3"
 services:
   scrape:
-    image: govhawk/openstates:1.4.0-beta
+    image: govhawk/openstates:1.5.0-beta
     environment:
     - MYSQL_HOST=mysql
     - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
@@ -37,7 +37,7 @@ services:
     - MYSQL_DATABASE=capublic
     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
   ca-download:
-    image: govhawk/openstates:1.4.0-beta
+    image: govhawk/openstates:1.5.0-beta
     entrypoint: /opt/openstates/openstates/openstates/ca/download.sh
     environment:
     - MYSQL_HOST=mysql
@@ -45,3 +45,8 @@ services:
     - .:/opt/openstates/openstates/
     depends_on:
     - mysql
+  redis:
+    image: bitnami/redis:5.0.5-ol-7-r89
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: always
