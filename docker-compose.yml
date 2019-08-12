@@ -1,14 +1,30 @@
 version: "3"
+
 services:
   scrape:
     image: govhawk/openstates:1.5.0-beta
     environment:
     - MYSQL_HOST=mysql
     - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
-    - NEW_YORK_API_KEY
-    - INDIANA_API_KEY
-    - PUPA_ARGS
-    - SKIP_BILLY=true
+    - NEW_YORK_API_KEY=${NEW_YORK_API_KEY}
+    - INDIANA_API_KEY=${INDIANA_API_KEY}
+    - OLODATA_PASSWORD=${OLODATA_PASSWORD}
+    - OLODATA_USERNAME=${OLODATA_USERNAME}
+    - PUPA_ARGS=${PUPA_ARGS}
+    - OUTPUT_TARGET=${OUTPUT_TARGET}
+    - CACHE_TARGET=${CACHE_TARGET}
+    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    - AMAZON_SQS_QUEUE_PREFIX=${AMAZON_SQS_QUEUE_PREFIX}
+    - AMAZON_SQS_QUEUE_SEP=${AMAZON_SQS_QUEUE_SEP}
+    - AMAZON_SQS_QUEUE=${AMAZON_SQS_QUEUE}
+    - AMAZON_S3_BUCKET=${AMAZON_S3_BUCKET}
+    - AMAZON_S3_ALWAYS=${AMAZON_S3_ALWAYS}
+    - REDIS_HOST=redis
+    - REDIS_PORT=6379
+    - REDIS_PASSWORD=pass1234
+    - VOTE_EVENT_NO_BILL_UUID=${VOTE_EVENT_NO_BILL_UUID}
     volumes:
     - .:/opt/openstates/openstates/
     entrypoint: /opt/openstates/openstates/pupa-scrape.sh
@@ -48,5 +64,12 @@ services:
   redis:
     image: bitnami/redis:5.0.5-ol-7-r89
     ports:
-      - "127.0.0.1:6379:6379"
+    - "6379:6379"
+    environment:
+    - REDIS_PASSWORD=pass1234
     restart: always
+
+networks:
+  default:
+    external:
+      name: mynet
