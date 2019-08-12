@@ -2,7 +2,7 @@ version: "3"
 
 services:
   scrape:
-    image: govhawk/openstates:1.5.0-beta
+    image: govhawk/openstates:2.0.0-beta.0
     environment:
     - MYSQL_HOST=mysql
     - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
@@ -25,8 +25,6 @@ services:
     - REDIS_PORT=6379
     - REDIS_PASSWORD=pass1234
     - VOTE_EVENT_NO_BILL_UUID=${VOTE_EVENT_NO_BILL_UUID}
-    volumes:
-    - .:/opt/openstates/openstates/
     entrypoint: /opt/openstates/openstates/pupa-scrape.sh
   postgres:
     image: mdillon/postgis:10-alpine
@@ -40,8 +38,6 @@ services:
     environment:
     - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
     entrypoint: /opt/openstates/openstates/scripts/dbinit.sh
-    volumes:
-    - .:/opt/openstates/openstates/
     depends_on:
     - postgres
   mysql:
@@ -53,12 +49,10 @@ services:
     - MYSQL_DATABASE=capublic
     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
   ca-download:
-    image: govhawk/openstates:1.5.0-beta
+    image: govhawk/openstates:2.0.0-beta.0
     entrypoint: /opt/openstates/openstates/openstates/ca/download.sh
     environment:
     - MYSQL_HOST=mysql
-    volumes:
-    - .:/opt/openstates/openstates/
     depends_on:
     - mysql
   redis:
