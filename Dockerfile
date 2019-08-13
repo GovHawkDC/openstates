@@ -1,4 +1,4 @@
-FROM debian:stretch-slim
+FROM ubuntu:bionic
 LABEL maintainer="GovHawk, LLC"
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -38,7 +38,7 @@ RUN apt-get install -y \
 
 # Deps: Databases
 RUN apt-get install -y \
-        default-libmysqlclient-dev
+        mysql-client
 
 # Deps: Geo
 RUN apt-get install -y \
