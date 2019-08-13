@@ -27,6 +27,8 @@ services:
     - REDIS_PASSWORD=pass1234
     - VOTE_EVENT_NO_BILL_UUID=${VOTE_EVENT_NO_BILL_UUID}
     entrypoint: /opt/openstates/openstates/pupa-scrape.sh
+    depends_on:
+    - redis
   postgres:
     image: mdillon/postgis:10-alpine
     ports:
