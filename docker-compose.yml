@@ -2,7 +2,7 @@ version: "3.4"
 
 services:
   scrape:
-    image: govhawk/openstates:2.0.0-beta.1
+    image: govhawk/openstates:2.0.0-beta.2
     environment:
     - MYSQL_HOST=mysql
     - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
@@ -54,7 +54,7 @@ services:
     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
     restart: always
   ca-download:
-    image: govhawk/openstates:2.0.0-beta.1
+    image: govhawk/openstates:2.0.0-beta.2
     entrypoint: /opt/openstates/openstates/openstates/ca/download.sh
     environment:
     - MYSQL_HOST=mysql
