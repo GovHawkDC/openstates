@@ -1,49 +1,24 @@
 #!/bin/sh
-
 set -e
 
-# Set up Google service account credentials if provided via environment var
-#
-# @see https://cloud.google.com/logging/docs/agent/authorization
-# @see http://google-cloud-python.readthedocs.io/en/latest/core/auth.html
-if [ ! -z ${GOOGLE_CLOUD_CREDENTIALS+x} ]; then
-  export GOOGLE_APPLICATION_CREDENTIALS="/etc/google/auth/application_default_credentials.json"
-  mkdir -p /etc/google/auth
-  echo "$GOOGLE_CLOUD_CREDENTIALS" > "$GOOGLE_APPLICATION_CREDENTIALS"
-  chown root:root "$GOOGLE_APPLICATION_CREDENTIALS"
-  chmod 0400 "$GOOGLE_APPLICATION_CREDENTIALS"
-fi
-
-#PUPA_ENV=~/.virtualenvs/pupa
-#BILLY_ENV=~/.virtualenvs/openstates
+echo "Scrape govhawk/openstates:2.0.0"
 
 # copy use shift to get rid of first param, pass rest to pupa update
 state=$1
 shift
 
-# The gentleman's delivery/deployment hehe
+# Cheap n' dirty way to sync openstates patches and hotfixes; the idea
+# here is that openstates gets updated more frequently w/ smaller
+# changes than, e.g., pupa... so to avoid re-building the docker
+# image...
 #
 # NOTE: noop the git pull call in case it fails
 # @see https://stackoverflow.com/a/40650331/1858091
-#( cd /opt/openstates/openstates && \
-#  git stash && \
-#  ( git pull origin govhawk-deploy || : ) ) > /dev/null
-
-
 ( cd /opt/openstates/openstates && \
   git stash && \
-  ( git pull origin govhawk-deploy || : ) )
+  ( git pull --no-edit origin govhawk-deploy || : ) )
 
 
 export PYTHONPATH=./openstates
 
 $PUPA_ENV/bin/pupa ${PUPA_ARGS:-} update $state "$@"
-
-if [ "$SKIP_BILLY" = true ]; then
-  exit 0
-fi
-
-export PUPA_DATA_DIR='../openstates/_data'
-export PYTHONPATH=./billy_metadata/
-$BILLY_ENV/bin/python -m pupa2billy.run $state
-$BILLY_ENV/bin/billy-update $state --import --report
