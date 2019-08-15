@@ -6,7 +6,9 @@ from pupa.scrape import Jurisdiction, Organization
 from .people import INPersonScraper
 # from .committees import INCommitteeScraper
 from .bills import INBillScraper
+from .events import INEventScraper
 
+settings = dict(SCRAPELIB_TIMEOUT=600)
 
 class Indiana(Jurisdiction):
     division_id = "ocd-division/country:us/state:in"
@@ -16,8 +18,8 @@ class Indiana(Jurisdiction):
     scrapers = {
         'people': INPersonScraper,
         # 'committees': INCommitteeScraper,
-        'bills': INBillScraper
-
+        'bills': INBillScraper,
+        'events': INEventScraper
     }
     legislative_sessions = [
         {

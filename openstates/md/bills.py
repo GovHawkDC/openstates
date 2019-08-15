@@ -489,8 +489,12 @@ class MDBillScraper(Scraper):
                                        media_type='application/pdf')
             elif a.text in ('Amendments', 'Conference Committee Amendment',
                             'Conference Committee Report'):
-                bill.add_document_link(whole,
-                                       a.get('href'), media_type='application/pdf')
+                if 'adopted' in whole.lower():
+                    bill.add_version_link(whole,
+                                          a.get('href'), media_type='application/pdf')
+                else:
+                    bill.add_document_link(whole,
+                                           a.get('href'), media_type='application/pdf')
             elif a.text == 'Vote - Senate - Committee':
                 bill.add_document_link('Senate %s Committee Vote' %
                                        a.tail.replace(' - ', ' ').strip(),

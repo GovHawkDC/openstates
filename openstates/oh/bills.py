@@ -122,15 +122,19 @@ class OHBillScraper(Scraper):
                 data = self.get(bill_api_url).json()
 
                 # add title if no short title
-                if not bill.title:
+                if not bill.title and data['items'][0]['longtitle']:
                     bill.title = data['items'][0]['longtitle']
-                bill.add_title(data['items'][0]['longtitle'], 'long title')
+                elif data['items'][0]['longtitle']:
+                    bill.add_title(data['items'][0]['longtitle'], 'long title')
+                else:
+                    continue
 
                 # this stuff is version-specific
                 for version in data['items']:
                     version_name = version["version"]
                     version_link = base_url+version["pdfDownloadLink"]
-                    bill.add_version_link(version_name, version_link, media_type='application/pdf')
+                    bill.add_version_link(version_name, version_link, media_type='application/pdf',
+                                          on_duplicate='ignore')
 
                 # we'll use latest bill_version for everything else
                 bill_version = data['items'][0]
@@ -593,7 +597,7 @@ class OHBillScraper(Scraper):
                                       media_type='text/html')
             elif pdf_links:
                 link = pdf_links[0].get('href')
-                bill.add_version_link(name, base_url + link,
+                bill.add_version_link(name, base_url + link, on_duplicate='use_old',
                                       media_type='application/pdf')
 
         html = self.get(base_url + piece).text

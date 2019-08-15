@@ -290,7 +290,11 @@ class DEBillScraper(Scraper, LXMLMixin):
             'filter': '',
         }
         self.info('Fetching actions for {}'.format(bill.identifier))
-        page = self.post(url=actions_url, data=form, allow_redirects=True).json()
+        try:
+            page = self.post(url=actions_url, data=form, allow_redirects=True).json()
+        except json.JSONDecodeError:
+            return
+
         for row in page['Data']:
             action_name = row['ActionDescription']
             action_date = dt.datetime.strptime(row['OccuredAtDateTime'],
@@ -406,7 +410,12 @@ class DEBillScraper(Scraper, LXMLMixin):
             'fromIntroDate': '',
             'toIntroDate': '',
         }
-        page = self.post(url=search_form_url, data=form, allow_redirects=True).json()
+
+        try:
+            page = self.post(url=search_form_url, data=form, allow_redirects=True).json()
+        except json.JSONDecodeError:
+            page = self.post(url=search_form_url, data=form, allow_redirects=True).json()
+
         return page
 
     def mime_from_link(self, link):

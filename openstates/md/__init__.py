@@ -144,6 +144,7 @@ class Maryland(Jurisdiction):
         },
     ]
     ignored_scraped_sessions = [
+        "2019 Regular Session",
         "1996 Regular Session",
         "1997 Regular Session",
         "1998 Regular Session",

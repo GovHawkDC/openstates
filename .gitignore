@@ -42,3 +42,5 @@ tmp.*
 pubinfo_*/
 billydata
 .idea
+
+Dockerfile

@@ -148,9 +148,10 @@ class Arkansas(Jurisdiction):
         {
             "_scraped_name": "Regular Session, 2019",
             "classification": "primary",
+            "end_date": "2019-01-19",
             "identifier": "2019",
             "name": "2019 Regular Session",
-            "start_date": "2019-01-14"
+            "start_date": "2019-03-30"
         },
     ]
     ignored_scraped_sessions = [
