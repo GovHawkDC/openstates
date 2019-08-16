@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "Scrape govhawk/openstates:2.0.0"
+echo "Scrape govhawk/openstates:2.0.1"
 
 # copy use shift to get rid of first param, pass rest to pupa update
 state=$1
