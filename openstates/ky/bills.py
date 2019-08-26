@@ -227,4 +227,4 @@ class KYBillScraper(Scraper, LXMLMixin):
         for subject in subjects:
             if subject not in seen_subjects:
                 bill.add_subject(subject.strip())
-                seen_subjects.append(subject)
+                seen_subjects.append(subject.strip())
