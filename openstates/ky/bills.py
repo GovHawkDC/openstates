@@ -59,6 +59,9 @@ class KYBillScraper(Scraper, LXMLMixin):
 
         # self.scrape_subjects(session)
         chambers = [chamber] if chamber else ['upper', 'lower']
+        if prefile:
+            chambers = ['upper']
+
         for chamber in chambers:
             yield from self.scrape_session(chamber, session, prefile)
 
