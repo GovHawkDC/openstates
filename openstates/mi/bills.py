@@ -146,40 +146,41 @@ class MIBillScraper(Scraper):
                     vote_url = BASE_URL + '/documents/%s/Journal/%s/htm/%s.htm' % (
                         session, chamber_name, objectname)
                     results = self.parse_roll_call(vote_url, rc_num)
-                    vote = VoteEvent(
-                        start_date=date,
-                        chamber=actor,
-                        bill=bill,
-                        motion_text=action,
-                        result='pass' if len(results['yes']) > len(results['no']) else 'fail',
-                        classification='passage',
-                    )
+                    if results is not None and 'yes' in results:
+                        vote = VoteEvent(
+                            start_date=date,
+                            chamber=actor,
+                            bill=bill,
+                            motion_text=action,
+                            result='pass' if len(results['yes']) > len(results['no']) else 'fail',
+                            classification='passage',
+                        )
 
-                    # check the expected counts vs actual
-                    count = re.search(r'YEAS (\d+)', action, re.IGNORECASE)
-                    count = int(count.groups()[0]) if count else 0
-                    if count != len(results['yes']):
-                        self.warning('vote count mismatch for %s %s, %d != %d' %
-                                     (bill_id, action, count, len(results['yes'])))
-                    count = re.search(r'NAYS (\d+)', action, re.IGNORECASE)
-                    count = int(count.groups()[0]) if count else 0
-                    if count != len(results['no']):
-                        self.warning('vote count mismatch for %s %s, %d != %d' %
-                                     (bill_id, action, count, len(results['no'])))
+                        # check the expected counts vs actual
+                        count = re.search(r'YEAS (\d+)', action, re.IGNORECASE)
+                        count = int(count.groups()[0]) if count else 0
+                        if count != len(results['yes']):
+                            self.warning('vote count mismatch for %s %s, %d != %d' %
+                                        (bill_id, action, count, len(results['yes'])))
+                        count = re.search(r'NAYS (\d+)', action, re.IGNORECASE)
+                        count = int(count.groups()[0]) if count else 0
+                        if count != len(results['no']):
+                            self.warning('vote count mismatch for %s %s, %d != %d' %
+                                        (bill_id, action, count, len(results['no'])))
 
-                    vote.set_count('yes', len(results['yes']))
-                    vote.set_count('no', len(results['no']))
-                    vote.set_count('other', len(results['other']))
+                        vote.set_count('yes', len(results['yes']))
+                        vote.set_count('no', len(results['no']))
+                        vote.set_count('other', len(results['other']))
 
-                    for name in results['yes']:
-                        vote.yes(name)
-                    for name in results['no']:
-                        vote.no(name)
-                    for name in results['other']:
-                        vote.vote('other', name)
+                        for name in results['yes']:
+                            vote.yes(name)
+                        for name in results['no']:
+                            vote.no(name)
+                        for name in results['other']:
+                            vote.vote('other', name)
 
-                    vote.add_source(vote_url)
-                    yield vote
+                        vote.add_source(vote_url)
+                        # yield vote
                 else:
                     self.warning("missing journal link for %s %s" %
                                  (bill_id, journal))
