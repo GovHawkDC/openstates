@@ -61,11 +61,10 @@ services:
     depends_on:
     - mysql
   redis:
-    image: bitnami/redis:5.0.5-ol-7-r89
+    image: redis:5.0.6
     ports:
     - "6379:6379"
-    environment:
-    - REDIS_PASSWORD=pass1234
+    command: redis-server --requirepass pass1234
     restart: always
 
 networks:
