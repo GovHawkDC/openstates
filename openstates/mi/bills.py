@@ -145,7 +145,8 @@ class MIBillScraper(Scraper):
                     chamber_name = {'upper': 'Senate', 'lower': 'House'}[actor]
                     vote_url = BASE_URL + '/documents/%s/Journal/%s/htm/%s.htm' % (
                         session, chamber_name, objectname)
-                    results = self.parse_roll_call(vote_url, rc_num)
+                    # results = self.parse_roll_call(vote_url, rc_num)
+                    results = None
                     if results is not None and 'yes' in results:
                         vote = VoteEvent(
                             start_date=date,
@@ -180,7 +181,7 @@ class MIBillScraper(Scraper):
                             vote.vote('other', name)
 
                         vote.add_source(vote_url)
-                        # yield vote
+                        yield vote
                 else:
                     self.warning("missing journal link for %s %s" %
                                  (bill_id, journal))
