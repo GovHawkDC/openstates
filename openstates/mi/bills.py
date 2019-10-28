@@ -6,7 +6,7 @@ import collections
 
 import lxml.html
 from pupa.scrape import Scraper, Bill, VoteEvent
-
+import scrapelib
 
 BASE_URL = 'http://www.legislature.mi.gov'
 TIMEZONE = pytz.timezone('US/Eastern')
@@ -145,15 +145,16 @@ class MIBillScraper(Scraper):
                     chamber_name = {'upper': 'Senate', 'lower': 'House'}[actor]
                     vote_url = BASE_URL + '/documents/%s/Journal/%s/htm/%s.htm' % (
                         session, chamber_name, objectname)
-                    # results = self.parse_roll_call(vote_url, rc_num)
-                    results = None
-                    if results is not None and 'yes' in results:
+                    results = self.parse_roll_call(vote_url, rc_num)
+
+                    if results is not None:
+                        vote_passed = len(results['yes']) > len(results['no'])
                         vote = VoteEvent(
                             start_date=date,
                             chamber=actor,
                             bill=bill,
                             motion_text=action,
-                            result='pass' if len(results['yes']) > len(results['no']) else 'fail',
+                            result='pass' if vote_passed else 'fail',
                             classification='passage',
                         )
 
@@ -162,12 +163,12 @@ class MIBillScraper(Scraper):
                         count = int(count.groups()[0]) if count else 0
                         if count != len(results['yes']):
                             self.warning('vote count mismatch for %s %s, %d != %d' %
-                                        (bill_id, action, count, len(results['yes'])))
+                                         (bill_id, action, count, len(results['yes'])))
                         count = re.search(r'NAYS (\d+)', action, re.IGNORECASE)
                         count = int(count.groups()[0]) if count else 0
                         if count != len(results['no']):
                             self.warning('vote count mismatch for %s %s, %d != %d' %
-                                        (bill_id, action, count, len(results['no'])))
+                                         (bill_id, action, count, len(results['no'])))
 
                         vote.set_count('yes', len(results['yes']))
                         vote.set_count('no', len(results['no']))
@@ -246,11 +247,17 @@ class MIBillScraper(Scraper):
             return name, url
 
     def parse_roll_call(self, url, rc_num):
-        html = self.get(url).text
-        if 'In The Chair' not in html:
+        try:
+            resp = self.get(url)
+        except scrapelib.HTTPError:
+            self.warning("Could not fetch roll call document at %s, unable to extract vote" % url)
+            return
+        html = resp.text
+        vote_doc = lxml.html.fromstring(html)
+        vote_doc_textonly = vote_doc.text_content()
+        if re.search('In\\s+The\\s+Chair', vote_doc_textonly) is None:
             self.warning('"In The Chair" indicator not found, unable to extract vote')
             return
-        vote_doc = lxml.html.fromstring(html)
 
         # split the file into lines using the <p> tags
         pieces = [p.text_content().replace(u'\xa0', ' ')
