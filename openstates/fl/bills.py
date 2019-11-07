@@ -63,6 +63,7 @@ class BillList(Page):
 
         sponsor = re.sub(r'^(?:Rep|Sen)\.\s', "", sponsor)
         for sp in sponsor.split(', '):
+            sp = sp.strip()
             bill.add_sponsorship(sp, 'primary', 'person', True)
 
         yield from self.scrape_page_items(BillDetail, url=bill_url, obj=bill)
@@ -77,6 +78,7 @@ class BillDetail(Page):
             self.process_history()
             self.process_versions()
             self.process_analysis()
+            self.process_amendments()
             yield from self.process_votes()
             yield from self.scrape_page_items(HousePage, bill=self.obj)
 
@@ -88,15 +90,48 @@ class BillDetail(Page):
                 version_url = tr.xpath("td/a[1]")[0].attrib['href']
                 if version_url.endswith('PDF'):
                     mimetype = 'application/pdf'
-                    text = self.scrape_page(BillVersionPDF, url=version_url)
                 elif version_url.endswith('HTML'):
                     mimetype = 'text/html'
-                    text = self.scrape_page(BillVersionHTML, url=version_url)
 
-                self.obj.add_version_link(name, version_url, media_type=mimetype, text=text)
+                self.obj.add_version_link(name, version_url, media_type=mimetype)
         except IndexError:
             self.obj.extras['places'] = []   # set places to something no matter what
             self.scraper.warning("No version table for {}".format(self.obj.identifier))
+
+    # 2020 SB 230 is a Bill with populated amendments:
+    # http://flsenate.gov/Session/Bill/2020/230/?Tab=Amendments
+    def process_amendments(self):
+        commmittee_amend_table = self.doc.xpath("//div[@id = 'tabBodyAmendments']"
+                                                "//div[@id='CommitteeAmendment']//table")
+        if commmittee_amend_table:
+            self.process_amendments_table(commmittee_amend_table, 'Committee')
+
+        floor_amend_table = self.doc.xpath("//div[@id = 'tabBodyAmendments']"
+                                           "//div[@id='FloorAmendment']//table")
+        if floor_amend_table:
+            self.process_amendments_table(floor_amend_table, 'Floor')
+
+    def process_amendments_table(self, table, amend_type):
+        try:
+            version_to_amend = table[0].xpath('string(caption)').strip()
+            for tr in table[0].xpath("tbody/tr"):
+                name = tr.xpath("string(td[1])").strip().split("\n")[0].strip()
+
+                # Amendment titles don't show which version they're amending, so add that
+                name = '{} to {}'.format(name, version_to_amend)
+
+                for link in tr.xpath("td[5]/a"):
+                    version_url = link.attrib['href']
+                    if version_url.endswith('PDF'):
+                        mimetype = 'application/pdf'
+
+                    elif version_url.endswith('HTML'):
+                        mimetype = 'text/html'
+
+                    self.obj.add_version_link(name, version_url, media_type=mimetype)
+        except IndexError:
+            self.scraper.warning("No {} amendments table for {}".format(
+                amend_type, self.obj.identifier))
 
     def process_analysis(self):
         try:
@@ -193,25 +228,6 @@ class BillDetail(Page):
                                                       date=vote_date, bill=self.obj)
         else:
             self.scraper.warning("No vote table for {}".format(self.obj.identifier))
-
-
-class BillVersionHTML(Page):
-    def handle_page(self):
-        text = self.doc.xpath('//pre')[0].text_content()
-        text = re.sub(r'\n\s*\d+\s*', ' ', text)
-        text = re.sub(r'\s+', ' ', text)
-        return text
-
-
-class BillVersionPDF(PDF):
-    def handle_page(self):
-        # newlines followed by numbers and lots of spaces
-        text = re.sub(r'\n\s*\d+\s*', ' ', self.text)
-        flhor_re = r'\s+'.join('FLORIDA HOUSE OF REPRESENTATIVES')
-        text = re.sub(flhor_re, ' ', text)
-        # collapse spaces
-        text = re.sub(r'\s+', ' ', text)
-        return text
 
 
 class FloorVote(PDF):
@@ -399,6 +415,7 @@ class HousePage(Page):
         # Keep the digits and all following characters in the bill's ID
         bill_number = re.search(r'^\w+\s(\d+\w*)$', self.kwargs['bill'].identifier).group(1)
         session_number = {
+            '2020': '89',
             '2019': '87',
             '2018': '86',
             '2017A': '85',
