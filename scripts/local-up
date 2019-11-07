@@ -29,7 +29,8 @@ fi
 source "${govhawk_repo_root}/venv/bin/activate"
 
 # Deps
-pip3 install -r requirements.txt
+# Note that local_requirements.txt omits California's MySQL client dependency for now.
+pip3 install -r local_requirements.txt
 pip3 install flake8
 pip3 install opencivicdata
 pip3 install pupa
