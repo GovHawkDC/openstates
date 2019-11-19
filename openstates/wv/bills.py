@@ -43,6 +43,7 @@ class WVBillScraper(Scraper):
         '20181S': '1x',
         '20182S': '2x',
         '20191S': '1x',
+        '20192S': '2x',
     }
 
     bill_types = {'B': 'bill',
