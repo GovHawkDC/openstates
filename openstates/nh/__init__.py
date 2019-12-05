@@ -66,6 +66,12 @@ class NewHampshire(Jurisdiction):
             "name": "2019 Regular Session",
             "start_date": "2019-01-02",
         },
+        {
+            "_scraped_name": "2020 Session",
+            "identifier": "2020",
+            "name": "2020 Regular Session",
+            "start_date": "2020-01-08",
+        },
     ]
     ignored_scraped_sessions = [
         "2013 Session",
