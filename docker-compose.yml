@@ -1,43 +1,73 @@
-version: "3.5"
-
-networks:
-  openstates-network:
-      name: openstates-network
+version: "3.4"
 
 services:
   scrape:
-    build: .
+    image: govhawk/openstates:2.0.1
     environment:
     - MYSQL_HOST=mysql
-    - DATABASE_URL=postgres://openstates:openstates@db/openstatesorg
-    - PYTHONPATH=./openstates
-    - NEW_YORK_API_KEY
-    - INDIANA_API_KEY
-    - PUPA_ARGS
-    volumes:
-    - .:/opt/openstates/openstates/
-    entrypoint: ["poetry", "run", "pupa", "update"]
-
-    networks:
-    - openstates-network
+    - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
+    - NEW_YORK_API_KEY=${NEW_YORK_API_KEY}
+    - INDIANA_API_KEY=${INDIANA_API_KEY}
+    - OLODATA_PASSWORD=${OLODATA_PASSWORD}
+    - OLODATA_USERNAME=${OLODATA_USERNAME}
+    - PUPA_ARGS=${PUPA_ARGS}
+    - SKIP_BILLY=true
+    - OUTPUT_TARGET=${OUTPUT_TARGET}
+    - CACHE_TARGET=${CACHE_TARGET}
+    - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+    - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    - AMAZON_SQS_QUEUE_PREFIX=${AMAZON_SQS_QUEUE_PREFIX}
+    - AMAZON_SQS_QUEUE_SEP=${AMAZON_SQS_QUEUE_SEP}
+    - AMAZON_SQS_QUEUE=${AMAZON_SQS_QUEUE}
+    - AMAZON_S3_BUCKET=${AMAZON_S3_BUCKET}
+    - AMAZON_S3_ALWAYS=${AMAZON_S3_ALWAYS}
+    - REDIS_HOST=redis
+    - REDIS_PORT=6379
+    - REDIS_PASSWORD=pass1234
+    - VOTE_EVENT_NO_BILL_UUID=${VOTE_EVENT_NO_BILL_UUID}
+    entrypoint: /opt/openstates/openstates/pupa-scrape.sh
+    depends_on:
+    - mysql
+    - redis
+  postgres:
+    image: mdillon/postgis:10-alpine
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_PASSWORD=secret
+    - POSTGRES_DB=openstates
+  dbinit:
+    image: openstates/openstates
+    environment:
+    - DATABASE_URL=postgres://postgres:secret@postgres:5432/openstates
+    entrypoint: /opt/openstates/openstates/scripts/dbinit.sh
+    depends_on:
+    - postgres
   mysql:
-    image: mariadb:10.3
-    command: mysqld_safe --max_allowed_packet=512M
+    image: mysql:5.6
+    command: --max_allowed_packet=512M
     ports:
     - "3306:3306"
     environment:
     - MYSQL_DATABASE=capublic
     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-    networks:
-    - openstates-network
+    restart: always
   ca-download:
-    image: openstates/openstates
+    image: govhawk/openstates:2.0.1
     entrypoint: /opt/openstates/openstates/openstates/ca/download.sh
     environment:
     - MYSQL_HOST=mysql
-    volumes:
-    - .:/opt/openstates/openstates/
     depends_on:
     - mysql
-    networks:
-    - openstates-network
+  redis:
+    image: redis:5.0.6
+    ports:
+    - "6379:6379"
+    command: redis-server --requirepass pass1234
+    restart: always
+
+networks:
+  default:
+    external:
+      name: mynet

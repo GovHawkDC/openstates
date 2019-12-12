@@ -13,4 +13,4 @@ until mysql -h "${MYSQL_HOST:-"localhost"}" -u "${MYSQL_USER:-"root"}" -e "SHOW 
   fi
 done
 
-poetry run python -m openstates.ca.download
+"$PUPA_ENV/bin/python" -m openstates.ca.download
