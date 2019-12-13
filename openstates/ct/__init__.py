@@ -87,6 +87,7 @@ class Connecticut(Jurisdiction):
         # },
     ]
     ignored_scraped_sessions = [
+        "20xx",
         "test.txt",
         "2020",
         "2010",
