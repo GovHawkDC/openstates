@@ -73,61 +73,47 @@ class AKBillScraper(Scraper):
     def scrape(self, chamber=None, session=None):
         if session is None:
             session = self.latest_session()
-            self.info('no session specified, using %s', session)
+            self.info('no session specified')
 
-        chambers = [chamber] if chamber is not None else ['upper', 'lower']
-        for chamber in chambers:
-            yield from self.scrape_chamber(chamber, session)
-
-    def scrape_chamber(self, chamber, session):
-        if chamber == 'upper':
-            bill_abbrs = ('SB', 'SR', 'SCR', 'SJR')
-        elif chamber == 'lower':
-            bill_abbrs = ('HB', 'HR', 'HCR', 'HJR')
         bill_types = {'B': 'bill', 'R': 'resolution', 'JR': 'joint resolution',
                       'CR': 'concurrent resolution'}
 
-        if self.bill_list_page is None:
-            # putting H1 -> H999 returns all the bills, even senate
-            bill_list_url = 'http://www.akleg.gov/basis/Bill/Range/{}?session=&billH1=1&bill2=H9999'.format(session)
-            page = lxml.html.fromstring(self.get(bill_list_url).text)
-            page.make_links_absolute('http://www.akleg.gov/')
-            self.bill_list_page = page
+        bill_list_url = ("https://www.akleg.gov/basis/Bill/Range/{session}")
+        doc = lxml.html.fromstring(self.get(bill_list_url).text)
+        doc.make_links_absolute(bill_list_url)
+        for bill_link in doc.xpath('//tr//td[1]//nobr[1]//a[1]'):
+            bill_abbr = bill_link.text
+            if ' ' in bill_abbr:
+                bill_abbr = bill_abbr.split(' ')[0]
+            elif 'HCR' in bill_abbr:
+                bill_abbr = bill_abbr[:3]
+            else:
+                bill_abbr = bill_abbr[:2]
+            bill_id = bill_link.text.replace(' ', '')
+            bill_type = bill_types[bill_abbr[1:]]
+            bill_url = bill_link.get('href').replace(' ', '')
+            if bill_abbr in ['SB', 'SR', 'SCR', 'SJR']:
+                chamber = 'upper'
+            else:
+                chamber = 'lower'
 
-        if chamber == 'upper':
-            bill_type_xpath = '//div[contains(@class, "content-page")]/div/table/tr[contains(@class, "Senate")]/td[1]/nobr/a/@href'
-        elif chamber == 'lower':
-            bill_type_xpath = '//div[contains(@class, "content-page")]/div/table/tr[contains(@class, "House")]/td[1]/nobr/a/@href'
+            yield from self.scrape_bill(
+                chamber,
+                session,
+                bill_id,
+                bill_type,
+                bill_url)
 
-        for bill_link in self.bill_list_page.xpath(bill_type_xpath):
-            yield from self.scrape_bill(chamber, session, bill_link)
+    def scrape_bill(self, chamber, session, bill_id, bill_type, url):
+        doc = lxml.html.fromstring(self.get(url).text)
+        doc.make_links_absolute(url)
 
-    def classify_bill(self, bill_id):
-        bill_types = {'B': 'bill', 'R': 'resolution', 'JR': 'joint resolution',
-                      'CR': 'concurrent resolution'}
-        for abbr in bill_types:
-            if abbr in bill_id:
-                return bill_types[abbr]
+        title = doc.xpath('//span[text()="Title"]')[0].getparent()
+        if title:
+            title = title[1].text.strip().strip('"')
         else:
-            raise AssertionError("Could not categorize bill ID")
-
-    def extract_ak_field(self, page, field):
-        # AK bill page has the same structure for lots of fields
-        # <li><span>Field</span><strong>Content</strong>
-        # Careful, how they appear styled and the page source are different
-        return page.xpath('//li[./span[text()="{}"]]/strong/text()'.format(field))[0]
-
-    def scrape_bill(self, chamber, session, bill_link):
-        page = lxml.html.fromstring(self.get(bill_link).text)
-        page.make_links_absolute('http://www.akleg.gov')
-
-        bill_id = self.extract_ak_field(page, 'Bill ').replace('   ', ' ')
-        bill_id = bill_id.strip()
-        short_title = self.extract_ak_field(page, 'Short Title ')
-        long_title = self.extract_ak_field(page, 'Title')
-
-        sponsors = self.extract_ak_field(page, 'Sponsor(S) ')
-        classification = self.classify_bill(bill_id)
+            self.warning("skipping bill {url}, no information")
+            return
 
         bill = Bill(
             bill_id,
@@ -136,31 +122,20 @@ class AKBillScraper(Scraper):
             classification=classification,
             legislative_session=session,
         )
-        bill.add_source(bill_link)
+        bill.add_source(url)
 
-        senate_sponsors = ''
-        house_sponsors = ''
+        # Get sponsors
+        spons_str = doc.xpath('//span[contains(text(), "Sponsor(S)")]')[0].getparent()[1].text
+        sponsors_match = re.match(
+            r'(SENATOR|REPRESENTATIVE)',
+            spons_str)
+        if sponsors_match:
+            sponsors = spons_str.split(',')
+            sponsor = sponsors[0].strip()
 
-        match = re.match(r'SENATOR[\(S\)]*\s*(?P<names>.*)', sponsors)
-        if match:
-            senate_sponsors = match.group('names')
-        match = re.match(r'REPRESENTATIVE[\(S\)]*\s*(?P<names>.*)', sponsors)
-        if match:
-            house_sponsors = match.group('names')
-
-        house_com_regex = r'HOUSE*\s*(?P<names>.*)\<br\>'
-        senate_com_regex = r'SENATE*\s*(?P<names>.*)\<br\>'
-
-        senate_sponsors = senate_sponsors.strip().split(',')
-        house_sponsors = house_sponsors.strip().split(',')
-
-        senate_sponsors = filter(None, senate_sponsors)
-        house_sponsors = filter(None, house_sponsors)
-
-        for sponsor in senate_sponsors:
-            if sponsor.isupper():
+            if sponsor:
                 bill.add_sponsorship(
-                    sponsor.strip(),
+                    sponsors[0].split()[1],
                     entity_type='person',
                     classification='primary',
                     primary=True,
@@ -173,130 +148,9 @@ class AKBillScraper(Scraper):
                     primary=False,
                 )
 
-        for sponsor in house_sponsors:
-            if sponsor.isupper():
-                bill.add_sponsorship(
-                    sponsor.strip(),
-                    entity_type='person',
-                    classification='primary',
-                    primary=True,
-                )
-            else:
-                bill.add_sponsorship(
-                    sponsor.strip(),
-                    entity_type='person',
-                    classification='cosponsor',
-                    primary=False,
-                )
-
-        self.parse_actions(bill, page)
-        self.parse_versions(bill, page)
-        self.parse_fiscal_notes(bill, page)
-        self.parse_amendments(bill, page)
-        self.parse_subjects(bill, page)
-
-        yield bill
-
-    def parse_subjects(self, bill, page):
-        subjects = page.xpath('//ul[contains(@class,"list-links")]/li[position()>1]/a/text()')
-        for subject in subjects:
-            bill.add_subject(subject.strip())
-
-    def parse_actions(self, bill, page):
-        action_rows = page.xpath('//tr[contains(@class,"floorAction") or contains(@class,"committeeAction")]')
-        for row in action_rows:
-            action_date = row.xpath('td[1]/time')[0].attrib['datetime']
-            action_date = datetime.datetime.strptime(action_date,'%Y-%m-%d')
-            action_date = self._TZ.localize(action_date)
-            action = row.xpath('td[3]/span/text()')[0].strip()
-            chamber = None
-            if '(S)' in action:
-                chamber = 'upper'
-            elif '(H)' in action:
-                chamber = 'lower'
-            else:
-                self.warning("Unable to determine chamber for {}, skipping".format(chamber))
-
-            action, atype = self.clean_action(action)
-
-            bill.add_action(action,action_date, chamber=chamber, classification=atype)
-            # if re.match(r"\w+ Y(\d+)", action):
-            #     vote_href = row.xpath('.//a/@href')
-            #     if vote_href:
-            #         yield from self.parse_vote(bill, action, act_chamber, act_date,
-            #                                 vote_href[0])
-
-
-    def parse_versions(self, bill, page):
-        # Version urls are in 3 formats:
-        # http://www.akleg.gov/basis/Bill/Text/31?Hsid=HB0001A
-        # http://www.akleg.gov/basis/Bill/Plaintext/31?Hsid=HB0001A
-        # http://www.legis.state.ak.us/PDF/31/Bills/HB0001A.PDF
-
-        version_rows = page.xpath('//tr[td[@data-label="Version"]]')
-        for row in version_rows:
-            link = row.xpath('td[@data-label="Version"]/span/a')[0]
-            version_name = link.text_content().strip()
-            html_url = link.attrib['href']
-            plain_url = html_url.replace('Text', 'Plaintext')
-            amended_name = row.xpath('td[@data-label="Amended Name"]/span/text()')[0]
-
-            name = '{} ({})'.format(amended_name, version_name)
-            bill.add_version_link(name, html_url, media_type='text/html')
-            bill.add_version_link(name, plain_url, media_type='text/plain')
-
-            if row.xpath('td[@data-label="PDF"]/span/a'):
-                pdf_url = row.xpath('td[@data-label="PDF"]/span/a/@href')[0]
-                bill.add_version_link(name, pdf_url, media_type='application/pdf')
-
-    def parse_fiscal_notes(self, bill, page):
-        version_rows = page.xpath('//tr[td[@data-label="Fiscal Note"]]')
-        for row in version_rows:
-            pdf_url = row.xpath('td[@data-label="Fiscal Note"]/span/a/@href')[0]
-            name = row.xpath('td[@data-label="Fiscal Note"]/span')[0].text_content().strip()
-            name = name.replace('pdf ','')
-            bill.add_document_link(name, pdf_url, media_type='application/pdf')
-
-    def parse_amendments(self, bill, page):
-        version_rows = page.xpath('//tr[td[@data-label="Amendment"]]')
-        for row in version_rows:
-            # not all amendments get text posted
-            if not row.xpath('td/a[contains(@class,"pdf")]/@href'):
-                continue
-            pdf_url = row.xpath('td/a[contains(@class,"pdf")]/@href')[0]
-            name = row.xpath('td[@data-label="Amendment"]/span')[0].text_content().strip()
-            chamber = row.xpath('td[@data-label="Chamber"]/span')[0].text_content().strip()
-            chamber = chamber.replace('H', 'House').replace('S', 'Senate')
-            name = '{} {}'.format(chamber, name)
-            bill.add_version_link(name, pdf_url, media_type='application/pdf', on_duplicate='ignore')
-
-    def parse_sponsors(self, bill, sponsor_str):
-
-        regexes = [
-            # senators
-            ('S', r'SENATOR[\(S\)]*\s*(?P<names>.*)\<br\>'),
-            ('H', r'REPRESENTATIVE[\(S\)]*\s*(?P<names>.*)\<br\>'),
-        ]
-
-        com_regexes = [
-            ('S', r'SENATE*\s*(?P<names>.*)\<br\>'),
-            ('H', r'HOUSE*\s*(?P<names>.*)\<br\>')
-        ]
-
-        for chamber_code, regex in regexes:
-            sponsors = re.match(regex, sponsor_str).group('names')
-            sponsors = ','.split(sponsors)
-
-            for sponsor in sponsors:
-                sponsor_name = '{} ({})'.format(sponsor_name.strip(), chamber_code)
-                if sponsor.isupper(): # primary in uppercase
-                    bill.add_sponsorship(
-                        sponsor,
-                        entity_type='person',
-                        classification='primary',
-                        primary=True,
-                    )
-                else:
+            for sponsor in sponsors[1:]:
+                sponsor = sponsor.strip()
+                if sponsor:
                     bill.add_sponsorship(
                         sponsor,
                         entity_type='person',
@@ -304,79 +158,229 @@ class AKBillScraper(Scraper):
                         primary=False,
                     )
 
-    def parse_vote(self, bill, action, act_chamber, act_date, url):
-        re_vote_text = re.compile(r'The question (?:being|to be reconsidered):\s*"(.*?\?)"', re.S)
-        re_header = re.compile(r'\d{2}-\d{2}-\d{4}\s{10,}\w{,20} Journal\s{10,}\d{,6}\s{,4}')
+        else:
+            # Committee sponsorship
+            spons_str = spons_str.strip()
 
-        html = self.get(url).text
-        doc = lxml.html.fromstring(html)
+            if re.match(r' BY REQUEST OF THE GOVERNOR$', spons_str):
+                spons_str = re.sub(r' BY REQUEST OF THE GOVERNOR$',
+                                   '', spons_str).title()
+                spons_str = (spons_str +
+                             " Committee (by request of the governor)")
 
-        if len(doc.xpath('//pre')) < 2:
-            return
+            if spons_str:
+                bill.add_sponsorship(
+                    sponsor.strip(),
+                    entity_type='person',
+                    classification='primary',
+                    primary=True,
+                )
+            else:
+                bill.add_sponsorship(
+                    sponsor.strip(),
+                    entity_type='person',
+                    classification='cosponsor',
+                    primary=False,
+                )
+
+        # Get actions
+        self._current_comm = None
+        act_rows = doc.xpath("//div[@id='tab6_4']//tr")[1:]
+        for row in act_rows:
+            date, journal, action = row.xpath('td')
+            action = action.text_content().strip()
+            raw_chamber = action[0:3]
+            journal_entry_number = journal.text_content()
+            act_date = datetime.datetime.strptime(date.text_content().strip(), '%m/%d/%Y')
+            if raw_chamber == "(H)":
+                act_chamber = "lower"
+            elif raw_chamber == "(S)":
+                act_chamber = "upper"
+
+            # Votes
+            if re.search(r"Y(\d+)", action):
+                vote_href = journal.xpath('.//a/@href')
+                if vote_href:
+                    vote_href = vote_href[0].replace(' ', '')
+                    yield from self.parse_vote(
+                        bill,
+                        journal_entry_number,
+                        action,
+                        act_chamber,
+                        act_date,
+                        vote_href
+                    )
+
+            action, atype = self.clean_action(action)
+
+            match = re.search(r'^Prefile released (\d+/\d+/\d+)$', action)
+            if match:
+                action = 'Prefile released'
+                act_date = datetime.datetime.strptime(match.group(1), '%m/%d/%y')
+
+            bill.add_action(
+                action, chamber=act_chamber, date=act_date.strftime('%Y-%m-%d'),
+                classification=atype)
+
+        # Get subjects
+        for subj in doc.xpath('//a[contains(@href, "subject")]/text()'):
+            bill.add_subject(subj.strip())
+
+        # Get versions - to do
+        text_list_url = (
+            "https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab1_4")
+        bill.add_source(text_list_url)
+
+        text_doc = lxml.html.fromstring(self.get(text_list_url).text)
+        text_doc.make_links_absolute(text_list_url)
+        for link in text_doc.xpath('//a[contains(@href, "/Text/")]'):
+            name = link.text_content()
+            text_url = link.get('href')
+            bill.add_version_link(name, text_url, media_type="text/html")
+
+        # Get documents - to do
+        doc_list_url = (
+            "https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab5_4")
+        doc_list = lxml.html.fromstring(self.get(doc_list_url).text)
+        doc_list.make_links_absolute(doc_list_url)
+        bill.add_source(doc_list_url)
+        for href in doc_list.xpath('//a[contains(@href, "get_documents")][@onclick]'):
+            h_name = href.text_content()
+            h_href = href.attrib['href']
+            if h_name.strip():
+                try:
+                    bill.add_document_link(h_name, h_href)
+                except KeyError:
+                    self.warning("Duplicate found")
+                    return
+
+        yield bill
+
+    def parse_vote(self, bill, journal_entry_number, action, act_chamber, act_date, url):
+        # html = self.get(url).text
+        # doc = lxml.html.fromstring(html)
+        yes = no = other = 0
+        result = ""
+        vote_counts = action.split()
+        for vote_count in vote_counts:
+            if re.match(r'[\D][\d]', vote_count):
+                if "Y" in vote_count:
+                    yes = int(vote_count[1:])
+                elif "N" in vote_count:
+                    no = int(vote_count[1:])
+                elif "E" in vote_count or "A" in vote_count:
+                    other += int(vote_count[1:])
+
+        if 'PASSED' in action:
+            result = 'pass'
+        elif 'FAILED' in action:
+            result = 'fail'
+        else:
+            result = 'pass' if yes > no else 'fail'
+
+        vote = VoteEvent(
+            bill=bill,
+            start_date=act_date.strftime('%Y-%m-%d'),
+            chamber=act_chamber,
+            motion_text=action,
+            result=result,
+            classification='passage',
+        )
+
+        vote.set_count('yes', yes)
+        vote.set_count('no', no)
+        vote.set_count('other', other)
+        vote.add_source(url)
+
+        yield vote
+
+        # print(action)
+
+        # Dan attempt at pulling out the vote information
+        # Xpath to grab journal entry information
+        # xpath_search = "//b[text()[contains(.,'%s')]]" % journal_entry_number
+        # xpath_search = "//body//pre[1]"
+        # vote_counts = doc.xpath(xpath_search)
+        # print(vote_counts[0].text_content().split("\n"))
+        # vote_counts = doc.xpath('//body//b[contains(text(), "YEAS")]')
+        # for votes in vote_counts:
+        #     print(votes.text_content())
+
+        # yield vote
+
+        # old code
+        # re_vote_text = re.compile(r'The question (?:being|to be '
+        #   'reconsidered):\s*"(.*?\?)"', re.S)
+        # re_header = re.compile(r'\d{2}-\d{2}-\d{4}\s{10,}\w{,20} Journal\s{10,}\d{,6}\s{,4}')
+
+        # if len(doc.xpath('//pre')) < 2:
+        #     return
 
         # Find all chunks of text representing voting reports.
-        votes_text = doc.xpath('//pre')[1].text_content()
-        votes_text = re_vote_text.split(votes_text)
-        votes_data = zip(votes_text[1::2], votes_text[2::2])
+        # votes_text = doc.xpath('//pre')[1].text_content()
+        # votes_text = re_vote_text.split(votes_text)
+        # votes_data = zip(votes_text[1::2], votes_text[2::2])
+        # votes_data = []
 
-        iVoteOnPage = 0
+        # iVoteOnPage = 0
 
-        # Process each.
-        for motion, text in votes_data:
+        # # Process each.
+        # votes_data = []
+        # for motion, text in votes_data:
 
-            iVoteOnPage += 1
-            yes = no = other = 0
+        #     iVoteOnPage += 1
+        #     yes = no = other = 0
 
-            tally = re.findall(r'\b([YNEA])[A-Z]+:\s{,3}(\d{,3})', text)
-            for vtype, vcount in tally:
-                vcount = int(vcount) if vcount != '-' else 0
-                if vtype == 'Y':
-                    yes = vcount
-                elif vtype == 'N':
-                    no = vcount
-                else:
-                    other += vcount
+        #     tally = re.findall(r'\b([YNEA])[A-Z]+:\s{,3}(\d{,3})', text)
+        #     for vtype, vcount in tally:
+        #         vcount = int(vcount) if vcount != '-' else 0
+        #         if vtype == 'Y':
+        #             yes = vcount
+        #         elif vtype == 'N':
+        #             no = vcount
+        #         else:
+        #             other += vcount
 
-            vote = VoteEvent(
-                bill=bill,
-                start_date=act_date.strftime('%Y-%m-%d'),
-                chamber=act_chamber,
-                motion_text=motion,
-                result='pass' if yes > no else 'fail',
-                classification='passage',
-            )
-            vote.set_count('yes', yes)
-            vote.set_count('no', no)
-            vote.set_count('other', other)
+        #     vote = VoteEvent(
+        #         bill=bill,
+        #         start_date=act_date.strftime('%Y-%m-%d'),
+        #         chamber=act_chamber,
+        #         motion_text=motion,
+        #         result='pass' if yes > no else 'fail',
+        #         classification='passage',
+        #     )
+        #     vote.set_count('yes', yes)
+        #     vote.set_count('no', no)
+        #     vote.set_count('other', other)
+        #     print("Yes votes:", yes, "No votes", no, "Other", other)
 
-            vote.pupa_id = (url + ' ' + str(iVoteOnPage)) if iVoteOnPage > 1 else url
+        #     vote.pupa_id = (url + ' ' + str(iVoteOnPage)) if iVoteOnPage > 1 else url
 
-            # In lengthy documents, the "header" can be repeated in the middle
-            # of content. This regex gets rid of it.
-            vote_lines = re_header.sub('', text)
-            vote_lines = vote_lines.split('\r\n')
+        #     # In lengthy documents, the "header" can be repeated in the middle
+        #     # of content. This regex gets rid of it.
+        #     vote_lines = re_header.sub('', text)
+        #     vote_lines = vote_lines.split('\r\n')
 
-            vote_type = None
-            for vote_list in vote_lines:
-                if vote_list.startswith('Yeas: '):
-                    vote_list, vote_type = vote_list[6:], 'yes'
-                elif vote_list.startswith('Nays: '):
-                    vote_list, vote_type = vote_list[6:], 'no'
-                elif vote_list.startswith('Excused: '):
-                    vote_list, vote_type = vote_list[9:], 'other'
-                elif vote_list.startswith('Absent: '):
-                    vote_list, vote_type = vote_list[9:], 'other'
-                elif vote_list.strip() == '':
-                    vote_type = None
-                if vote_type:
-                    for name in vote_list.split(','):
-                        name = name.strip()
-                        if name:
-                            vote.vote(vote_type, name)
+        #     vote_type = None
+        #     for vote_list in vote_lines:
+        #         if vote_list.startswith('Yeas: '):
+        #             vote_list, vote_type = vote_list[6:], 'yes'
+        #         elif vote_list.startswith('Nays: '):
+        #             vote_list, vote_type = vote_list[6:], 'no'
+        #         elif vote_list.startswith('Excused: '):
+        #             vote_list, vote_type = vote_list[9:], 'other'
+        #         elif vote_list.startswith('Absent: '):
+        #             vote_list, vote_type = vote_list[9:], 'other'
+        #         elif vote_list.strip() == '':
+        #             vote_type = None
+        #         if vote_type:
+        #             for name in vote_list.split(','):
+        #                 name = name.strip()
+        #                 if name:
+        #                     vote.vote(vote_type, name)
 
-            vote.add_source(url)
-
-            yield vote
+        #     vote.add_source(url)
+        # yield vote
 
     def clean_action(self, action):
         # Clean up some acronyms
@@ -394,7 +398,10 @@ class AKBillScraper(Scraper):
             dept = match.group(3)
             dept = self._fiscal_dept_mapping.get(dept, dept)
 
-            action = "Fiscal Note %s: %s (%s)" % (num, impact, dept)
+            action = "Fiscal Note {num}: {impact} ({dept})".format(
+                num=num,
+                impact=impact,
+                dept=dept)
 
         match = self._comm_re.match(action)
         if match:
@@ -404,27 +411,25 @@ class AKBillScraper(Scraper):
         if match:
             vtype = self._comm_vote_type[match.group(1)]
 
-            action = "%s %s: %s" % (self._current_comm, vtype,
-                                    match.group(2))
+            action = f"{self._current_comm} {vtype}: {match.group(2)}"
 
         match = re.match(r'^COSPONSOR\(S\): (.*)$', action)
         if match:
-            action = "Cosponsors added: %s" % match.group(1)
+            action = f'Cosponsors added: {match.group(1)}'
 
         match = re.match('^([A-Z]{3,3}), ([A-Z]{3,3})$', action)
         if match:
-            action = "REFERRED TO %s and %s" % (
-                self._comm_mapping[match.group(1)],
-                self._comm_mapping[match.group(2)])
+            action = f'REFERRED TO {self._comm_mapping[match.group(1)]} and'
+            '{self._comm_mapping[match.group(2)]}'
 
         match = re.match('^([A-Z]{3,3})$', action)
         if match:
-            action = 'REFERRED TO %s' % self._comm_mapping[action]
+            action = f'REFERRED TO {self._comm_mapping[action]}'
 
         match = re.match('^REFERRED TO (.*)$', action)
         if match:
             comms = match.group(1).title().replace(' And ', ' and ')
-            action = "REFERRED TO %s" % comms
+            action = f'REFERRED TO {comms}'
 
         action = re.sub(r'\s+', ' ', action)
 
