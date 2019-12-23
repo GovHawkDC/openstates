@@ -56,6 +56,7 @@ RUN /opt/openstates/venv-pupa/bin/pip install -e git+https://github.com/GovHawkD
 RUN /opt/openstates/venv-pupa/bin/pip install -r /opt/openstates/openstates/requirements.txt
 
 WORKDIR /opt/openstates/openstates/
+ENV PYTHONPATH=./openstates
 
 RUN git config --global user.email "user@example.org"
 RUN git config --global user.name "Example User"
