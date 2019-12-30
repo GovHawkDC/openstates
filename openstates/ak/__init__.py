@@ -85,16 +85,10 @@ class Alaska(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-<<<<<<< HEAD
-        sessions = url_xpath(
-            'http://www.akleg.gov/basis/Home/Bill',
-            "//select[@id='sessionSelect']/option/text()"
-=======
         return [session["_scraped_name"] for session in self.legislative_sessions]
         return url_xpath(
             "https://www.akleg.gov/basis/Home/Archive",
             '//div[@id="fullpage"]//a[contains(@href, "/BillsandLaws/")]//text()',
->>>>>>> openstates/master
         )
         sessions = [session.strip() for session in sessions]
         return sessions
