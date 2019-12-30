@@ -592,10 +592,6 @@ class FlBillScraper(Scraper, Spatula):
         subjects = self.scrape_page(SubjectPDF, subject_url)
 
         url = "http://flsenate.gov/Session/Bills/{}?chamber=both".format(session)
-<<<<<<< HEAD
-        yield from self.scrape_page_items(StartPage, url, session=session, subjects=subjects)
-=======
         yield from self.scrape_page_items(
             StartPage, url, session=session, subjects=subjects
         )
->>>>>>> openstates/master

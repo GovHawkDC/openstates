@@ -65,11 +65,7 @@ class KSBillScraper(Scraper):
                     if "committee" in primary_sponsor.lower()
                     else "person",
                     primary=True,
-<<<<<<< HEAD
                     classification="primary"
-=======
-                    classification="original sponsor",
->>>>>>> openstates/master
                 )
             for sponsor in bill_data["SPONSOR_NAMES"]:
                 if sponsor in bill_data["ORIGINAL_SPONSOR"]:
