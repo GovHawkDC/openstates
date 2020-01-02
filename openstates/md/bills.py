@@ -455,8 +455,10 @@ class MDBillScraper(Scraper):
         page = lxml.html.fromstring(html)
         page.make_links_absolute(self.BASE_URL)
 
-        bill_id = page.xpath('//h2[@style="font-size:1.3rem;"]/a[1]/text()')[0].strip()
-
+        if page.xpath('//h2[@style="font-size:1.3rem;"]/a[1]/text()'):
+            bill_id = page.xpath('//h2[@style="font-size:1.3rem;"]/a[1]/text()')[0].strip()
+        else: 
+            bill_id = page.xpath('//h2[@style="font-size:1.3rem;"]/text()')[0].strip()
         title = page.xpath('//dt[contains(text(), "Title")]/following-sibling::dd[1]/text()')[0].strip()
 
         if "B" in bill_id:
