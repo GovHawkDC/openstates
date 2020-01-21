@@ -203,12 +203,12 @@ class MIBillScraper(Scraper):
             document = self.parse_doc_row(row)
             if document:
                 name, url = document
-                bill.add_document_link(name, url)
+                bill.add_document_link(name, url, on_duplicate="ignore")
         for row in doc.xpath('//table[@id="frg_billstatus_SfaTable"]/tr'):
             document = self.parse_doc_row(row)
             if document:
                 name, url = document
-                bill.add_document_link(name, url)
+                bill.add_document_link(name, url, on_duplicate="ignore")
 
         yield bill
 
