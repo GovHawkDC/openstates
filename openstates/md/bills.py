@@ -483,7 +483,7 @@ class MDBillScraper(Scraper):
 
         # fiscal note
         if page.xpath('//dt[contains(text(), "Analysis")]/following-sibling::dd[1]/a'):
-            fiscal_note = page.xpath('//dt[contains(text(), "Title")]/following-sibling::dd[1]/a')[0]
+            fiscal_note = page.xpath('//dt[contains(text(), "Analysis")]/following-sibling::dd[1]/a')[0]
             fiscal_url = fiscal_note.get('href')
             fiscal_title = fiscal_note.text_content()
             bill.add_document_link(
