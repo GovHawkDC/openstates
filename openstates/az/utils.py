@@ -62,6 +62,7 @@ action_chamber_map = {
     "Veto": "executive",
 }
 
+# https://www.azleg.gov/faq/abbreviations/
 status_action_map = {
     "PASSED": "passage",
     "FAILED": "failure",
@@ -72,6 +73,7 @@ status_action_map = {
     "INTRO": "introduction",
     "AMEND": "amendment-introduction",
     "W/D": "withdrawal",
+    "PFC": "committee-passage",
 }
 
 action_map = {

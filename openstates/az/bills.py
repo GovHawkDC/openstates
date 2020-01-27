@@ -1,12 +1,12 @@
 import json
 import datetime
+import re
 
 from lxml import html
 from pupa.scrape import Scraper, Bill, VoteEvent
 
 from . import utils
 from . import session_metadata
-
 
 BASE_URL = "https://www.azleg.gov/"
 
@@ -144,7 +144,7 @@ class AZBillScraper(Scraper):
             if page[action] and utils.action_map[action]["name"] != "":
                 try:
                     action_date = datetime.datetime.strptime(
-                        page[action], "%Y-%m-%dT%H:%M:%S"
+                        self.strip_microseconds(page[action]), "%Y-%m-%dT%H:%M:%S"
                     ).strftime("%Y-%m-%d")
 
                     bill.add_action(
@@ -220,10 +220,17 @@ class AZBillScraper(Scraper):
                 )
             if status["ReportDate"]:
                 action_date = datetime.datetime.strptime(
-                    status["ReportDate"], "%Y-%m-%dT%H:%M:%S"
+                    self.strip_microseconds(status["ReportDate"]), "%Y-%m-%dT%H:%M:%S"
                 ).strftime("%Y-%m-%d")
+
+                action_text = "Reported {} from committee {} {}".format(
+                    status["Action"],
+                    self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]],
+                    status["Committee"]["CommitteeName"],
+                )
+
                 bill.add_action(
-                    description=status["Action"],
+                    description=action_text,
                     chamber={"S": "upper", "H": "lower"}[
                         status["Committee"]["LegislativeBody"]
                     ],
@@ -232,6 +239,44 @@ class AZBillScraper(Scraper):
                 )
             else:
                 self.info("Action without report date: {}".format(status["Action"]))
+        elif status["Action"] == "None" and "Committee" in status:
+            # certain committee actions are labelled 'none' but the metadata
+            # tells us it was an assigment or passage
+
+            if "AssignedDate" in status:
+                action_text = "Assigned to {} {}".format(
+                    self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]],
+                    status["Committee"]["CommitteeName"],
+                )
+                action_date = datetime.datetime.strptime(
+                    self.strip_microseconds(status["AssignedDate"]), "%Y-%m-%dT%H:%M:%S"
+                ).strftime("%Y-%m-%d")
+                bill.add_action(
+                    description=action_text,
+                    chamber={"S": "upper", "H": "lower"}[
+                        status["Committee"]["LegislativeBody"]
+                    ],
+                    date=action_date,
+                    classification=["referral-committee"],
+                )
+        elif status["Action"] == "HELD" and "Committee" in status:
+            action_date = datetime.datetime.strptime(
+                self.strip_microseconds(status["ReportDate"]), "%Y-%m-%dT%H:%M:%S"
+            ).strftime("%Y-%m-%d")
+
+            action_text = "HELD in committee {} {}".format(
+                status["Action"],
+                self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]],
+                status["Committee"]["CommitteeName"],
+            )
+
+            bill.add_action(
+                description=action_text,
+                chamber={"S": "upper", "H": "lower"}[
+                    status["Committee"]["LegislativeBody"]
+                ],
+                date=action_date,
+            )
         else:
             # most of the unclassified ones are hearings
             # https://www.azleg.gov/faq/abbreviations/
@@ -338,7 +383,7 @@ class AZBillScraper(Scraper):
         if not actions:
             return bill
         action_date = actions[0]["date"]
-        actions[0]["description"] = actions[0]["description"].lower()
+        actions[0]["description"] = actions[0]["description"]
         actions_list.append(actions[0])
         # seperate the actions that are out of order
         for action in actions[1:]:
@@ -347,7 +392,7 @@ class AZBillScraper(Scraper):
             else:
                 actions_list.append(action)
                 action_date = action["date"]
-            action["description"] = action["description"].lower()
+            action["description"] = action["description"]
         action_date = actions_list[0]["date"]
 
         for action in actions_list:
@@ -376,3 +421,9 @@ class AZBillScraper(Scraper):
             if key in bill_id.lower():
                 return utils.bill_types[key]
         return None
+
+    # some timestamps returned by the API are
+    # H:I:S.<fractional second> which causes strptime to throw
+    # so replace :12.345 with just :12
+    def strip_microseconds(self, string):
+        return re.sub(r"(:\d{2})(\.\d+)", r"\1", string)
