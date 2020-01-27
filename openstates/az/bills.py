@@ -265,7 +265,6 @@ class AZBillScraper(Scraper):
             ).strftime("%Y-%m-%d")
 
             action_text = "HELD in committee {} {}".format(
-                status["Action"],
                 self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]],
                 status["Committee"]["CommitteeName"],
             )
