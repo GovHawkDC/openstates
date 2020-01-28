@@ -112,6 +112,12 @@ class USEventScraper(Scraper, LXMLMixin):
                 bill_name = '{} {}'.format(bill_type, bill_number)
                 agenda_item.add_bill(bill_name)
 
+            event.add_participant(
+                com,
+                type='committee',
+                note='host',
+            )
+
             event.add_source('https://www.senate.gov/committees/hearings_meetings.htm')
 
             yield event
