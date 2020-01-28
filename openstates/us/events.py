@@ -1,6 +1,7 @@
 import pytz
 import lxml
 import datetime
+import re
 import requests
 
 from openstates.utils import LXMLMixin
@@ -18,6 +19,7 @@ class USEventScraper(Scraper, LXMLMixin):
     hearing_document_types = {
         "HW": "Witness List",
         "HC": "Hearing Notice",
+        "SD": "Instructions for Submitting a Request to Testify",
     }
 
     buildings = {
@@ -98,7 +100,17 @@ class USEventScraper(Scraper, LXMLMixin):
                 location_name=address
             )
 
-            event.add_agenda_item(description=agenda)
+            agenda_item = event.add_agenda_item(description=agenda)
+
+            # ex: Business meeting to consider S.785, to improve mental...
+            matches = re.findall(r'\s(\w+)\.(\d+),', agenda)
+
+            if matches:
+                match = matches[0]
+                bill_type = match[0]
+                bill_number = match[1]
+                bill_name = '{} {}'.format(bill_type, bill_number)
+                agenda_item.add_bill(bill_name)
 
             event.add_source('https://www.senate.gov/committees/hearings_meetings.htm')
 
@@ -135,7 +147,9 @@ class USEventScraper(Scraper, LXMLMixin):
                     '__EVENTARGUMENT': ''
                 }
 
+                self.info('Fetching {} via POST'.format(row.get('href')))
                 xml = self.asp_post(row.get('href'), page, params)
+
                 xml = lxml.etree.fromstring(xml)
 
                 yield from self.house_meeting(xml, row.get('href'))
@@ -200,8 +214,24 @@ class USEventScraper(Scraper, LXMLMixin):
                 media_type = self.media_types[doc_file.get('doc-type')]
                 url = doc_file.get('doc-url')
 
+                if doc.get('type') in ['BR', 'AM', 'CA']:
+                    if doc_name == '':
+                        doc_name = doc.xpath('string(legis-num)').strip()
+                    matches = re.findall(r'([\w|\.]+)\s+(\d+)', doc_name)
+
+                    if matches:
+                        match = matches[0]
+                        bill_type = match[0].replace('.','')
+                        bill_number = match[1]
+                        bill_name = '{} {}'.format(bill_type, bill_number)
+                        agenda = event.add_agenda_item(description=bill_name)
+                        agenda.add_bill(bill_name)
+
                 if doc_name == '':
-                    doc_name = self.hearing_document_types[doc.get('type')]
+                    try:
+                        doc_name = self.hearing_document_types[doc.get('type')]
+                    except KeyError:
+                        self.warning("Unable to find document type: {}".format(doc.get('type')))
 
                 event.add_document(doc_name, url, media_type=media_type, on_duplicate='ignore')
 
