@@ -91,9 +91,7 @@ class TNEventScraper(Scraper, LXMLMixin):
                     if "Immediately follows H-FLOOR" in datetime_string:
                         continue
                     if " Immediately follows" in datetime_string:
-                        datetime_string, _ = datetime_string.split(
-                            "Immediately follows"
-                        )
+                        datetime_string, _ = datetime_string.split("Immediately follows")
                     if "canceled" in datetime_string.lower():
                         continue
                     if "TBA" in datetime_string:
@@ -107,12 +105,7 @@ class TNEventScraper(Scraper, LXMLMixin):
                         when = dt.datetime.strptime(datetime_string, dtfmt_no_time)
                     when = self._utc.localize(when)
 
-                event = Event(
-                    name=description,
-                    start_date=when,
-                    location_name=location,
-                    description=description,
-                )
+                event = Event(name=description, start_date=when, location_name=location, description=description,)
                 # The description is a committee name
                 event.add_committee(name=description)
                 event.add_source(cal_weekly_events)

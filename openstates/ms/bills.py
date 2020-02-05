@@ -54,9 +54,7 @@ class MSBillScraper(Scraper):
             yield from self.scrape_bills(chamber, session)
 
     def scrape_bills(self, chamber_to_scrape, session):
-        url = (
-            "http://billstatus.ls.state.ms.us/%s/pdf/all_measures/allmsrs.xml" % session
-        )
+        url = "http://billstatus.ls.state.ms.us/%s/pdf/all_measures/allmsrs.xml" % session
 
         bill_dir_page = self.get(url)
         root = lxml.etree.fromstring(bill_dir_page.content)
@@ -67,12 +65,7 @@ class MSBillScraper(Scraper):
             else:
                 chamber = "lower"
 
-            bill_type = {
-                "B": "bill",
-                "C": "concurrent resolution",
-                "R": "resolution",
-                "N": "nomination",
-            }[bill_id[1]]
+            bill_type = {"B": "bill", "C": "concurrent resolution", "R": "resolution", "N": "nomination",}[bill_id[1]]
 
             # just skip past bills that are of the wrong chamber
             if chamber != chamber_to_scrape:
@@ -81,10 +74,7 @@ class MSBillScraper(Scraper):
             link = mr.xpath("string(ACTIONLINK)").replace("..", "")
             main_doc = mr.xpath("string(MEASURELINK)").replace("../../../", "")
             main_doc_url = "http://billstatus.ls.state.ms.us/%s" % main_doc
-            bill_details_url = "http://billstatus.ls.state.ms.us/%s/pdf%s" % (
-                session,
-                link,
-            )
+            bill_details_url = "http://billstatus.ls.state.ms.us/%s/pdf%s" % (session, link,)
             try:
                 details_page = self.get(bill_details_url)
             except scrapelib.HTTPError:
@@ -99,22 +89,14 @@ class MSBillScraper(Scraper):
             title = details_root.xpath("string(//SHORTTITLE)")
             longtitle = details_root.xpath("string(//LONGTITLE)")
 
-            bill = Bill(
-                bill_id,
-                legislative_session=session,
-                chamber=chamber,
-                title=title,
-                classification=bill_type,
-            )
+            bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
             bill.extras["summary"] = longtitle
             bill.add_source(main_doc_url)
             # sponsors
             main_sponsor = details_root.xpath("string(//P_NAME)").split()
             if main_sponsor:
                 main_sponsor = main_sponsor[0]
-                main_sponsor_link = details_root.xpath("string(//P_LINK)").replace(
-                    " ", "_"
-                )
+                main_sponsor_link = details_root.xpath("string(//P_LINK)").replace(" ", "_")
                 main_sponsor_url = ("http://billstatus.ls.state.ms.us/%s/" "pdf/%s") % (
                     session,
                     main_sponsor_link.strip("../"),
@@ -122,85 +104,50 @@ class MSBillScraper(Scraper):
                 type = "primary"
                 bill.add_source(main_sponsor_url)
                 bill.add_sponsorship(
-                    main_sponsor,
-                    classification=type,
-                    entity_type="person",
-                    primary=True,
+                    main_sponsor, classification=type, entity_type="person", primary=True,
                 )
 
             for author in details_root.xpath("//AUTHORS/ADDITIONAL"):
                 leg = author.xpath("string(CO_NAME)").replace(" ", "_")
                 if leg:
-                    leg_url = (
-                        "http://billstatus.ls.state.ms.us/%s/"
-                        "pdf/House_authors/%s.xml"
-                    ) % (session, leg)
+                    leg_url = ("http://billstatus.ls.state.ms.us/%s/" "pdf/House_authors/%s.xml") % (session, leg)
                     type = "cosponsor"
                     bill.add_source(leg_url)
-                    bill.add_sponsorship(
-                        leg, classification=type, entity_type="person", primary=False
-                    )
+                    bill.add_sponsorship(leg, classification=type, entity_type="person", primary=False)
             # Versions
-            curr_version = details_root.xpath("string(//CURRENT_OTHER" ")").replace(
-                "../../../../", ""
-            )
+            curr_version = details_root.xpath("string(//CURRENT_OTHER" ")").replace("../../../../", "")
             if curr_version != "":
                 curr_version_url = "http://billstatus.ls.state.ms.us/" + curr_version
                 bill.add_version_link(
-                    "Current version",
-                    curr_version_url,
-                    on_duplicate="ignore",
-                    media_type="text/html",
+                    "Current version", curr_version_url, on_duplicate="ignore", media_type="text/html",
                 )
 
-            intro_version = details_root.xpath("string(//INTRO_OTHER)").replace(
-                "../../../../", ""
-            )
+            intro_version = details_root.xpath("string(//INTRO_OTHER)").replace("../../../../", "")
             if intro_version != "":
                 intro_version_url = "http://billstatus.ls.state.ms.us/" + intro_version
                 bill.add_version_link(
-                    "As Introduced",
-                    intro_version_url,
-                    on_duplicate="ignore",
-                    media_type="text/html",
+                    "As Introduced", intro_version_url, on_duplicate="ignore", media_type="text/html",
                 )
 
-            comm_version = details_root.xpath("string(//CMTESUB_OTHER" ")").replace(
-                "../../../../", ""
-            )
+            comm_version = details_root.xpath("string(//CMTESUB_OTHER" ")").replace("../../../../", "")
             if comm_version.find("documents") != -1:
                 comm_version_url = "http://billstatus.ls.state.ms.us/" + comm_version
                 bill.add_version_link(
-                    "Committee Substitute",
-                    comm_version_url,
-                    on_duplicate="ignore",
-                    media_type="text/html",
+                    "Committee Substitute", comm_version_url, on_duplicate="ignore", media_type="text/html",
                 )
-            passed_version = details_root.xpath("string(//PASSED_OTHER" ")").replace(
-                "../../../../", ""
-            )
+            passed_version = details_root.xpath("string(//PASSED_OTHER" ")").replace("../../../../", "")
             if passed_version.find("documents") != -1:
-                passed_version_url = (
-                    "http://billstatus.ls.state.ms.us/" + passed_version
-                )
+                passed_version_url = "http://billstatus.ls.state.ms.us/" + passed_version
                 title = "As Passed the " + chamber
                 bill.add_version_link(
-                    title,
-                    passed_version_url,
-                    on_duplicate="ignore",
-                    media_type="text/html",
+                    title, passed_version_url, on_duplicate="ignore", media_type="text/html",
                 )
 
-            asg_version = details_root.xpath("string(//ASG_OTHER)").replace(
-                "../../../../", ""
-            )
+            asg_version = details_root.xpath("string(//ASG_OTHER)").replace("../../../../", "")
             if asg_version.find("documents") != -1:
                 asg_version_url = "http://billstatus.ls.state.ms.us/" + asg_version
                 bill.add_version_link(
-                    "Approved by the Governor",
-                    asg_version_url,
-                    on_duplicate="ignore",
-                    media_type="text/html",
+                    "Approved by the Governor", asg_version_url, on_duplicate="ignore", media_type="text/html",
                 )
 
             # amendments
@@ -233,14 +180,9 @@ class MSBillScraper(Scraper):
 
                 if "adopted" in name.lower() or "amendment report" in name.lower():
                     bill.add_version_link(
-                        name,
-                        pdf_url,
-                        on_duplicate="ignore",
-                        media_type="application/pdf",
+                        name, pdf_url, on_duplicate="ignore", media_type="application/pdf",
                     )
-                    bill.add_version_link(
-                        name, html_url, on_duplicate="ignore", media_type="text/html"
-                    )
+                    bill.add_version_link(name, html_url, on_duplicate="ignore", media_type="text/html")
 
             # avoid duplicate votes
             seen_votes = set()
@@ -278,10 +220,7 @@ class MSBillScraper(Scraper):
                         break
 
                 bill.add_action(
-                    action,
-                    self._tz.localize(date),
-                    chamber=actor,
-                    classification=atype if atype != "other" else None,
+                    action, self._tz.localize(date), chamber=actor, classification=atype if atype != "other" else None,
                 )
 
                 # use committee names as scraped subjects
@@ -296,9 +235,7 @@ class MSBillScraper(Scraper):
                     vote_url = "http://billstatus.ls.state.ms.us%s" % act_vote
                     if vote_url not in seen_votes:
                         seen_votes.add(vote_url)
-                        yield from self.scrape_votes(
-                            vote_url, action, date, actor, bill
-                        )
+                        yield from self.scrape_votes(vote_url, action, date, actor, bill)
 
             bill.add_source(bill_details_url)
             yield bill
@@ -319,10 +256,7 @@ class MSBillScraper(Scraper):
         "Veto Overridden": ("Override Veto", True),
         "Veto Sustained": ("Override Veto", False),
         "Concurred in Amend From House": ("Concurrence in Amendment From House", True),
-        "Concurred in Amend From Senate": (
-            "Concurrence in Amendment From Senate",
-            True,
-        ),
+        "Concurred in Amend From Senate": ("Concurrence in Amendment From Senate", True,),
         "Decline to Concur/Invite Conf": ("Decline to Concur", True),
         "Decline Concur/Inv Conf Lost": ("Decline to Concur", False),
         "Failed to Suspend Rules": ("Motion to Suspend Rules", False),

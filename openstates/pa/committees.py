@@ -9,9 +9,7 @@ from . import utils
 class CommitteeDict(dict):
     def __missing__(self, key):
         (chamber, committee_name) = key
-        committee = Organization(
-            name=committee_name, chamber=chamber, classification="committee"
-        )
+        committee = Organization(name=committee_name, chamber=chamber, classification="committee")
         self[key] = committee
         return committee
 

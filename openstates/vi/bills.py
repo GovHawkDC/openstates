@@ -15,22 +15,10 @@ _action_pairs = (
     ("ctl00_ContentPlaceHolder_DateRecLabel", "Received", "filing"),
     ("ctl00_ContentPlaceHolder_DateAssignLabel", "Assigned", "other"),
     ("ctl00_ContentPlaceHolder_DateToSenLabel", "Sent to Senator", "other"),
-    (
-        "ctl00_ContentPlaceHolder_DateToGovLabel",
-        "Sent to Governor",
-        "executive-receipt",
-    ),
-    (
-        "ctl00_ContentPlaceHolder_DateAppGovLabel",
-        "Signed by Governor",
-        "executive-signature",
-    ),
+    ("ctl00_ContentPlaceHolder_DateToGovLabel", "Sent to Governor", "executive-receipt",),
+    ("ctl00_ContentPlaceHolder_DateAppGovLabel", "Signed by Governor", "executive-signature",),
     ("ctl00_ContentPlaceHolder_DateVetoedLabel", "Vetoed", "executive-veto"),
-    (
-        "ctl00_ContentPlaceHolder_DateOverLabel",
-        "Governor Veto Overridden",
-        "veto-override-passage",
-    ),
+    ("ctl00_ContentPlaceHolder_DateOverLabel", "Governor Veto Overridden", "veto-override-passage",),
 )
 
 _action_ids = (
@@ -139,9 +127,7 @@ class VIBillScraper(Scraper, LXMLMixin):
         bills_list = lxml.html.fromstring(bills_list.text)
 
         bills_list.make_links_absolute("http://www.legvi.org/vilegsearch/")
-        bills = bills_list.xpath(
-            '//table[@id="ctl00_ContentPlaceHolder_BillsDataGrid"]/tr'
-        )
+        bills = bills_list.xpath('//table[@id="ctl00_ContentPlaceHolder_BillsDataGrid"]/tr')
 
         for bill_row in bills[1:]:
             (bill_type,) = bill_row.xpath("./td[6]/font/text()")
@@ -153,24 +139,18 @@ class VIBillScraper(Scraper, LXMLMixin):
     def scrape_bill(self, bill_page_url):
         bill_page = lxml.html.fromstring(self.get(bill_page_url).text)
 
-        title = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_SubjectLabel"]/text()'
-        )
+        title = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_SubjectLabel"]/text()')
         if title:
             title = title[0]
         else:
             self.warning("Missing bill title {}".format(bill_page_url))
             return False
 
-        bill_no = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/a/text()'
-        )
+        bill_no = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/a/text()')
         if bill_no:
             bill_no = bill_no[0]
         else:
-            bill_no = bill_page.xpath(
-                '//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/text()'
-            )
+            bill_no = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/text()')
             if bill_no:
                 bill_no = bill_no[0]
             else:
@@ -178,11 +158,7 @@ class VIBillScraper(Scraper, LXMLMixin):
                 return False
 
         bill = Bill(
-            bill_no,
-            legislative_session=self.session,
-            chamber="legislature",
-            title=title,
-            classification="bill",
+            bill_no, legislative_session=self.session, chamber="legislature", title=title, classification="bill",
         )
 
         bill.add_source(bill_page_url)
@@ -190,15 +166,11 @@ class VIBillScraper(Scraper, LXMLMixin):
         self.parse_versions(bill, bill_page, bill_no)
         self.parse_acts(bill, bill_page)
 
-        sponsors = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_SponsorsLabel"]/text()'
-        )
+        sponsors = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_SponsorsLabel"]/text()')
         if sponsors:
             self.assign_sponsors(bill, sponsors[0], "primary")
 
-        cosponsors = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_CoSponsorsLabel"]/text()'
-        )
+        cosponsors = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_CoSponsorsLabel"]/text()')
         if cosponsors:
             self.assign_sponsors(bill, cosponsors[0], "cosponsor")
 
@@ -208,9 +180,7 @@ class VIBillScraper(Scraper, LXMLMixin):
         yield bill
 
     def parse_versions(self, bill, bill_page, bill_no):
-        bill_version = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/a/@href'
-        )
+        bill_version = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_BillNumberLabel"]/a/@href')
         if bill_version:
             bill.add_version_link(
                 note=bill_no,
@@ -219,17 +189,13 @@ class VIBillScraper(Scraper, LXMLMixin):
             )
 
     def parse_acts(self, bill, bill_page):
-        bill_act = bill_page.xpath(
-            '//span[@id="ctl00_ContentPlaceHolder_ActNumberLabel"]/a'
-        )
+        bill_act = bill_page.xpath('//span[@id="ctl00_ContentPlaceHolder_ActNumberLabel"]/a')
         if bill_act:
             (act_title,) = bill_act[0].xpath("./text()")
             act_title = "Act {}".format(act_title)
             (act_link,) = bill_act[0].xpath("./@href")
             act_link = "http://www.legvi.org/vilegsearch/{}".format(act_link)
-            bill.add_document_link(
-                note=act_title, url=act_link, media_type="application/pdf"
-            )
+            bill.add_document_link(note=act_title, url=act_link, media_type="application/pdf")
 
     def clean_names(self, name_str):
         # Clean up the names a bit to allow for comma splitting
@@ -241,9 +207,7 @@ class VIBillScraper(Scraper, LXMLMixin):
         sponsors = self.clean_names(sponsors)
         sponsors = sponsors.split(", ")
         for sponsor in sponsors:
-            bill.add_sponsorship(
-                classification=sponsor_type, name=sponsor.strip(), entity_type="person"
-            )
+            bill.add_sponsorship(classification=sponsor_type, name=sponsor.strip(), entity_type="person")
 
     def parse_date_actions(self, bill, bill_page):
         # There's a set of dates on the bill page denoting specific actions

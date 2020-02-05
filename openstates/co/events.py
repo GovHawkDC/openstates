@@ -42,27 +42,19 @@ class COEventScraper(Scraper, LXMLMixin):
             for link in com_links:
                 page = self.lxmlize(link)
 
-                hearing_links = page.xpath(
-                    '//div[contains(@class,"schedule-item-content")]' "/h4/a/@href"
-                )
+                hearing_links = page.xpath('//div[contains(@class,"schedule-item-content")]' "/h4/a/@href")
 
                 for link in hearing_links:
                     try:
                         page = self.lxmlize(link)
 
-                        title = page.xpath(
-                            '//header/h1[contains(@class,"node-title")]'
-                        )[0]
+                        title = page.xpath('//header/h1[contains(@class,"node-title")]')[0]
                         title = title.text_content().strip()
 
-                        date_day = page.xpath(
-                            '//div[contains(@class,"calendar-date")]'
-                        )[0]
+                        date_day = page.xpath('//div[contains(@class,"calendar-date")]')[0]
                         date_day = date_day.text_content().strip()
 
-                        details = page.xpath(
-                            '//span[contains(@class, "calendar-details")]'
-                        )[0]
+                        details = page.xpath('//span[contains(@class, "calendar-details")]')[0]
                         details = details.text_content().split("|")
 
                         date_time = details[0].strip()
@@ -72,26 +64,18 @@ class COEventScraper(Scraper, LXMLMixin):
                             date = dt.datetime.strptime(date_day, "%A %B %d, %Y")
                         else:
                             date_str = "{} {}".format(date_day, date_time)
-                            date = dt.datetime.strptime(
-                                date_str, "%A %B %d, %Y %I:%M %p"
-                            )
+                            date = dt.datetime.strptime(date_str, "%A %B %d, %Y %I:%M %p")
 
                         agendas = []
                         # they overload the bills table w/ other agenda items. colspon=2 is agenda
-                        non_bills = page.xpath(
-                            '//td[@data-label="Hearing Item" and @colspan="2"]'
-                        )
+                        non_bills = page.xpath('//td[@data-label="Hearing Item" and @colspan="2"]')
                         for row in non_bills:
                             content = row.text_content().strip()
                             agendas.append(content)
 
                         agenda = "\n".join(agendas) if agendas else ""
 
-                        event = Event(
-                            name=title,
-                            start_date=self._tz.localize(date),
-                            location_name=location,
-                        )
+                        event = Event(name=title, start_date=self._tz.localize(date), location_name=location,)
                         if agenda:
                             event.add_agenda_item(agenda)
                         event.add_source(link)

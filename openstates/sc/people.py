@@ -45,9 +45,7 @@ class SCPersonScraper(Scraper):
                 self.info("Resigned")
                 continue
 
-            party, district, _ = leg_doc.xpath(
-                '//p[@style="font-size: 17px;' ' margin: 0 0 0 0; padding: 0;"]/text()'
-            )
+            party, district, _ = leg_doc.xpath('//p[@style="font-size: 17px;' ' margin: 0 0 0 0; padding: 0;"]/text()')
 
             if "Republican" in party:
                 party = "Republican"
@@ -61,66 +59,42 @@ class SCPersonScraper(Scraper):
             except IndexError:
                 self.warning("No Photo URL for {}".format(full_name))
                 photo_url = ""
-            person = Person(
-                name=full_name,
-                district=district,
-                party=party,
-                primary_org=chamber,
-                image=photo_url,
-            )
+            person = Person(name=full_name, district=district, party=party, primary_org=chamber, image=photo_url,)
 
             # office address / phone
             try:
                 addr_div = leg_doc.xpath(
-                    '//div[@style="float: left; width: 225px;'
-                    ' margin: 10px 5px 0 20px; padding: 0;"]'
+                    '//div[@style="float: left; width: 225px;' ' margin: 10px 5px 0 20px; padding: 0;"]'
                 )[0]
-                capitol_address = addr_div.xpath(
-                    'p[@style="font-size: 13px;' ' margin: 0 0 10px 0; padding: 0;"]'
-                )[0].text_content()
+                capitol_address = addr_div.xpath('p[@style="font-size: 13px;' ' margin: 0 0 10px 0; padding: 0;"]')[
+                    0
+                ].text_content()
 
-                phone = addr_div.xpath(
-                    'p[@style="font-size: 13px;'
-                    ' margin: 0 0 0 0; padding: 0;"]/text()'
-                )[0]
+                phone = addr_div.xpath('p[@style="font-size: 13px;' ' margin: 0 0 0 0; padding: 0;"]/text()')[0]
                 capitol_phone = phone.strip()
 
                 if capitol_address:
-                    person.add_contact_detail(
-                        type="address", value=capitol_address, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="address", value=capitol_address, note="Capitol Office")
 
                 if capitol_phone:
-                    person.add_contact_detail(
-                        type="voice", value=capitol_phone, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="voice", value=capitol_phone, note="Capitol Office")
             except IndexError:
                 self.warning("no capitol address for {0}".format(full_name))
 
             # home address / phone
             try:
-                addr_div = leg_doc.xpath(
-                    '//div[@style="float: left;'
-                    ' width: 225px; margin: 10px 0 0 20px;"]'
-                )[0]
-                addr = addr_div.xpath(
-                    'p[@style="font-size: 13px;' ' margin: 0 0 10px 0; padding: 0;"]'
-                )[0].text_content()
+                addr_div = leg_doc.xpath('//div[@style="float: left;' ' width: 225px; margin: 10px 0 0 20px;"]')[0]
+                addr = addr_div.xpath('p[@style="font-size: 13px;' ' margin: 0 0 10px 0; padding: 0;"]')[
+                    0
+                ].text_content()
 
-                phone = addr_div.xpath(
-                    'p[@style="font-size: 13px;'
-                    ' margin: 0 0 0 0; padding: 0;"]/text()'
-                )[0]
+                phone = addr_div.xpath('p[@style="font-size: 13px;' ' margin: 0 0 0 0; padding: 0;"]/text()')[0]
                 phone = phone.strip()
                 if addr:
-                    person.add_contact_detail(
-                        type="address", value=addr, note="District Office"
-                    )
+                    person.add_contact_detail(type="address", value=addr, note="District Office")
 
                 if phone:
-                    person.add_contact_detail(
-                        type="voice", value=phone, note="District Office"
-                    )
+                    person.add_contact_detail(type="voice", value=phone, note="District Office")
             except IndexError:
                 self.warning("no district address for {0}".format(full_name))
 
@@ -152,9 +126,7 @@ class SCPersonScraper(Scraper):
 
                 # only yield each committee once
                 if committee not in seen_committees:
-                    com = Organization(
-                        name=committee, classification="committee", chamber=chamber
-                    )
+                    com = Organization(name=committee, classification="committee", chamber=chamber)
                     com.add_source(url)
                     seen_committees[committee] = com
                     yield com

@@ -70,9 +70,7 @@ class Kansas(Jurisdiction):
         legislature_name = "Kansas State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -81,7 +79,6 @@ class Kansas(Jurisdiction):
 
     def get_session_list(self):
         url = url_xpath(
-            "http://www.kslegislature.org/li",
-            '//div[@id="nav"]//a[contains(text(), "Senate Bills")]/@href',
+            "http://www.kslegislature.org/li", '//div[@id="nav"]//a[contains(text(), "Senate Bills")]/@href',
         )[0]
         return [url.split("/")[2]]

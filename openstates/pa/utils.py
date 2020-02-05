@@ -35,34 +35,40 @@ def start_year(session):
 
 
 def bill_list_url(chamber, session, special):
-    return (
-        "http://www.legis.state.pa.us/cfdocs/legis/bi/"
-        "BillIndx.cfm?sYear=%s&sIndex=%i&bod=%s"
-        % (start_year(session), special, bill_abbr(chamber))
+    return "http://www.legis.state.pa.us/cfdocs/legis/bi/" "BillIndx.cfm?sYear=%s&sIndex=%i&bod=%s" % (
+        start_year(session),
+        special,
+        bill_abbr(chamber),
     )
 
 
 def history_url(chamber, session, special, type, bill_number):
-    return (
-        "http://www.legis.state.pa.us/cfdocs/billinfo/"
-        "bill_history.cfm?syear=%s&sind=%i&body=%s&type=%s&BN=%s"
-        % (start_year(session), special, bill_abbr(chamber), type, bill_number)
+    return "http://www.legis.state.pa.us/cfdocs/billinfo/" "bill_history.cfm?syear=%s&sind=%i&body=%s&type=%s&BN=%s" % (
+        start_year(session),
+        special,
+        bill_abbr(chamber),
+        type,
+        bill_number,
     )
 
 
 def info_url(chamber, session, special, type, bill_number):
-    return (
-        "http://www.legis.state.pa.us/cfdocs/billinfo/"
-        "billinfo.cfm?syear=%s&sind=%i&body=%s&type=%s&BN=%s"
-        % (start_year(session), special, bill_abbr(chamber), type, bill_number)
+    return "http://www.legis.state.pa.us/cfdocs/billinfo/" "billinfo.cfm?syear=%s&sind=%i&body=%s&type=%s&BN=%s" % (
+        start_year(session),
+        special,
+        bill_abbr(chamber),
+        type,
+        bill_number,
     )
 
 
 def vote_url(chamber, session, special, type, bill_number):
-    return (
-        "http://www.legis.state.pa.us/cfdocs/billinfo/"
-        "bill_votes.cfm?syear=%s&sind=%d&body=%s&type=%s&bn=%s"
-        % (start_year(session), special, bill_abbr(chamber), type, bill_number)
+    return "http://www.legis.state.pa.us/cfdocs/billinfo/" "bill_votes.cfm?syear=%s&sind=%d&body=%s&type=%s&bn=%s" % (
+        start_year(session),
+        special,
+        bill_abbr(chamber),
+        type,
+        bill_number,
     )
 
 

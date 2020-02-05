@@ -49,12 +49,7 @@ class NVEventScraper(Scraper, LXMLMixin):
         # The rest just becomes the description
         notes = "\n".join(notes)
 
-        event = Event(
-            start_date=self._TZ.localize(start_date),
-            name=title,
-            location_name=address,
-            description=notes,
-        )
+        event = Event(start_date=self._TZ.localize(start_date), name=title, location_name=address, description=notes,)
 
         event.add_source(self.URL)
 

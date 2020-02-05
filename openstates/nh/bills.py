@@ -101,9 +101,7 @@ class NHBillScraper(Scraper, LXMLMixin):
 
         last_line = []
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LSRs.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LSRs.txt").content.decode("utf-8").split("\n")
         ):
             line = line.split("|")
             if len(line) < 1:
@@ -150,16 +148,12 @@ class NHBillScraper(Scraper, LXMLMixin):
                     amendment_id = self.amendments_by_lsr[lsr]
                     amendment_url = (
                         "http://www.gencourt.state.nh.us/bill_status/"
-                        "billText.aspx?sy={}&id={}&txtFormat=amend".format(
-                            session, amendment_id
-                        )
+                        "billText.aspx?sy={}&id={}&txtFormat=amend".format(session, amendment_id)
                     )
                     amendment_name = "Amendment #{}".format(amendment_id)
 
                     self.bills[lsr].add_version_link(
-                        note=amendment_name,
-                        url=amendment_url,
-                        media_type="application/pdf",
+                        note=amendment_name, url=amendment_url, media_type="application/pdf",
                     )
 
                 self.bills_by_id[bill_id] = self.bills[lsr]
@@ -168,9 +162,7 @@ class NHBillScraper(Scraper, LXMLMixin):
 
     def scrape_legislators(self):
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/legislators.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/legislators.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue
@@ -196,9 +188,7 @@ class NHBillScraper(Scraper, LXMLMixin):
                 "billText.aspx?sy={}&id={}&txtFormat=html".format(session, version_id)
             )
 
-            self.bills[lsr].add_version_link(
-                note="latest version", url=version_url, media_type="text/html"
-            )
+            self.bills[lsr].add_version_link(note="latest version", url=version_url, media_type="text/html")
 
     def classify_bill_type(self, expanded_bill_id):
         if expanded_bill_id.startswith("CACR"):
@@ -217,9 +207,7 @@ class NHBillScraper(Scraper, LXMLMixin):
     # bill requests follow a different format in the bulk data
     def scrape_prefiles(self, session):
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue
@@ -267,17 +255,13 @@ class NHBillScraper(Scraper, LXMLMixin):
                     primary=True if sp_type == "primary" else False,
                 )
                 if sp_type == "primary":
-                    self.bills[lsr].extras["primary_seat"] = self.legislators[
-                        sponsor_num
-                    ]["seat"]
+                    self.bills[lsr].extras["primary_seat"] = self.legislators[sponsor_num]["seat"]
             except KeyError:
                 self.warning("Error, can't find person %s" % sponsor_num)
 
     def add_actions(self, session):
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue
@@ -293,16 +277,12 @@ class NHBillScraper(Scraper, LXMLMixin):
                 action = action.strip()
                 atype = classify_action(action)
                 self.bills[lsr].add_action(
-                    chamber=actor,
-                    description=action,
-                    date=time.strftime("%Y-%m-%d"),
-                    classification=atype,
+                    chamber=actor, description=action, date=time.strftime("%Y-%m-%d"), classification=atype,
                 )
                 amendment_id = extract_amendment_id(action)
                 if amendment_id:
                     self.bills[lsr].add_document_link(
-                        note="amendment %s" % amendment_id,
-                        url=AMENDMENT_URL % amendment_id,
+                        note="amendment %s" % amendment_id, url=AMENDMENT_URL % amendment_id,
                     )
 
     def add_source(self, bill, lsr, session):
@@ -315,9 +295,7 @@ class NHBillScraper(Scraper, LXMLMixin):
     def add_sponsors(self, session):
         # sponsors
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrSponsors.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrSponsors.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue
@@ -333,17 +311,13 @@ class NHBillScraper(Scraper, LXMLMixin):
                         entity_type="person",
                         primary=True if sp_type == "primary" else False,
                     )
-                    self.bills[lsr].extras = {
-                        "_code": self.legislators[employee]["seat"]
-                    }
+                    self.bills[lsr].extras = {"_code": self.legislators[employee]["seat"]}
                 except KeyError:
                     self.warning("Error, can't find person %s" % employee)
 
     def scrape_version_ids(self):
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/LsrsOnly.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue
@@ -359,9 +333,7 @@ class NHBillScraper(Scraper, LXMLMixin):
 
     def scrape_amendments(self):
         for line in (
-            self.get("http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt")
-            .content.decode("utf-8")
-            .split("\n")
+            self.get("http://gencourt.state.nh.us/dynamicdatafiles/Docket.txt").content.decode("utf-8").split("\n")
         ):
             if len(line) < 1:
                 continue

@@ -47,9 +47,7 @@ class TXEventScraper(Scraper, LXMLMixin):
         regexp = r"(S|J|H)(B|M|R) (\d+)"
         bills = re.findall(regexp, plaintext)
 
-        event = Event(
-            name=committee, start_date=self._tz.localize(datetime), location_name=where
-        )
+        event = Event(name=committee, start_date=self._tz.localize(datetime), location_name=where)
 
         event.add_source(url)
         event.add_participant(committee, type="committee", note="host")
@@ -82,9 +80,7 @@ class TXEventScraper(Scraper, LXMLMixin):
 
             # Time expressed as 9:00 AM, Thursday, May 17, 2012
             datetime = dt.datetime.strptime(tad, tad_fmt)
-            yield from self.scrape_event_page(
-                session, chamber, event.attrib["href"], datetime
-            )
+            yield from self.scrape_event_page(session, chamber, event.attrib["href"], datetime)
 
     def scrape_upcoming_page(self, session, chamber, url):
         page = self.lxmlize(url)
@@ -111,26 +107,18 @@ class TXEventScraper(Scraper, LXMLMixin):
                 datetime = datetime.group(1)
                 datetime = dt.datetime.strptime(datetime, "%A, %B %d, %Y %I:%M %p")
 
-                yield from self.scrape_event_page(
-                    session, chamber, event.attrib["href"], datetime
-                )
+                yield from self.scrape_event_page(session, chamber, event.attrib["href"], datetime)
 
     def scrape_committee_upcoming(self, session, chamber):
         chid = {"upper": "S", "lower": "H", "other": "J"}[chamber]
 
-        url = (
-            "https://capitol.texas.gov/Committees/Committees.aspx" + "?Chamber=" + chid
-        )
+        url = "https://capitol.texas.gov/Committees/Committees.aspx" + "?Chamber=" + chid
 
         page = self.lxmlize(url)
         refs = page.xpath("//div[@id='content']//a")
         for ref in refs:
             yield from self.scrape_page(session, chamber, ref.attrib["href"])
 
-        url = (
-            "http://capitol.texas.gov/Committees/MeetingsUpcoming.aspx"
-            + "?Chamber="
-            + chid
-        )
+        url = "http://capitol.texas.gov/Committees/MeetingsUpcoming.aspx" + "?Chamber=" + chid
 
         yield from self.scrape_upcoming_page(session, chamber, url)

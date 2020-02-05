@@ -37,16 +37,12 @@ class MABillScraper(Scraper):
     def get_refiners(self, page, refinerName):
         # Get the possible values for each category of refiners,
         # e.g. House, Senate for lawsbranchname (Branch)
-        filters = page.xpath(
-            "//div[@data-refinername='{}']/div/label".format(refinerName)
-        )
+        filters = page.xpath("//div[@data-refinername='{}']/div/label".format(refinerName))
 
         refiner_list = {}
         for refiner_filter in filters:
             label = re.sub(r"\([^)]*\)", "", refiner_filter.xpath("text()")[1]).strip()
-            refiner = refiner_filter.xpath("input/@data-refinertoken")[0].replace(
-                '"', ""
-            )
+            refiner = refiner_filter.xpath("input/@data-refinertoken")[0].replace('"', "")
             refiner_list[label] = refiner
         return refiner_list
 
@@ -92,9 +88,7 @@ class MABillScraper(Scraper):
         search_url = (
             "https://malegislature.gov/Bills/Search?"
             "SearchTerms=&Page={}&Refinements%5Blawsgeneralcourt%5D={}"
-            "&Refinements%5Blawsbranchname%5D={}".format(
-                pageNumber, session_filter, chamber_filter
-            )
+            "&Refinements%5Blawsbranchname%5D={}".format(pageNumber, session_filter, chamber_filter)
         )
 
         page = lxml.html.fromstring(self.get(search_url).text)
@@ -117,9 +111,7 @@ class MABillScraper(Scraper):
         page = lxml.html.fromstring(self.get(search_url).text)
 
         if page.xpath('//ul[contains(@class,"pagination-sm")]/li[last()]/a/@onclick'):
-            maxPage = page.xpath(
-                '//ul[contains(@class,"pagination-sm")]/li[last()]/a/@onclick'
-            )[0]
+            maxPage = page.xpath('//ul[contains(@class,"pagination-sm")]/li[last()]/a/@onclick')[0]
             maxPage = re.sub(r"[^\d]", "", maxPage).strip()
         else:
             maxPage = 1
@@ -129,9 +121,7 @@ class MABillScraper(Scraper):
     def scrape_bill(self, session, bill_id, chamber):
         # https://malegislature.gov/Bills/189/SD2739
         session_for_url = self.replace_non_digits(session)
-        bill_url = "https://malegislature.gov/Bills/{}/{}".format(
-            session_for_url, bill_id
-        )
+        bill_url = "https://malegislature.gov/Bills/{}/{}".format(session_for_url, bill_id)
 
         try:
             response = self.get(bill_url)
@@ -152,9 +142,7 @@ class MABillScraper(Scraper):
         # These titles will be extant on the bill list page, but missing on the bill detail page
         # The titles are eventually populated
         try:
-            bill_title = page.xpath('//div[@id="contentContainer"]/div/div/h2/text()')[
-                0
-            ]
+            bill_title = page.xpath('//div[@id="contentContainer"]/div/div/h2/text()')[0]
         except IndexError:
             self.warning("Couldn't find title for {}; skipping".format(bill_id))
             return False
@@ -167,13 +155,7 @@ class MABillScraper(Scraper):
         if "SRes" in bill_id:
             bill_id = bill_id.replace("SRes", "SR")
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=bill_title,
-            classification="bill",
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=bill_title, classification="bill",)
 
         bill_summary = None
         if page.xpath('//p[@id="pinslip"]/text()'):
@@ -193,21 +175,16 @@ class MABillScraper(Scraper):
         )
         if sponsor:
             sponsor = sponsor[0].strip()
-            bill.add_sponsorship(
-                sponsor, classification="primary", primary=True, entity_type="person"
-            )
+            bill.add_sponsorship(sponsor, classification="primary", primary=True, entity_type="person")
 
         self.scrape_cosponsors(bill, bill_url)
 
         version = page.xpath(
-            "//div[contains(@class, 'modalBtnGroup')]/"
-            "a[contains(text(), 'Download PDF') and not(@disabled)]/@href"
+            "//div[contains(@class, 'modalBtnGroup')]/" "a[contains(text(), 'Download PDF') and not(@disabled)]/@href"
         )
         if version:
             version_url = "https://malegislature.gov{}".format(version[0])
-            bill.add_version_link(
-                "Bill Text", version_url, media_type="application/pdf"
-            )
+            bill.add_version_link("Bill Text", version_url, media_type="application/pdf")
 
         # yield back votes and bill
         # XXX  yield from
@@ -229,9 +206,7 @@ class MABillScraper(Scraper):
             #     cosponsor_district = row.xpath('td[2]/text()')[0]
 
             # Filter the sponsor out of the petitioners list
-            if not any(
-                sponsor["name"] == cosponsor_name for sponsor in bill.sponsorships
-            ):
+            if not any(sponsor["name"] == cosponsor_name for sponsor in bill.sponsorships):
                 bill.add_sponsorship(
                     cosponsor_name,
                     classification="cosponsor",
@@ -247,9 +222,7 @@ class MABillScraper(Scraper):
         # XXX: yield from
         self.scrape_action_page(bill, page)
 
-        max_page = page.xpath(
-            '//ul[contains(@class,"pagination-sm")]/li[last()]/a/@onclick'
-        )
+        max_page = page.xpath('//ul[contains(@class,"pagination-sm")]/li[last()]/a/@onclick')
         if max_page:
             max_page = re.sub(r"[^\d]", "", max_page[0]).strip()
             for counter in range(2, int(max_page) + 1):
@@ -319,18 +292,12 @@ class MABillScraper(Scraper):
                 # see Senate   Roll Call #25 and House Roll Call 56
                 if "yeas" in action_name and "nays" in action_name:
                     try:
-                        y, n = re.search(
-                            r"(\d+) yeas .*? (\d+) nays", action_name.lower()
-                        ).groups()
+                        y, n = re.search(r"(\d+) yeas .*? (\d+) nays", action_name.lower()).groups()
                         y = int(y)
                         n = int(n)
                     except AttributeError:
-                        y = int(
-                            re.search(r"yeas\s+(\d+)", action_name.lower()).group(1)
-                        )
-                        n = int(
-                            re.search(r"nays\s+(\d+)", action_name.lower()).group(1)
-                        )
+                        y = int(re.search(r"yeas\s+(\d+)", action_name.lower()).group(1))
+                        n = int(re.search(r"nays\s+(\d+)", action_name.lower()).group(1))
 
                     # TODO: other count isn't included, set later
                     cached_vote = VoteEvent(
@@ -344,9 +311,7 @@ class MABillScraper(Scraper):
                     cached_vote.set_count("yes", y)
                     cached_vote.set_count("no", n)
 
-                    rollcall_pdf = "http://malegislature.gov" + row.xpath(
-                        "string(td[3]/a/@href)"
-                    )
+                    rollcall_pdf = "http://malegislature.gov" + row.xpath("string(td[3]/a/@href)")
                     self.scrape_senate_vote(cached_vote, rollcall_pdf)
                     cached_vote.add_source(rollcall_pdf)
                     cached_vote.pupa_id = rollcall_pdf
@@ -355,10 +320,7 @@ class MABillScraper(Scraper):
 
             attrs = self.categorizer.categorize(action_name)
             action = bill.add_action(
-                action_name.strip(),
-                action_date,
-                chamber=action_actor,
-                classification=attrs["classification"],
+                action_name.strip(), action_date, chamber=action_actor, classification=attrs["classification"],
             )
             for com in attrs.get("committees", []):
                 action.add_related_entity(com, entity_type="organization")
@@ -369,18 +331,14 @@ class MABillScraper(Scraper):
             (path, resp) = self.urlretrieve(vurl)
             pdflines = convert_pdf(path, "text")
             os.remove(path)
-            self.house_pdf_cache[vurl] = pdflines.decode("utf-8").replace(
-                u"\u2019", "'"
-            )
+            self.house_pdf_cache[vurl] = pdflines.decode("utf-8").replace(u"\u2019", "'")
         return self.house_pdf_cache[vurl]
 
     def scrape_house_vote(self, vote, vurl, supplement):
         pdflines = self.get_house_pdf(vurl)
         # get pdf data from supplement number
         try:
-            vote_text = pdflines.split("No. " + str(supplement))[1].split(
-                "MASSACHUSETTS"
-            )[0]
+            vote_text = pdflines.split("No. " + str(supplement))[1].split("MASSACHUSETTS")[0]
         except IndexError:
             self.info("No vote found in supplement for vote #%s" % supplement)
             return

@@ -18,27 +18,15 @@ class Ohio(Jurisdiction):
         "bills": OHBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "128",
-            "identifier": "128",
-            "name": "128th Legislature (2009-2010)",
-        },
+        {"_scraped_name": "128", "identifier": "128", "name": "128th Legislature (2009-2010)",},
         {
             "_scraped_name": "129",
             "identifier": "129",
             "name": "129th Legislature (2011-2012)",
             "start_date": "2011-01-03",
         },
-        {
-            "_scraped_name": "130",
-            "identifier": "130",
-            "name": "130th Legislature (2013-2014)",
-        },
-        {
-            "_scraped_name": "131",
-            "identifier": "131",
-            "name": "131st Legislature (2015-2016)",
-        },
+        {"_scraped_name": "130", "identifier": "130", "name": "130th Legislature (2013-2014)",},
+        {"_scraped_name": "131", "identifier": "131", "name": "131st Legislature (2015-2016)",},
         {
             "_scraped_name": "132",
             "identifier": "132",
@@ -60,9 +48,7 @@ class Ohio(Jurisdiction):
         legislature_name = "Ohio General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
         yield Organization("Governor of Ohio", classification="executive")
 
@@ -74,8 +60,7 @@ class Ohio(Jurisdiction):
         sessions = url_xpath(
             "https://www.legislature.ohio.gov/legislation/search"
             "?generalAssemblies=133&pageSize=10&start=1&isInitial=true",
-            '//div[@id="generalAssemblyValues"]//'
-            'div[contains(@class, "optionLabel")]/text()',
+            '//div[@id="generalAssemblyValues"]//' 'div[contains(@class, "optionLabel")]/text()',
         )
         # Archive does not include current session
         return sessions

@@ -39,9 +39,7 @@ class PALegislatorScraper(Scraper):
             url = link.get("href")
             leg_id = url.split("?id=")[1]
 
-            person = Person(
-                name=full_name, district=district, party=party, primary_org=chamber
-            )
+            person = Person(name=full_name, district=district, party=party, primary_org=chamber)
             person.add_link(leg_list_url)
             person.add_source(leg_list_url)
 
@@ -57,9 +55,7 @@ class PALegislatorScraper(Scraper):
             yield person
 
     def scrape_photo_url(self, url, page, person):
-        photo_urls = page.xpath(
-            "//div[@class='MemberBio']//img[contains(@src, '/members/')]/@src"
-        )
+        photo_urls = page.xpath("//div[@class='MemberBio']//img[contains(@src, '/members/')]/@src")
         if len(photo_urls) == 0:
             self.warning("No photo found for legislator {}".format(person.name))
         elif len(photo_urls) == 1:
@@ -82,9 +78,7 @@ class PALegislatorScraper(Scraper):
         offices = False
 
         account_types = ["facebook", "twitter", "youtube", "instagram", "pintrest"]
-        soc_media_accounts = doc.xpath(
-            "//div[contains(@class,'MemberBio-SocialLinks')]/a/@href"
-        )
+        soc_media_accounts = doc.xpath("//div[contains(@class,'MemberBio-SocialLinks')]/a/@href")
         for acct in soc_media_accounts:
             for sm_site in account_types:
                 if sm_site in acct.lower():

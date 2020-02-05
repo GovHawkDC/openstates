@@ -19,9 +19,7 @@ class WYPersonScraper(Scraper):
     def scrape_chamber(self, chamber, session):
         chamber_abbrev = {"upper": "S", "lower": "H"}[chamber]
 
-        url = "https://wyoleg.gov/LsoService/api/legislator/2018/{}".format(
-            chamber_abbrev
-        )
+        url = "https://wyoleg.gov/LsoService/api/legislator/2018/{}".format(chamber_abbrev)
 
         response = self.get(url)
         people_json = json.loads(response.content.decode("utf-8"))
@@ -29,9 +27,7 @@ class WYPersonScraper(Scraper):
         for row in people_json:
 
             # some fields are only available in the list json, some only in the details call
-            details_url = "https://wyoleg.gov/LsoService/api/legislator/{}".format(
-                row["legID"]
-            )
+            details_url = "https://wyoleg.gov/LsoService/api/legislator/{}".format(row["legID"])
             details_response = self.get(details_url)
             details = json.loads(details_response.content.decode("utf-8"))
 
@@ -43,9 +39,7 @@ class WYPersonScraper(Scraper):
             else:
                 dob_str = ""
 
-            photo_url = "http://wyoleg.gov/LegislatorSummary/Photos/{}".format(
-                details["legPhoto"]
-            )
+            photo_url = "http://wyoleg.gov/LegislatorSummary/Photos/{}".format(details["legPhoto"])
 
             person = Person(
                 name=row["name"],
@@ -57,12 +51,7 @@ class WYPersonScraper(Scraper):
             )
 
             if details["address"]:
-                address = "{}, {} {} {}".format(
-                    details["address"],
-                    details["city"],
-                    details["state"],
-                    details["zip"],
-                )
+                address = "{}, {} {} {}".format(details["address"], details["city"], details["state"], details["zip"],)
                 person.add_contact_detail(type="address", value=address)
 
             if row["eMail"]:
@@ -88,9 +77,7 @@ class WYPersonScraper(Scraper):
                 person.extras["civic_organizations"] = details["civicOrgs"]
 
             # http://wyoleg.gov/Legislators/2018/S/2032
-            leg_url = "http://wyoleg.gov/Legislators/{}/{}/{}".format(
-                session, row["party"], row["legID"]
-            )
+            leg_url = "http://wyoleg.gov/Legislators/{}/{}/{}".format(session, row["party"], row["legID"])
 
             person.add_source(leg_url)
             person.add_link(leg_url)

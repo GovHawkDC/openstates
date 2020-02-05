@@ -119,9 +119,7 @@ class NorthDakota(Jurisdiction):
         legislature_name = "North Dakota Legislative Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -137,7 +135,5 @@ class NorthDakota(Jurisdiction):
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute(url)
         sessions = doc.xpath("//div[@class='view-content']//a/text()")
-        sessions = [
-            session for session in sessions if "Territorial Assembly" not in session
-        ]
+        sessions = [session for session in sessions if "Territorial Assembly" not in session]
         return sessions

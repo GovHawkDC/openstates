@@ -30,10 +30,7 @@ class PRCommitteeScraper(Scraper, LXMLMixin):
             yield from getattr(self, "scrape_" + chamber + "_chamber")()
 
     def scrape_lower_chamber(self):
-        url = (
-            "http://www.tucamarapr.org/dnncamara/ActividadLegislativa/"
-            "ComisionesyProyectosEspeciales.aspx"
-        )
+        url = "http://www.tucamarapr.org/dnncamara/ActividadLegislativa/" "ComisionesyProyectosEspeciales.aspx"
 
         page = self.lxmlize(url)
 
@@ -51,16 +48,13 @@ class PRCommitteeScraper(Scraper, LXMLMixin):
         comm.add_source(url)
 
         info_node = self.get_node(
-            page,
-            './/div[@id = "dnn_ctr1109_ViewWebCommission_WebCommission1_'
-            'pnlCommission"]',
+            page, './/div[@id = "dnn_ctr1109_ViewWebCommission_WebCommission1_' 'pnlCommission"]',
         )
 
         # This will likely capture empty text nodes as well.
         members = self.get_nodes(
             info_node,
-            './/div[@class="two-cols com"]/div[@class="col"]//text()'
-            "[normalize-space() and preceding-sibling::br]",
+            './/div[@class="two-cols com"]/div[@class="col"]//text()' "[normalize-space() and preceding-sibling::br]",
         )
 
         member_count = 0

@@ -13,18 +13,8 @@ class USVirginIslands(Jurisdiction):
         # 'bills': VIBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "30",
-            "classification": "primary",
-            "identifier": "30",
-            "name": "2013-2013 Regular Session",
-        },
-        {
-            "_scraped_name": "31",
-            "classification": "primary",
-            "identifier": "31",
-            "name": "2015-2016 Regular Session",
-        },
+        {"_scraped_name": "30", "classification": "primary", "identifier": "30", "name": "2013-2013 Regular Session",},
+        {"_scraped_name": "31", "classification": "primary", "identifier": "31", "name": "2015-2016 Regular Session",},
         {
             "_scraped_name": "32",
             "classification": "primary",
@@ -40,15 +30,12 @@ class USVirginIslands(Jurisdiction):
         legislature_name = "Senate of the Virgin Islands"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
 
         yield legislature
         yield upper
 
     def get_session_list(self):
         return url_xpath(
-            "http://www.legvi.org/vilegsearch/",
-            '//select[@name="ctl00$ContentPlaceHolder$leginum"]/option/text()',
+            "http://www.legvi.org/vilegsearch/", '//select[@name="ctl00$ContentPlaceHolder$leginum"]/option/text()',
         )

@@ -69,9 +69,7 @@ class WAEventScraper(Scraper, LXMLMixin):
             if self.chambers[event_chamber] != chamber:
                 continue
 
-            event_date = datetime.datetime.strptime(
-                xpath(row, "string(wa:Date)"), "%Y-%m-%dT%H:%M:%S"
-            )
+            event_date = datetime.datetime.strptime(xpath(row, "string(wa:Date)"), "%Y-%m-%dT%H:%M:%S")
             event_date = self._tz.localize(event_date)
             event_com = xpath(row, "string(wa:Committees/" "wa:Committee/wa:LongName)")
             agenda_id = xpath(row, "string(wa:AgendaId)")
@@ -84,16 +82,9 @@ class WAEventScraper(Scraper, LXMLMixin):
 
             location = "{}, {}, {} {}".format(room, building, city, state)
 
-            event = Event(
-                name=event_com,
-                start_date=event_date,
-                location_name=location,
-                description=notes,
-            )
+            event = Event(name=event_com, start_date=event_date, location_name=location, description=notes,)
 
-            source_url = "https://app.leg.wa.gov/committeeschedules/Home/Agenda/{}".format(
-                agenda_id
-            )
+            source_url = "https://app.leg.wa.gov/committeeschedules/Home/Agenda/{}".format(agenda_id)
             event.add_source(source_url)
 
             event.add_participant(event_com, type="committee", note="host")

@@ -194,9 +194,7 @@ class Arkansas(Jurisdiction):
         legislature_name = "Arkansas General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -205,11 +203,7 @@ class Arkansas(Jurisdiction):
 
     def get_session_list(self):
         links = url_xpath(
-            "http://www.arkleg.state.ar.us/assembly/2013/2013R/Pages"
-            "/Previous%20Legislatures.aspx",
-            "//a",
+            "http://www.arkleg.state.ar.us/assembly/2013/2013R/Pages" "/Previous%20Legislatures.aspx", "//a",
         )
-        sessions = [
-            a.text_content() for a in links if "Session" in a.attrib.get("title", "")
-        ]
+        sessions = [a.text_content() for a in links if "Session" in a.attrib.get("title", "")]
         return sessions

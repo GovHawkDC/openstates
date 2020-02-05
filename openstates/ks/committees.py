@@ -28,15 +28,9 @@ class KSCommitteeScraper(Scraper):
             for committee_data in committees:
 
                 # set to joint if we are using the special_committees
-                com_chamber = (
-                    "legislature" if com_type == "special_committees" else chamber
-                )
+                com_chamber = "legislature" if com_type == "special_committees" else chamber
 
-                committee = Organization(
-                    committee_data["TITLE"],
-                    chamber=com_chamber,
-                    classification="committee",
-                )
+                committee = Organization(committee_data["TITLE"], chamber=com_chamber, classification="committee",)
 
                 com_url = ksapi.url + "ctte/%s/" % committee_data["KPID"]
                 try:
@@ -60,9 +54,7 @@ class KSCommitteeScraper(Scraper):
                     committee.add_member(member["FULLNAME"])
 
                 if not committee._related:
-                    self.warning(
-                        "skipping blank committee %s" % committee_data["TITLE"]
-                    )
+                    self.warning("skipping blank committee %s" % committee_data["TITLE"])
                 else:
                     committee.add_source(com_url)
                     yield committee

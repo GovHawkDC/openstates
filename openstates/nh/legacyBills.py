@@ -7,24 +7,12 @@ from pupa.scrape import Scraper, Bill, VoteEvent as Vote
 
 
 zip_urls = {
-    "2011": (
-        "http://gencourt.state.nh.us/downloads/2011%20Session%20Bill%20Status%20Tables.zip"
-    ),
-    "2012": (
-        "http://gencourt.state.nh.us/downloads/2012%20Session%20Bill%20Status%20Tables.zip"
-    ),
-    "2013": (
-        "http://gencourt.state.nh.us/downloads/2013%20Session%20Bill%20Status%20Tables.zip"
-    ),
-    "2014": (
-        "http://gencourt.state.nh.us/downloads/2014%20Session%20Bill%20Status%20Tables.zip"
-    ),
-    "2015": (
-        "http://gencourt.state.nh.us/downloads/2015%20Session%20Bill%20Status%20Tables.zip"
-    ),
-    "2016": (
-        "http://gencourt.state.nh.us/downloads/2016%20Session%20Bill%20Status%20Tables.zip"
-    ),
+    "2011": ("http://gencourt.state.nh.us/downloads/2011%20Session%20Bill%20Status%20Tables.zip"),
+    "2012": ("http://gencourt.state.nh.us/downloads/2012%20Session%20Bill%20Status%20Tables.zip"),
+    "2013": ("http://gencourt.state.nh.us/downloads/2013%20Session%20Bill%20Status%20Tables.zip"),
+    "2014": ("http://gencourt.state.nh.us/downloads/2014%20Session%20Bill%20Status%20Tables.zip"),
+    "2015": ("http://gencourt.state.nh.us/downloads/2015%20Session%20Bill%20Status%20Tables.zip"),
+    "2016": ("http://gencourt.state.nh.us/downloads/2016%20Session%20Bill%20Status%20Tables.zip"),
 }
 
 
@@ -119,9 +107,7 @@ class NHLegacyBillScraper(Scraper):
                     classification=bill_type,
                 )
                 version_url = VERSION_URL % (session, expanded_bill_id.replace(" ", ""))
-                self.bills[lsr].add_version_link(
-                    note="latest version", url=version_url, media_type="text/html"
-                )
+                self.bills[lsr].add_version_link(note="latest version", url=version_url, media_type="text/html")
                 self.bills_by_id[bill_id] = self.bills[lsr]
 
         # load legislators
@@ -152,9 +138,7 @@ class NHLegacyBillScraper(Scraper):
                         entity_type="person",
                         primary=True if sp_type == "primary" else False,
                     )
-                    self.bills[lsr].extras = {
-                        "_code": self.legislators[employee]["seat"]
-                    }
+                    self.bills[lsr].extras = {"_code": self.legislators[employee]["seat"]}
                 except KeyError:
                     self.warning("Error, can't find person %s" % employee)
 
@@ -172,16 +156,12 @@ class NHLegacyBillScraper(Scraper):
                 action = action.strip()
                 atype = classify_action(action)
                 self.bills[lsr].add_action(
-                    chamber=actor,
-                    description=action,
-                    date=time.strftime("%Y-%m-%d"),
-                    classification=atype,
+                    chamber=actor, description=action, date=time.strftime("%Y-%m-%d"), classification=atype,
                 )
                 amendment_id = extract_amendment_id(action)
                 if amendment_id:
                     self.bills[lsr].add_document_link(
-                        note="amendment %s" % amendment_id,
-                        url=AMENDMENT_URL % amendment_id,
+                        note="amendment %s" % amendment_id, url=AMENDMENT_URL % amendment_id,
                     )
 
         yield from self.scrape_votes(session, zip_url)

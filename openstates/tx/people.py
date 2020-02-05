@@ -61,18 +61,14 @@ class TXPersonScraper(Scraper, LXMLMixin):
         # use only full-session slug for this
         session = self.latest_session()[:2]
 
-        url = (
-            "https://lrl.texas.gov/legeLeaders/members/membersearch."
-            "cfm?leg={}&chamber={}"
-        ).format(session, chamber_map[chamber])
+        url = ("https://lrl.texas.gov/legeLeaders/members/membersearch." "cfm?leg={}&chamber={}").format(
+            session, chamber_map[chamber]
+        )
         page = self.lxmlize(url)
 
         # table is broken and doesn't have proper <tr> tags
         # so we'll group the td tags into groups of 9
-        tds = self.get_nodes(
-            page,
-            '//div[@class="body2ndLevel"]/table//td[contains(@class, ' '"result")]',
-        )
+        tds = self.get_nodes(page, '//div[@class="body2ndLevel"]/table//td[contains(@class, ' '"result")]',)
 
         for td_index, td in enumerate(tds):
             # 2nd and 6th column
@@ -136,9 +132,7 @@ class TXPersonScraper(Scraper, LXMLMixin):
         member_page = self.lxmlize(url)
 
         photo_url = member_page.xpath('//img[@id="memhead"]/@src')[0]
-        scraped_name_district_text = member_page.xpath(
-            '//div[@class="pgtitle"]/text()'
-        )[0]
+        scraped_name_district_text = member_page.xpath('//div[@class="pgtitle"]/text()')[0]
         scraped_name, district_text = scraped_name_district_text.split(":")
         name = " ".join(scraped_name.replace("Senator ", "").split()).strip()
         district = str(district_text.split()[1]).strip()
@@ -148,13 +142,7 @@ class TXPersonScraper(Scraper, LXMLMixin):
         bio = " ".join(member_page.xpath('//div[@class="bio"]/text()'))
         party = parties[district]
 
-        person = Person(
-            name=name,
-            district=district,
-            party=party,
-            primary_org="upper",
-            biography=bio,
-        )
+        person = Person(name=name, district=district, party=party, primary_org="upper", biography=bio,)
 
         if photo_url is not None:
             person.image = photo_url
@@ -173,14 +161,10 @@ class TXPersonScraper(Scraper, LXMLMixin):
         # logger.warn(office_ids)
         for office in office_ids:
             # logger.warn(office)
-            row = member_page.xpath(
-                f'//table[@class="memdir"]/tr/td[@headers="{office["id"]}"]'
-            )
+            row = member_page.xpath(f'//table[@class="memdir"]/tr/td[@headers="{office["id"]}"]')
             # A few member pages have broken ids for office listings:
             if len(row) == 0:
-                row = member_page.xpath(
-                    f'//table[@class="memdir"]/tr/td[@headers="dDA1"]'
-                )
+                row = member_page.xpath(f'//table[@class="memdir"]/tr/td[@headers="dDA1"]')
             if len(row) > 0:
                 details = " ".join(row[0].xpath("text()")).strip()
                 details = details.replace("\r", "").replace("\n", "")
@@ -191,12 +175,7 @@ class TXPersonScraper(Scraper, LXMLMixin):
 
             match = self.address_re.search(details)
             if match is not None:
-                address = re.sub(
-                    " +$",
-                    "",
-                    match.group().replace("\r", "").replace("\n", ""),
-                    flags=re.MULTILINE,
-                )
+                address = re.sub(" +$", "", match.group().replace("\r", "").replace("\n", ""), flags=re.MULTILINE,)
             else:
                 # No valid address found in the details.
                 continue
@@ -205,17 +184,11 @@ class TXPersonScraper(Scraper, LXMLMixin):
             fax_number = extract_fax(details)
 
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note=office["label"]
-                )
+                person.add_contact_detail(type="address", value=address, note=office["label"])
             if phone_number:
-                person.add_contact_detail(
-                    type="voice", value=phone_number, note=office["label"]
-                )
+                person.add_contact_detail(type="voice", value=phone_number, note=office["label"])
             if fax_number:
-                person.add_contact_detail(
-                    type="fax", value=fax_number, note=office["label"]
-                )
+                person.add_contact_detail(type="fax", value=fax_number, note=office["label"])
 
         yield person
 
@@ -246,9 +219,7 @@ class TXPersonScraper(Scraper, LXMLMixin):
         if photo_url.endswith("/.jpg"):
             photo_url = None
 
-        scraped_name, district_text = member_page.xpath(
-            '//div[@class="member-info"]/h2'
-        )
+        scraped_name, district_text = member_page.xpath('//div[@class="member-info"]/h2')
         scraped_name = scraped_name.text_content().strip().replace("Rep. ", "")
         scraped_name = " ".join(scraped_name.split())
 
@@ -281,9 +252,7 @@ class TXPersonScraper(Scraper, LXMLMixin):
                 "type": office_name(p_tag).replace(" Address", "").lower(),
                 "details": p_tag.text_content(),
             }
-            for p_tag in member_page.xpath(
-                '//h4/following-sibling::p[@class="double-space"]'
-            )
+            for p_tag in member_page.xpath('//h4/following-sibling::p[@class="double-space"]')
         ]
 
         for office_text in offices_text:
@@ -299,29 +268,20 @@ class TXPersonScraper(Scraper, LXMLMixin):
             if details.count("Office") > 1:
                 district_offices = [
                     district_office.strip()
-                    for district_office in re.findall(
-                        r"(\w+ Office.+?(?=\w+ Office|$))", details, flags=re.DOTALL
-                    )
+                    for district_office in re.findall(r"(\w+ Office.+?(?=\w+ Office|$))", details, flags=re.DOTALL)
                 ]
                 offices_text += [
                     {
                         "name": re.match(r"\w+ Office", office).group(),
                         "type": "district",
-                        "details": re.search(
-                            r"(?<=Office).+(?=\w+ Office|$)?", office, re.DOTALL
-                        ).group(),
+                        "details": re.search(r"(?<=Office).+(?=\w+ Office|$)?", office, re.DOTALL).group(),
                     }
                     for office in district_offices
                 ]
 
             match = self.address_re.search(details)
             if match is not None:
-                address = re.sub(
-                    " +$",
-                    "",
-                    match.group().replace("\r", "").replace("\n\n", "\n"),
-                    flags=re.MULTILINE,
-                )
+                address = re.sub(" +$", "", match.group().replace("\r", "").replace("\n\n", "\n"), flags=re.MULTILINE,)
             else:
                 # No valid address found in the details.
                 continue
@@ -330,16 +290,10 @@ class TXPersonScraper(Scraper, LXMLMixin):
             fax_number = extract_fax(details)
 
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note=office_text["name"]
-                )
+                person.add_contact_detail(type="address", value=address, note=office_text["name"])
             if phone_number:
-                person.add_contact_detail(
-                    type="voice", value=phone_number, note=office_text["name"]
-                )
+                person.add_contact_detail(type="voice", value=phone_number, note=office_text["name"])
             if fax_number:
-                person.add_contact_detail(
-                    type="fax", value=fax_number, note=office_text["name"]
-                )
+                person.add_contact_detail(type="fax", value=fax_number, note=office_text["name"])
 
         yield person

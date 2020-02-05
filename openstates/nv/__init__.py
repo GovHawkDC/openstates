@@ -126,12 +126,8 @@ class Nevada(Jurisdiction):
         legislature_name = "Nevada Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
-        lower = Organization(
-            "Assembly", classification="lower", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
+        lower = Organization("Assembly", classification="lower", parent_id=legislature._id)
 
         yield Organization("Office of the Governor", classification="executive")
         yield legislature
@@ -140,8 +136,7 @@ class Nevada(Jurisdiction):
 
     def get_session_list(self):
         return url_xpath(
-            "https://www.leg.state.nv.us/Session/",
-            '//div[contains(@class, "list-group-item-heading")]/text()',
+            "https://www.leg.state.nv.us/Session/", '//div[contains(@class, "list-group-item-heading")]/text()',
         )
 
     def get_extract_text(self, doc, data):

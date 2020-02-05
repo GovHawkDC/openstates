@@ -52,13 +52,9 @@ class MEBillScraper(Scraper):
         r = request_session.post(url=search_url, data=form_data)
         r.raise_for_status()
 
-        yield from self._recursively_process_bills(
-            request_session=request_session, chamber=chamber, session=session
-        )
+        yield from self._recursively_process_bills(request_session=request_session, chamber=chamber, session=session)
 
-    def _recursively_process_bills(
-        self, request_session, chamber, session, first_item=1
-    ):
+    def _recursively_process_bills(self, request_session, chamber, session, first_item=1):
         """
         Once a search has been initiated, this function will save a
         Bill object for every Paper from the given chamber
@@ -74,20 +70,13 @@ class MEBillScraper(Scraper):
                 bill_id_slug = bill.xpath("./@href")[0]
                 if bill_id_slug == "summary.asp?ID=280068396":
                     continue
-                bill_url = "http://legislature.maine.gov/LawMakerWeb/{}".format(
-                    bill_id_slug
-                )
+                bill_url = "http://legislature.maine.gov/LawMakerWeb/{}".format(bill_id_slug)
                 bill_id = bill.text[:2] + " " + bill.text[2:]
 
                 if bill_id in BLACKLISTED_BILL_IDS[session]:
                     continue
 
-                bill = Bill(
-                    identifier=bill_id,
-                    legislative_session=session,
-                    title="",
-                    chamber=chamber,
-                )
+                bill = Bill(identifier=bill_id, legislative_session=session, title="", chamber=chamber,)
                 bill.add_source(bill_url)
 
                 yield from self.scrape_bill(bill, chamber)
@@ -96,10 +85,7 @@ class MEBillScraper(Scraper):
             # Make a recursive call to this function, for the next page
             PAGE_SIZE = 25
             yield from self._recursively_process_bills(
-                request_session=request_session,
-                chamber=chamber,
-                session=session,
-                first_item=first_item + PAGE_SIZE,
+                request_session=request_session, chamber=chamber, session=session, first_item=first_item + PAGE_SIZE,
             )
 
     def scrape_bill(self, bill, chamber):
@@ -113,9 +99,7 @@ class MEBillScraper(Scraper):
         bill_title = bill_title[1:-1].title()
         bill.title = bill_title
 
-        if bill_title.startswith("Joint Order") or bill_title.startswith(
-            "Joint Resolution"
-        ):
+        if bill_title.startswith("Joint Order") or bill_title.startswith("Joint Resolution"):
             bill.classification = ["joint resolution"]
         else:
             bill.classification = ["bill"]
@@ -133,10 +117,7 @@ class MEBillScraper(Scraper):
             xpath = '//a[contains(@href, "sponsors")]/@href'
             sponsors_url = page.xpath(xpath)[0]
         except IndexError:
-            msg = (
-                "Page didn't contain sponsors url with expected "
-                "format. Page url was %s" % url
-            )
+            msg = "Page didn't contain sponsors url with expected " "format. Page url was %s" % url
             raise ValueError(msg)
         sponsors_html = self.get(sponsors_url, retry_on_404=True).text
         sponsors_page = lxml.html.fromstring(sponsors_html)
@@ -149,11 +130,7 @@ class MEBillScraper(Scraper):
             if "the Majority" in text:
                 # At least one bill was sponsored by 'the Majority'.
                 bill.add_sponsorship(
-                    name="the Majority",
-                    chamber=chamber,
-                    entity_type="person",
-                    classification="primary",
-                    primary=True,
+                    name="the Majority", chamber=chamber, entity_type="person", classification="primary", primary=True,
                 )
                 continue
 
@@ -165,15 +142,11 @@ class MEBillScraper(Scraper):
                 type_ = "cosponsor"
 
             elif re.match(rgx, text):
-                chamber_title, name = [
-                    x.strip() for x in re.search(rgx, text).groups()[:2]
-                ]
+                chamber_title, name = [x.strip() for x in re.search(rgx, text).groups()[:2]]
                 if chamber_title in ["President", "Speaker"]:
                     spon_chamber = chamber
                 else:
-                    spon_chamber = {"Senator": "upper", "Representative": "lower",}[
-                        chamber_title
-                    ]
+                    spon_chamber = {"Senator": "upper", "Representative": "lower",}[chamber_title]
                 bill.add_sponsorship(
                     name=name.strip(),
                     chamber=spon_chamber,
@@ -192,12 +165,7 @@ class MEBillScraper(Scraper):
             # TODO: this is a problematic way to get governor signed action,
             #       see 122nd legislature LD 1235 for an example of this phrase
             #       appearing in the bill title!
-            date = page.xpath(
-                (
-                    'string(//td[contains(text(), "Date")]/'
-                    "following-sibling::td/b/text())"
-                )
-            )
+            date = page.xpath(('string(//td[contains(text(), "Date")]/' "following-sibling::td/b/text())"))
             try:
                 dt = datetime.datetime.strptime(date, "%m/%d/%Y")
             except ValueError:
@@ -247,15 +215,11 @@ class MEBillScraper(Scraper):
                     pdf_url = row.xpath('.//a[@class="pdf_btn"]/@href')
 
                     if pdf_url:
-                        bill.add_version_link(
-                            version_name, pdf_url[0], media_type="application/pdf"
-                        )
+                        bill.add_version_link(version_name, pdf_url[0], media_type="application/pdf")
 
                     word_url = row.xpath('.//a[@class="doc_btn"]/@href')
                     if word_url:
-                        bill.add_version_link(
-                            version_name, word_url[0], media_type="application/msword"
-                        )
+                        bill.add_version_link(version_name, word_url[0], media_type="application/msword")
 
                 # Check whether the bill text is missing.
                 is_bill_text_missing = vdoc.xpath(
@@ -281,22 +245,16 @@ class MEBillScraper(Scraper):
                     )
 
                     if bill_text_html:
-                        bill.add_version_link(
-                            "Initial Version", bill_text_html, media_type="text/html"
-                        )
+                        bill.add_version_link("Initial Version", bill_text_html, media_type="text/html")
 
                     if bill_text_rtf:
                         bill.add_version_link(
-                            "Initial Version",
-                            bill_text_rtf,
-                            media_type="application/rtf",
+                            "Initial Version", bill_text_rtf, media_type="application/rtf",
                         )
 
                     if bill_text_pdf:
                         bill.add_version_link(
-                            "Initial Version",
-                            bill_text_pdf,
-                            media_type="application/pdf",
+                            "Initial Version", bill_text_pdf, media_type="application/pdf",
                         )
 
     def scrape_votes(self, bill, url):
@@ -380,9 +338,7 @@ class MEBillScraper(Scraper):
         try:
             page = self.get(url, retry_on_404=True).text
         except scrapelib.HTTPError:
-            self.warning(
-                "Error loading actions webpage for bill {}".format(bill["bill_id"])
-            )
+            self.warning("Error loading actions webpage for bill {}".format(bill["bill_id"]))
             return
 
         page = lxml.html.fromstring(page)
@@ -413,10 +369,7 @@ class MEBillScraper(Scraper):
             for action in actions:
                 attrs = self.categorizer.categorize(action)
                 bill.add_action(
-                    action,
-                    date,
-                    chamber=chamber,
-                    classification=attrs["classification"],
+                    action, date, chamber=chamber, classification=attrs["classification"],
                 )
 
 

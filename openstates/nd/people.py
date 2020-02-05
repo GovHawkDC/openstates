@@ -16,13 +16,11 @@ class NDPersonScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(main_url)
         for idx, person_url in enumerate(
-            page.xpath(
-                '//div[contains(@class, "all-members")]/' 'div[@class="name"]/a/@href'
-            )
+            page.xpath('//div[contains(@class, "all-members")]/' 'div[@class="name"]/a/@href')
         ):
-            political_party = page.xpath(
-                '//div[contains(@class, "all-members")]/' 'div[@class="party"]/text()'
-            )[idx].strip()
+            political_party = page.xpath('//div[contains(@class, "all-members")]/' 'div[@class="party"]/text()')[
+                idx
+            ].strip()
             yield from self.scrape_legislator_page(term, person_url, political_party)
 
     def scrape_legislator_page(self, term, url, political_party):
@@ -55,12 +53,8 @@ class NDPersonScraper(Scraper):
         }
         metainf = {}
         headings = page.xpath('//div[contains(@class, "pane-content")]//strong')
-        metainf["district"] = (
-            headings[0].xpath("following-sibling::a/text()")[0].strip()
-        )
-        metainf["political party"] = (
-            headings[1].xpath("following-sibling::text()")[0].strip()
-        )
+        metainf["district"] = headings[0].xpath("following-sibling::a/text()")[0].strip()
+        metainf["political party"] = headings[1].xpath("following-sibling::text()")[0].strip()
         metainf["chamber"] = headings[2].xpath("following-sibling::text()")[0].strip()
         for block in page.xpath("//div[contains(@class, 'field-label-inline')]"):
             label, items = block.xpath("./*")
@@ -71,9 +65,7 @@ class NDPersonScraper(Scraper):
 
         chamber = {"Senate": "upper", "House": "lower"}[metainf["chamber"]]
         party = {"Democrat": "Democratic", "Republican": "Republican"}[political_party]
-        person = Person(
-            primary_org=chamber, district=district, name=name, party=party, image=photo
-        )
+        person = Person(primary_org=chamber, district=district, name=name, party=party, image=photo)
         person.add_link(url)
         for key, person_key in [
             ("email", "email"),
@@ -82,21 +74,13 @@ class NDPersonScraper(Scraper):
         ]:
             if key in metainf:
                 if metainf[key].strip():
-                    person.add_contact_detail(
-                        type=person_key, value=metainf[key], note="Capitol Office"
-                    )
+                    person.add_contact_detail(type=person_key, value=metainf[key], note="Capitol Office")
         if address:
-            person.add_contact_detail(
-                type="address", value=address, note="District Office"
-            )
+            person.add_contact_detail(type="address", value=address, note="District Office")
         if "cellphone" in metainf:
-            person.add_contact_detail(
-                type="voice", value=metainf["cellphone"], note="District Office"
-            )
+            person.add_contact_detail(type="voice", value=metainf["cellphone"], note="District Office")
         if "home-telephone" in metainf:
-            person.add_contact_detail(
-                type="voice", value=metainf["home-telephone"], note="District Office"
-            )
+            person.add_contact_detail(type="voice", value=metainf["home-telephone"], note="District Office")
 
         person.add_source(url)
         yield person

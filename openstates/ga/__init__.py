@@ -18,26 +18,10 @@ class Georgia(Jurisdiction):
         # 'committee': GACommitteeScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2011-2012 Regular Session",
-            "identifier": "2011_12",
-            "name": "2011-2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2011 Special Session",
-            "identifier": "2011_ss",
-            "name": "2011 Special Session",
-        },
-        {
-            "_scraped_name": "2013-2014 Regular Session",
-            "identifier": "2013_14",
-            "name": "2013-2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015-2016 Regular Session",
-            "identifier": "2015_16",
-            "name": "2015-2016 Regular Session",
-        },
+        {"_scraped_name": "2011-2012 Regular Session", "identifier": "2011_12", "name": "2011-2012 Regular Session",},
+        {"_scraped_name": "2011 Special Session", "identifier": "2011_ss", "name": "2011 Special Session",},
+        {"_scraped_name": "2013-2014 Regular Session", "identifier": "2013_14", "name": "2013-2014 Regular Session",},
+        {"_scraped_name": "2015-2016 Regular Session", "identifier": "2015_16", "name": "2015-2016 Regular Session",},
         {
             "_scraped_name": "2017-2018 Regular Session",
             "identifier": "2017_18",
@@ -76,9 +60,7 @@ class Georgia(Jurisdiction):
         legislature_name = "Georgia General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -92,6 +74,4 @@ class Georgia(Jurisdiction):
         # import pdb; pdb.set_trace()
         # sessions <-- check the Id for the _guid
 
-        return [
-            x["Description"].strip() for x in backoff(sessions.GetSessions)["Session"]
-        ]
+        return [x["Description"].strip() for x in backoff(sessions.GetSessions)["Session"]]

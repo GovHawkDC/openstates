@@ -171,9 +171,7 @@ class Maryland(Jurisdiction):
         legislature_name = "Maryland General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization("Office of the Governor", classification="executive")
@@ -183,6 +181,5 @@ class Maryland(Jurisdiction):
 
     def get_session_list(self):
         return url_xpath(
-            "http://mgaleg.maryland.gov/mgawebsite/Search/Legislation",
-            '//select[@id="valueSessions"]/option/text()',
+            "http://mgaleg.maryland.gov/mgawebsite/Search/Legislation", '//select[@id="valueSessions"]/option/text()',
         )

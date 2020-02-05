@@ -19,13 +19,10 @@ class NVPeopleScraper(Scraper):
             chamber_slug = "Assembly"
         session_slug = self.jurisdiction.session_slugs[session]
 
-        leg_base_url = "http://www.leg.state.nv.us/App/Legislator/A/%s/%s/" % (
-            chamber_slug,
+        leg_base_url = "http://www.leg.state.nv.us/App/Legislator/A/%s/%s/" % (chamber_slug, session_slug,)
+        leg_json_url = "http://www.leg.state.nv.us/App/Legislator/A/api/%s/Legislator?house=%s" % (
             session_slug,
-        )
-        leg_json_url = (
-            "http://www.leg.state.nv.us/App/Legislator/A/api/%s/Legislator?house=%s"
-            % (session_slug, chamber_slug)
+            chamber_slug,
         )
 
         resp = json.loads(self.get(leg_json_url).text)
@@ -53,10 +50,7 @@ class NVPeopleScraper(Scraper):
 
             # fetch the json used by the page
             leg_details_url = (
-                "https://www.leg.state.nv.us/App/Legislator/A/api/{}/Legislator?id=".format(
-                    session_slug
-                )
-                + leg_id
+                "https://www.leg.state.nv.us/App/Legislator/A/api/{}/Legislator?id=".format(session_slug) + leg_id
             )
             leg_resp = json.loads(self.get(leg_details_url).text)
             details = leg_resp["legislatorDetails"]
@@ -70,17 +64,11 @@ class NVPeopleScraper(Scraper):
             phone = details["LCBPhone"]
             email = details["LCBEmail"]
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="District Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="District Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="District Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="District Office")
             if phone:
-                person.add_contact_detail(
-                    type="email", value=email, note="District Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="District Office")
             person.add_link(leg_details_url)
             person.add_source(leg_details_url)
             yield person

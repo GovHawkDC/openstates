@@ -27,9 +27,7 @@ class NJCommitteeScraper(Scraper, MDBMixin):
             elif abrv[0] == "S":
                 chamber = "upper"
 
-            org = Organization(
-                name=comm_name, chamber=chamber, classification="committee"
-            )
+            org = Organization(name=comm_name, chamber=chamber, classification="committee")
             org.add_source("http://www.njleg.state.nj.us/downloads.asp")
             org_dictionary[abrv] = org
 

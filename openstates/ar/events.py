@@ -72,12 +72,7 @@ class AREventScraper(Scraper):
                     continue
 
                 description = "%s MEETING" % comm
-                event = Event(
-                    name=description,
-                    start_date=when,
-                    location_name=location,
-                    description=description,
-                )
+                event = Event(name=description, start_date=when, location_name=location, description=description,)
                 event.add_source(url)
 
                 event.add_participant(comm, type="committee", note="host")

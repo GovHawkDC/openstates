@@ -47,9 +47,7 @@ class NJEventScraper(Scraper, MDBMixin):
 
         for com in com_csv:
             # map XYZ -> "Assembly/Senate _________ Committee"
-            self._committees[com["Code"]] = " ".join(
-                (chamber[com["House"]], com["Description"], "Committee")
-            )
+            self._committees[com["Code"]] = " ".join((chamber[com["House"]], com["Description"], "Committee"))
 
     def scrape(self, session=None):
         if session is None:
@@ -67,9 +65,7 @@ class NJEventScraper(Scraper, MDBMixin):
             related_bills = []
 
             for bill in re.findall(r"(A|S)(-)?(\d{4})", description):
-                related_bills.append(
-                    {"bill_id": "%s %s" % (bill[0], bill[2]), "descr": description}
-                )
+                related_bills.append({"bill_id": "%s %s" % (bill[0], bill[2]), "descr": description})
 
             date_time = "%s %s" % (record["Date"], record["Time"])
             date_time = dt.datetime.strptime(date_time, "%m/%d/%Y %I:%M %p")

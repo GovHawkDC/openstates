@@ -3,10 +3,7 @@ from pupa.scrape import Scraper, Organization
 from .util import get_client, get_url, backoff, SESSION_SITE_IDS
 
 
-CTTIE_URL = (
-    "http://www.house.ga.gov/COMMITTEES/en-US/committee.aspx?"
-    "Committee={cttie}&Session={sid}"
-)
+CTTIE_URL = "http://www.house.ga.gov/COMMITTEES/en-US/committee.aspx?" "Committee={cttie}&Session={sid}"
 
 
 class GACommitteeScraper(Scraper):
@@ -34,14 +31,10 @@ class GACommitteeScraper(Scraper):
             comname, typ, guid, code, description = [
                 committee[x] for x in ["Name", "Type", "Id", "Code", "Description"]
             ]
-            comchamber = {"House": "lower", "Senate": "upper", "Joint": "legislature"}[
-                typ
-            ]
+            comchamber = {"House": "lower", "Senate": "upper", "Joint": "legislature"}[typ]
             ctty_key = "{}-{}".format(typ, code)
             if ctty_key not in self.ctty_cache:
-                ctty = Organization(
-                    chamber=comchamber, name=comname, classification="committee"
-                )
+                ctty = Organization(chamber=comchamber, name=comname, classification="committee")
                 ctty.extras = {
                     "code": code,
                     "guid": guid,
@@ -65,18 +58,12 @@ class GACommitteeScraper(Scraper):
                         subctty = subctty_cache[subcommittee]
                     else:
                         # Create subcommittee.
-                        subctty = Organization(
-                            name=subcommittee,
-                            classification="committee",
-                            parent_id=ctty._id,
-                        )
+                        subctty = Organization(name=subcommittee, classification="committee", parent_id=ctty._id,)
                         subctty.extras = {
                             "guid": subguid,
                         }
                         subctty.add_source(self.csource)
-                        subctty.add_source(
-                            CTTIE_URL.format(**{"sid": sid, "cttie": guid,})
-                        )
+                        subctty.add_source(CTTIE_URL.format(**{"sid": sid, "cttie": guid,}))
                         subctty_cache[subcommittee] = subctty
                     membership = subctty.add_member(name, role)
                     membership.extras = {"guid": member["Member"]["Id"]}

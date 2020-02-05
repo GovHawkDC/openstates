@@ -56,9 +56,7 @@ class LAEventScraper(Scraper, LXMLMixin):
             when = datetime.datetime.strptime(date, "%B %d, %Y")
         else:
             all_day = False
-            when = datetime.datetime.strptime(
-                "%s %s" % (date, time), "%B %d, %Y %I:%M %p"
-            )
+            when = datetime.datetime.strptime("%s %s" % (date, time), "%B %d, %Y %I:%M %p")
 
         # when = self._tz.localize(when)
 
@@ -71,12 +69,7 @@ class LAEventScraper(Scraper, LXMLMixin):
         else:
             return
 
-        event = Event(
-            name=description,
-            start_date=self._tz.localize(when),
-            location_name=location,
-            all_day=all_day,
-        )
+        event = Event(name=description, start_date=self._tz.localize(when), location_name=location, all_day=all_day,)
         event.add_source(url)
 
         event.add_participant(title, note="host", type="committee")
@@ -116,9 +109,7 @@ class LAEventScraper(Scraper, LXMLMixin):
 
         for meeting in valid_meetings:
             try:
-                guid = meeting.xpath(
-                    "./td/a[descendant::img[contains(@src," '"PDF-AGENDA.png")]]/@href'
-                )[0]
+                guid = meeting.xpath("./td/a[descendant::img[contains(@src," '"PDF-AGENDA.png")]]/@href')[0]
                 # self.logger.debug(guid)
                 self.warning("logger.debug" + guid)
             except KeyError:
@@ -130,9 +121,7 @@ class LAEventScraper(Scraper, LXMLMixin):
 
             if "@" in meeting_string:
                 continue  # Contains no time data.
-            date, time, location = (
-                [s.strip() for s in meeting_string.split(",") if s] + [None] * 3
-            )[:3]
+            date, time, location = ([s.strip() for s in meeting_string.split(",") if s] + [None] * 3)[:3]
 
             # check for time in date because of missing comma
             time_srch = re.search(r"\d{2}:\d{2} (AM|PM)", date)
@@ -153,15 +142,9 @@ class LAEventScraper(Scraper, LXMLMixin):
             # self.logger.debug(description)
             self.warning("logger.debug" + description)
 
-            event = Event(
-                name=description,
-                start_date=self._tz.localize(when),
-                location_name=location,
-            )
+            event = Event(name=description, start_date=self._tz.localize(when), location_name=location,)
             event.add_source(url)
             event.add_participant(committee_name, type="committee", note="host")
-            event.add_document(
-                note="Agenda", url=guid, text="agenda", media_type="application/pdf"
-            )
+            event.add_document(note="Agenda", url=guid, text="agenda", media_type="application/pdf")
 
             yield event

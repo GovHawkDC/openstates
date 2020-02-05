@@ -29,14 +29,9 @@ class COLegislatorScraper(Scraper, LXMLMixin):
             ]
         # TODO: Filter by session when we find out the appropriate query params
         for co_internal_chamber_id in co_internal_chamber_ids:
-            chamber = (
-                "upper"
-                if co_internal_chamber_id == CHAMBER_TO_CO_INTERNAL_CHAMBER_ID["upper"]
-                else "lower"
-            )
+            chamber = "upper" if co_internal_chamber_id == CHAMBER_TO_CO_INTERNAL_CHAMBER_ID["upper"] else "lower"
             filtered_legislators_page_url = "{legislators_url}/?field_chamber_target_id={internal_chamber_id}".format(
-                legislators_url=self.legislators_url,
-                internal_chamber_id=co_internal_chamber_id,
+                legislators_url=self.legislators_url, internal_chamber_id=co_internal_chamber_id,
             )
 
             filtered_legislators_page = self.lxmlize(filtered_legislators_page_url)
@@ -44,9 +39,7 @@ class COLegislatorScraper(Scraper, LXMLMixin):
             # '//table' is simple and safe. There is only one table on the legislator listings page
             # and it is unlikely that more will be added.
             for row in filtered_legislators_page.xpath("//table//tr"):
-                legislator, profile_url = table_row_to_legislator_and_profile_url(
-                    row, chamber
-                )
+                legislator, profile_url = table_row_to_legislator_and_profile_url(row, chamber)
                 legislator_profile_page = self.lxmlize(profile_url)
                 legislator.image = get_photo_url(legislator_profile_page)
                 legislator.add_source(profile_url)
@@ -69,14 +62,7 @@ def co_address_from_role(role):
 def table_row_to_legislator_and_profile_url(table_row_element, chamber):
     """Derive a Legislator from an HTML table row lxml Element, and a link to their profile"""
     td_elements = table_row_element.xpath("td")
-    (
-        role_element,
-        name_element,
-        district_element,
-        party_element,
-        phone_element,
-        email_element,
-    ) = td_elements
+    (role_element, name_element, district_element, party_element, phone_element, email_element,) = td_elements
 
     # Name comes in the form Last, First
     # last_name_first_name = name_element.text_content().strip()
@@ -98,9 +84,7 @@ def table_row_to_legislator_and_profile_url(table_row_element, chamber):
 
     (profile_url,) = name_element.xpath("a/@href")
     print(chamber, district, party)
-    legislator = Person(
-        primary_org=chamber, name=full_name, district=district, party=party
-    )
+    legislator = Person(primary_org=chamber, name=full_name, district=district, party=party)
     legislator.add_contact_detail(type="address", value=address, note="Capitol Office")
     if phone:
         legislator.add_contact_detail(type="voice", value=phone, note="Capitol Office")

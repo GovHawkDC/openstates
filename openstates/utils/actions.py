@@ -16,9 +16,7 @@ class Rule(namedtuple("Rule", "regexes types stop attrs")):
     the action was listed in the wrong column.
     """
 
-    def __new__(
-        _cls, regexes, types=None, stop=False, flexible_whitespace=True, **kwargs
-    ):
+    def __new__(_cls, regexes, types=None, stop=False, flexible_whitespace=True, **kwargs):
         "Create new instance of Rule(regex, types, attrs, stop)"
 
         # Regexes can be a string, regex, or sequence.

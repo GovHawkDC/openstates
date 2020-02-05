@@ -60,15 +60,10 @@ class LACommitteeScraper(Scraper, LXMLMixin):
     def _scrape_lower_standing_committee(self, committee_name, url):
         page = self.lxmlize(url)
 
-        committee = Organization(
-            committee_name, chamber="lower", classification="committee"
-        )
+        committee = Organization(committee_name, chamber="lower", classification="committee")
         committee.add_source(url)
 
-        rows = page.xpath(
-            '//table[@id="body_ListView1_itemPlaceholderContainer"]'
-            '/tr[@class="linkStyle2"]'
-        )
+        rows = page.xpath('//table[@id="body_ListView1_itemPlaceholderContainer"]' '/tr[@class="linkStyle2"]')
 
         for row in rows:
             member_name = row.xpath("normalize-space(string(./td[1]/a))")
@@ -83,18 +78,14 @@ class LACommitteeScraper(Scraper, LXMLMixin):
     def _scrape_lower_standing_committees(self):
         url = "http://house.louisiana.gov/H_Reps/H_Reps_StandCmtees.aspx"
         page = self.lxmlize(url)
-        committee_cells = page.xpath(
-            '//div[@class="row1Cmtes clearfix"]/div[@id="links"]'
-        )
+        committee_cells = page.xpath('//div[@class="row1Cmtes clearfix"]/div[@id="links"]')
 
         for committee_cell in committee_cells:
             committee_link = committee_cell.xpath(".//a")[0]
             committee_url = committee_link.get("href")
             committee_name = committee_link.xpath("normalize-space(string())").strip()
 
-            yield from self._scrape_lower_standing_committee(
-                committee_name, committee_url
-            )
+            yield from self._scrape_lower_standing_committee(committee_name, committee_url)
 
     def _scrape_lower_special_committees(self):
         url = "http://house.louisiana.gov/H_Cmtes/SpecialCommittees.aspx"
@@ -111,14 +102,10 @@ class LACommitteeScraper(Scraper, LXMLMixin):
 
             chamber = "legislature" if committee_name.startswith("Joint") else "lower"
 
-            committee = Organization(
-                committee_name, chamber=chamber, classification="committee"
-            )
+            committee = Organization(committee_name, chamber=chamber, classification="committee")
             committee.add_source(url)
 
-            committee_memberlist = header.xpath(
-                './following-sibling::div[@class="pane"]' '//tr[@class="linkStyle2"]'
-            )
+            committee_memberlist = header.xpath('./following-sibling::div[@class="pane"]' '//tr[@class="linkStyle2"]')
 
             for row in committee_memberlist:
                 member_name = row.xpath("normalize-space(string(./th[1]))")

@@ -55,36 +55,25 @@ class OHEventScraper(Scraper):
                             continue
 
                         time = time.replace(".", "").upper()
-                        time = datetime.datetime.strptime(
-                            time + "_" + date, "%I:%M %p_%A, %B %d, %Y"
-                        )
+                        time = datetime.datetime.strptime(time + "_" + date, "%I:%M %p_%A, %B %d, %Y")
                         time = self._tz.localize(time)
 
                         location = location.strip()
 
                         description = "\n".join(
-                            [
-                                x.strip()
-                                for x in description.split("\n")
-                                if x.strip() and not x.strip()[0].isdigit()
-                            ]
+                            [x.strip() for x in description.split("\n") if x.strip() and not x.strip()[0].isdigit()]
                         )
 
                         if not description:
                             description = "[No description provided by state]"
 
                         event = Event(
-                            name=description,
-                            start_date=time,
-                            location_name=location,
-                            description=description,
+                            name=description, start_date=time, location_name=location, description=description,
                         )
                         event.add_source(PDF_URL)
                         event.add_participant(comm, type="committee", note="host")
                         for line in description.split("\n"):
-                            related_bill = re.search(
-                                r"(H\.?(?:[JC]\.?)?[BR]\.?\s+\d+)\s+(.*)$", line
-                            )
+                            related_bill = re.search(r"(H\.?(?:[JC]\.?)?[BR]\.?\s+\d+)\s+(.*)$", line)
                             if related_bill:
                                 (related_bill, relation) = related_bill.groups()
                                 relation = relation.strip()
@@ -129,9 +118,7 @@ class OHEventScraper(Scraper):
                         except AttributeError:
                             continue
 
-                        time = datetime.datetime.strptime(
-                            time + "_" + date, "%I:%M %p_%A, %B %d, %Y"
-                        )
+                        time = datetime.datetime.strptime(time + "_" + date, "%I:%M %p_%A, %B %d, %Y")
                         time = self._tz.localize(time)
 
                         location = location.strip()
@@ -151,18 +138,13 @@ class OHEventScraper(Scraper):
                             description = "[No description provided by state]"
 
                         event = Event(
-                            name=description,
-                            start_date=time,
-                            location_name=location,
-                            description=description,
+                            name=description, start_date=time, location_name=location, description=description,
                         )
 
                         event.add_source(PDF_URL)
                         event.add_participant(comm, type="committee", note="host")
                         for line in description.split("\n"):
-                            related_bill = re.search(
-                                r"(S\.?(?:[JC]\.?)?[BR]\.?\s+\d+)\s+(.*)$", line
-                            )
+                            related_bill = re.search(r"(S\.?(?:[JC]\.?)?[BR]\.?\s+\d+)\s+(.*)$", line)
                             if related_bill:
                                 (related_bill, relation) = related_bill.groups()
                                 relation = relation.strip()

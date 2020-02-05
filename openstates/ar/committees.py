@@ -27,10 +27,10 @@ class ARCommitteeScraper(Scraper):
         session_slug = get_slug_for_session(session)
         session_year = int(session[:4])
         odd_year = session_year if session_year % 2 else session_year - 1
-        base_url = (
-            "http://www.arkleg.state.ar.us/assembly/%s/%s/"
-            "Pages/Committees.aspx?committeetype="
-        ) % (odd_year, session_slug)
+        base_url = ("http://www.arkleg.state.ar.us/assembly/%s/%s/" "Pages/Committees.aspx?committeetype=") % (
+            odd_year,
+            session_slug,
+        )
 
         for chamber, url_ext in COMM_TYPES.items():
             chamber_url = base_url + url_ext
@@ -57,17 +57,13 @@ class ARCommitteeScraper(Scraper):
     def _fix_committee_case(self, subcommittee):
         """Properly capitalize the committee name.
         """
-        subcommittee = re.sub(
-            r"^(HOUSE|SENATE|JOINT)\s+", "", subcommittee.strip().title()
-        )
+        subcommittee = re.sub(r"^(HOUSE|SENATE|JOINT)\s+", "", subcommittee.strip().title())
 
         # Fix roman numeral capping.
         def replacer(m):
             return m.group().upper()
 
-        subcommittee = re.sub(
-            r"\b(VII|VII|III|IIV|IV|II|VI|IX|V|X)\b", replacer, subcommittee, flags=re.I
-        )
+        subcommittee = re.sub(r"\b(VII|VII|III|IIV|IV|II|VI|IX|V|X)\b", replacer, subcommittee, flags=re.I)
         return subcommittee
 
     def _fix_committee_name(self, committee, parent=None, subcommittee=False):
@@ -135,9 +131,7 @@ class ARCommitteeScraper(Scraper):
             subcommittee = page.xpath(xpath)
             if subcommittee:
                 subcommittee = page.xpath(xpath).pop(0)
-                subcommittee = self._fix_committee_name(
-                    subcommittee, parent=name, subcommittee=True
-                )
+                subcommittee = self._fix_committee_name(subcommittee, parent=name, subcommittee=True)
                 subcommittee = self._fix_committee_case(subcommittee)
             else:
                 subcommittee = None
@@ -169,8 +163,7 @@ class ARCommitteeScraper(Scraper):
             comm.add_member(member, role=mtype)
 
         for a in page.xpath(
-            '//table[@id="ctl00_m_g_a194465c_f092_46df_b753_'
-            '354150ac7dbd_ctl00_tblContainer"]//ul/li/a'
+            '//table[@id="ctl00_m_g_a194465c_f092_46df_b753_' '354150ac7dbd_ctl00_tblContainer"]//ul/li/a'
         ):
             sub_name = a.text.strip()
             sub_url = a.get("href").replace("../", "/")

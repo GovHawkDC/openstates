@@ -7,10 +7,7 @@ from pupa.utils import convert_pdf
 from pupa.scrape import Scraper, VoteEvent as Vote
 
 
-date_re = (
-    r".*(?P<date>(MONDAY|TUESDAY|WEDNESDAY|"
-    + r"THURSDAY|FRIDAY|SATURDAY|SUNDAY),\s\w+\s\d{1,2},\s\d{4}).*"
-)
+date_re = r".*(?P<date>(MONDAY|TUESDAY|WEDNESDAY|" + r"THURSDAY|FRIDAY|SATURDAY|SUNDAY),\s\w+\s\d{1,2},\s\d{4}).*"
 chamber_re = r".*JOURNAL OF THE ((HOUSE)|(SENATE)).*\d+.*DAY.*"
 page_re = r"Page\s\d+"
 
@@ -26,19 +23,10 @@ class NDVoteScraper(Scraper, LXMLMixin):
 
     def scrape_chamber(self, chamber, session):
         chamber_name = "house" if chamber == "lower" else "senate"
-        session_slug = {
-            "62": "62-2011",
-            "63": "63-2013",
-            "64": "64-2015",
-            "65": "65-2017",
-            "66": "66-2019",
-        }[session]
+        session_slug = {"62": "62-2011", "63": "63-2013", "64": "64-2015", "65": "65-2017", "66": "66-2019",}[session]
 
         # Open the index page of the session's Registers, and open each
-        url = "http://www.legis.nd.gov/assembly/%s/journals/%s-journal.html" % (
-            session_slug,
-            chamber_name,
-        )
+        url = "http://www.legis.nd.gov/assembly/%s/journals/%s-journal.html" % (session_slug, chamber_name,)
         page = self.lxmlize(url)
         pdfs = page.xpath("//a[contains(@href, '.pdf')]")
         for pdf in pdfs:
@@ -106,9 +94,7 @@ class NDVoteScraper(Scraper, LXMLMixin):
 
                     # ABSENT AND NOT VOTING marks the end of each motion name
                     # In this case, prepare to capture votes
-                    if line.strip().endswith("VOTING") or line.strip().endswith(
-                        "VOTING."
-                    ):
+                    if line.strip().endswith("VOTING") or line.strip().endswith("VOTING."):
                         in_motion = False
                         in_vote = True
 
@@ -136,35 +122,18 @@ class NDVoteScraper(Scraper, LXMLMixin):
                         and re.findall(r"(?i)(H|S|J)(C?)(B|R|M) (\d+)", line)
                         and not any(
                             x in line.lower()
-                            for x in [
-                                "passed",
-                                "adopted",
-                                "sustained",
-                                "prevailed",
-                                "lost",
-                                "failed",
-                            ]
+                            for x in ["passed", "adopted", "sustained", "prevailed", "lost", "failed",]
                         )
                     ):
                         bills.extend(re.findall(r"(?i)(H|S|J)(C?)(B|R|M) (\d+)", line))
 
                     elif cur_vote is not None and not any(
-                        x in line.lower()
-                        for x in [
-                            "passed",
-                            "adopted",
-                            "sustained",
-                            "prevailed",
-                            "lost",
-                            "failed",
-                        ]
+                        x in line.lower() for x in ["passed", "adopted", "sustained", "prevailed", "lost", "failed",]
                     ):
                         who = [x.strip() for x in line.split(";") if x.strip() != ""]
 
                         if name_may_be_continued:
-                            results[cur_vote][-1] = (
-                                results[cur_vote][-1] + " " + who.pop(0)
-                            )
+                            results[cur_vote][-1] = results[cur_vote][-1] + " " + who.pop(0)
 
                         name_may_be_continued = False if line.endswith(";") else True
 
@@ -172,15 +141,7 @@ class NDVoteScraper(Scraper, LXMLMixin):
 
                     # At the conclusion of a vote, save its data
                     elif any(
-                        x in line.lower()
-                        for x in [
-                            "passed",
-                            "adopted",
-                            "sustained",
-                            "prevailed",
-                            "lost",
-                            "failed",
-                        ]
+                        x in line.lower() for x in ["passed", "adopted", "sustained", "prevailed", "lost", "failed",]
                     ):
 
                         in_vote = False
@@ -204,9 +165,7 @@ class NDVoteScraper(Scraper, LXMLMixin):
 
                         # If votes are found in the motion name, throw an error
                         if "YEAS:" in cur_motion or "NAYS:" in cur_motion:
-                            raise AssertionError(
-                                "Vote data found in motion name: " + cur_motion
-                            )
+                            raise AssertionError("Vote data found in motion name: " + cur_motion)
 
                         # Use the collected results to determine who voted how
                         keys = {
@@ -286,15 +245,9 @@ class NDVoteScraper(Scraper, LXMLMixin):
 
                                 if motion_count != vote_count:
                                     self.warning(
-                                        "Motion text vote counts ({}) ".format(
-                                            motion_count
-                                        )
-                                        + "differed from roll call counts ({}) ".format(
-                                            vote_count
-                                        )
-                                        + "for {0} on {1}".format(
-                                            category_name, cur_bill_id
-                                        )
+                                        "Motion text vote counts ({}) ".format(motion_count)
+                                        + "differed from roll call counts ({}) ".format(vote_count)
+                                        + "for {0} on {1}".format(category_name, cur_bill_id)
                                     )
 
                                     for item in vote.counts:

@@ -6,10 +6,7 @@ _categorizer_rules = (
     (r"Referred to (?P<committees>.+)", "referral-committee"),
     (r"Re-(referred|committed) to (?P<committees>.+)", "referral-committee"),
     (r"(?i)(re-)?reported", "committee-passage"),
-    (
-        r"Reported with request to re-refer to (?P<committees>.+)",
-        ["referral-committee", "committee-passage"],
-    ),
+    (r"Reported with request to re-refer to (?P<committees>.+)", ["referral-committee", "committee-passage"],),
     (r"^Amended on", "amendment-passage"),
     (r"as amended", "amendment-passage"),
     # Governor.

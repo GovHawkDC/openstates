@@ -20,9 +20,7 @@ class TXBillScraper(Scraper, LXMLMixin):
         "H": "House Committee Report",
         "F": "Enrolled",
     }
-    companion_url = (
-        "https://capitol.texas.gov/BillLookup/Companions.aspx" "?LegSess={}&Bill={}"
-    )
+    companion_url = "https://capitol.texas.gov/BillLookup/Companions.aspx" "?LegSess={}&Bill={}"
 
     def _get_ftp_files(self, root, dir_):
         """ Recursively traverse an FTP directory, returning all files """
@@ -68,44 +66,34 @@ class TXBillScraper(Scraper, LXMLMixin):
         session_code = self._format_session(session)
 
         self.versions = []
-        version_files = self._get_ftp_files(
-            self._FTP_ROOT, "bills/{}/billtext/html".format(session_code)
-        )
+        version_files = self._get_ftp_files(self._FTP_ROOT, "bills/{}/billtext/html".format(session_code))
         for item in version_files:
             bill_id = item.split("/")[-1].split(".")[0]
             bill_id = " ".join(re.search(r"([A-Z]{2})R?0+(\d+)", bill_id).groups())
             self.versions.append((bill_id, item))
 
         self.analyses = []
-        analysis_files = self._get_ftp_files(
-            self._FTP_ROOT, "bills/{}/analysis/html".format(session_code)
-        )
+        analysis_files = self._get_ftp_files(self._FTP_ROOT, "bills/{}/analysis/html".format(session_code))
         for item in analysis_files:
             bill_id = item.split("/")[-1].split(".")[0]
             bill_id = " ".join(re.search(r"([A-Z]{2})R?0+(\d+)", bill_id).groups())
             self.analyses.append((bill_id, item))
 
         self.fiscal_notes = []
-        fiscal_note_files = self._get_ftp_files(
-            self._FTP_ROOT, "bills/{}/fiscalnotes/html".format(session_code)
-        )
+        fiscal_note_files = self._get_ftp_files(self._FTP_ROOT, "bills/{}/fiscalnotes/html".format(session_code))
         for item in fiscal_note_files:
             bill_id = item.split("/")[-1].split(".")[0]
             bill_id = " ".join(re.search(r"([A-Z]{2})R?0+(\d+)", bill_id).groups())
             self.fiscal_notes.append((bill_id, item))
 
         self.witnesses = []
-        witness_files = self._get_ftp_files(
-            self._FTP_ROOT, "bills/{}/witlistbill/html".format(session_code)
-        )
+        witness_files = self._get_ftp_files(self._FTP_ROOT, "bills/{}/witlistbill/html".format(session_code))
         for item in witness_files:
             bill_id = item.split("/")[-1].split(".")[0]
             bill_id = " ".join(re.search(r"([A-Z]{2})R?0+(\d+)", bill_id).groups())
             self.witnesses.append((bill_id, item))
 
-        history_files = self._get_ftp_files(
-            self._FTP_ROOT, "bills/{}/billhistory".format(session_code)
-        )
+        history_files = self._get_ftp_files(self._FTP_ROOT, "bills/{}/billhistory".format(session_code))
         for bill_url in history_files:
             if "house" in bill_url:
                 if "lower" in chambers:
@@ -137,13 +125,7 @@ class TXBillScraper(Scraper, LXMLMixin):
         else:
             raise ScrapeError("Invalid bill_id: %s" % bill_id)
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=bill_title,
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=bill_title, classification=bill_type,)
 
         bill.add_source(history_url)
 
@@ -153,17 +135,13 @@ class TXBillScraper(Scraper, LXMLMixin):
         versions = [x for x in self.versions if x[0] == bill_id]
         for version in versions:
             bill.add_version_link(
-                note=self.NAME_SLUGS[version[1][-5]],
-                url=version[1],
-                media_type="text/html",
+                note=self.NAME_SLUGS[version[1][-5]], url=version[1], media_type="text/html",
             )
 
         analyses = [x for x in self.analyses if x[0] == bill_id]
         for analysis in analyses:
             bill.add_document_link(
-                note="Analysis ({})".format(self.NAME_SLUGS[analysis[1][-5]]),
-                url=analysis[1],
-                media_type="text/html",
+                note="Analysis ({})".format(self.NAME_SLUGS[analysis[1][-5]]), url=analysis[1], media_type="text/html",
             )
 
         fiscal_notes = [x for x in self.fiscal_notes if x[0] == bill_id]
@@ -183,9 +161,7 @@ class TXBillScraper(Scraper, LXMLMixin):
             )
 
         for action in root.findall("actions/action"):
-            act_date = datetime.datetime.strptime(
-                action.findtext("date"), "%m/%d/%Y"
-            ).date()
+            act_date = datetime.datetime.strptime(action.findtext("date"), "%m/%d/%Y").date()
 
             action_number = action.find("actionNumber").text
             actor = {"H": "lower", "S": "upper", "E": "executive"}[action_number[0]]
@@ -232,9 +208,7 @@ class TXBillScraper(Scraper, LXMLMixin):
                     atype.append("introduction")
             elif desc == "Passed as amended":
                 atype = "passage"
-            elif desc.startswith("Referred to") or desc.startswith(
-                "Recommended to be sent to "
-            ):
+            elif desc.startswith("Referred to") or desc.startswith("Recommended to be sent to "):
                 atype = "referral-committee"
             elif desc == "Reported favorably w/o amendment(s)":
                 atype = "committee-passage"
@@ -249,12 +223,7 @@ class TXBillScraper(Scraper, LXMLMixin):
             else:
                 atype = None
 
-            act = bill.add_action(
-                action.findtext("description"),
-                act_date,
-                chamber=actor,
-                classification=atype,
-            )
+            act = bill.add_action(action.findtext("description"), act_date, chamber=actor, classification=atype,)
 
             if atype and "referral-committee" in atype:
                 repls = ["Referred to", "Recommended to be sent to "]
@@ -265,32 +234,21 @@ class TXBillScraper(Scraper, LXMLMixin):
 
         for author in root.findtext("authors").split(" | "):
             if author != "":
-                bill.add_sponsorship(
-                    author, classification="primary", entity_type="person", primary=True
-                )
+                bill.add_sponsorship(author, classification="primary", entity_type="person", primary=True)
         for coauthor in root.findtext("coauthors").split(" | "):
             if coauthor != "":
                 bill.add_sponsorship(
-                    coauthor,
-                    classification="cosponsor",
-                    entity_type="person",
-                    primary=False,
+                    coauthor, classification="cosponsor", entity_type="person", primary=False,
                 )
         for sponsor in root.findtext("sponsors").split(" | "):
             if sponsor != "":
                 bill.add_sponsorship(
-                    sponsor,
-                    classification="primary",
-                    entity_type="person",
-                    primary=True,
+                    sponsor, classification="primary", entity_type="person", primary=True,
                 )
         for cosponsor in root.findtext("cosponsors").split(" | "):
             if cosponsor != "":
                 bill.add_sponsorship(
-                    cosponsor,
-                    classification="cosponsor",
-                    entity_type="person",
-                    primary=False,
+                    cosponsor, classification="cosponsor", entity_type="person", primary=False,
                 )
 
         if root.findtext("companions"):
@@ -300,8 +258,7 @@ class TXBillScraper(Scraper, LXMLMixin):
 
     def _get_companion(self, bill):
         url = self.companion_url.format(
-            self._format_session(bill.legislative_session),
-            self._format_bill_id(bill.identifier),
+            self._format_session(bill.legislative_session), self._format_bill_id(bill.identifier),
         )
         page = self.lxmlize(url)
         links = page.xpath('//table[@id="Table6"]//a')
@@ -309,9 +266,7 @@ class TXBillScraper(Scraper, LXMLMixin):
             parsed = urlparse.urlparse(link.attrib["href"])
             query = urlparse.parse_qs(parsed.query)
             bill.add_related_bill(
-                identifier=query["Bill"][0],
-                legislative_session=query["LegSess"][0],
-                relation_type="companion",
+                identifier=query["Bill"][0], legislative_session=query["LegSess"][0], relation_type="companion",
             )
 
     def _format_session(self, session):

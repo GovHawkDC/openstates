@@ -5,11 +5,7 @@ import lxml.html
 
 class DCCommitteeScraper(Scraper):
     def remove_title(self, name):
-        return (
-            re.sub(r"(Ward \d+\s+)*Councilmember\s*", "", name)
-            .replace("At-Large", "")
-            .strip()
-        )
+        return re.sub(r"(Ward \d+\s+)*Councilmember\s*", "", name).replace("At-Large", "").strip()
 
     def scrape(self):
         com_url = "http://dccouncil.us/committees"
@@ -27,16 +23,10 @@ class DCCommitteeScraper(Scraper):
             comm_page.make_links_absolute(url)
 
             # classify these as belonging to the legislature
-            committee = Organization(
-                name=name, classification="committee", chamber="legislature"
-            )
+            committee = Organization(name=name, classification="committee", chamber="legislature")
 
             if comm_page.xpath('//p[@class="page-summary"]'):
-                summary = (
-                    comm_page.xpath('//p[@class="page-summary"]')[0]
-                    .text_content()
-                    .strip()
-                )
+                summary = comm_page.xpath('//p[@class="page-summary"]')[0].text_content().strip()
                 committee.extras["summary"] = summary
 
             chair = comm_page.xpath("//h4[text()='Chairperson']/following-sibling::p")
@@ -44,9 +34,7 @@ class DCCommitteeScraper(Scraper):
             chair_name = self.remove_title(chair_name)
             committee.add_member(chair_name, role="chair")
 
-            members = comm_page.xpath(
-                "//h4[text()='Councilmembers']/following-sibling::ul"
-            )
+            members = comm_page.xpath("//h4[text()='Councilmembers']/following-sibling::ul")
             members = members[0].xpath("./li")
 
             for m in members:

@@ -8,9 +8,7 @@ from pupa.scrape import Scraper, Event
 
 class MOEventScraper(Scraper, LXMLMixin):
     _TZ = pytz.timezone("America/Chicago")
-    bill_link_xpath = (
-        './/a[contains(@href, "Bill.aspx") ' 'or contains(@href, "bill.aspx")]/text()'
-    )
+    bill_link_xpath = './/a[contains(@href, "Bill.aspx") ' 'or contains(@href, "bill.aspx")]/text()'
 
     def scrape(
         self, chamber=None,
@@ -42,19 +40,13 @@ class MOEventScraper(Scraper, LXMLMixin):
             when_time = self.row_content(page, "Time:")
             location = self.row_content(page, "Room:")
 
-            location = "{}, {}".format(
-                location, "201 W Capitol Ave, Jefferson City, MO 65101"
-            )
+            location = "{}, {}".format(location, "201 W Capitol Ave, Jefferson City, MO 65101")
 
             # com = self.row_content(page, 'Committee:')
-            com = page.xpath(
-                '//td[descendant::b[contains(text(),"Committee")]]/a/text()'
-            )[0]
+            com = page.xpath('//td[descendant::b[contains(text(),"Committee")]]/a/text()')[0]
             com = com.split(", Senator")[0].strip()
 
-            start_date = self._TZ.localize(
-                dateutil.parser.parse("{} {}".format(when_date, when_time))
-            )
+            start_date = self._TZ.localize(dateutil.parser.parse("{} {}".format(when_date, when_time)))
 
             event = Event(start_date=start_date, name=com, location_name=location)
 
@@ -103,9 +95,7 @@ class MOEventScraper(Scraper, LXMLMixin):
         location = self.table_row_content(page, "Location:")
 
         if "house hearing room" in location.lower():
-            location = "{}, {}".format(
-                location, "201 W Capitol Ave, Jefferson City, MO 65101"
-            )
+            location = "{}, {}".format(location, "201 W Capitol Ave, Jefferson City, MO 65101")
 
         # fix some broken times, e.g. '12 :00'
         when_time = when_time.replace(" :", ":")
@@ -115,9 +105,7 @@ class MOEventScraper(Scraper, LXMLMixin):
             when_time = when_time.split("AM", 1)[0]
             when_time = when_time.split("PM", 1)[0]
 
-        start_date = self._TZ.localize(
-            dateutil.parser.parse("{} {}".format(when_date, when_time))
-        )
+        start_date = self._TZ.localize(dateutil.parser.parse("{} {}".format(when_date, when_time)))
 
         event = Event(start_date=start_date, name=com, location_name=location)
 
@@ -128,10 +116,7 @@ class MOEventScraper(Scraper, LXMLMixin):
         )
 
         # different from general MO link xpath due to the <b>
-        house_link_xpath = (
-            './/a[contains(@href, "Bill.aspx") '
-            'or contains(@href, "bill.aspx")]/b/text()'
-        )
+        house_link_xpath = './/a[contains(@href, "Bill.aspx") ' 'or contains(@href, "bill.aspx")]/b/text()'
 
         for bill_title in page.xpath(house_link_xpath):
             bill_no = bill_title.split("--")[0].strip()
@@ -145,18 +130,14 @@ class MOEventScraper(Scraper, LXMLMixin):
     # Given <td><b>header</b> other text</td>,
     # return 'other text'
     def row_content(self, page, header):
-        content = page.xpath(
-            '//td[descendant::b[contains(text(),"{}")]]/text()'.format(header)
-        )
+        content = page.xpath('//td[descendant::b[contains(text(),"{}")]]/text()'.format(header))
         if len(content) > 0:
             return content[0].strip()
         else:
             return ""
 
     def table_row_content(self, page, header):
-        content = page.xpath(
-            'string(.//tr[td[contains(string(.), "{}")]]/td[2])'.format(header)
-        )
+        content = page.xpath('string(.//tr[td[contains(string(.), "{}")]]/td[2])'.format(header))
         if len(content) > 0:
             return content.strip()
         else:

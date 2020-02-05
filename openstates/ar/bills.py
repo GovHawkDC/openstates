@@ -61,13 +61,7 @@ class ARBillScraper(Scraper):
             if row[-1] != self.slug:
                 continue
 
-            bill = Bill(
-                bill_id,
-                legislative_session=session,
-                chamber=chamber,
-                title=row[3],
-                classification=bill_type,
-            )
+            bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=row[3], classification=bill_type,)
             bill.add_source(url)
 
             primary = row[11]
@@ -76,15 +70,12 @@ class ARBillScraper(Scraper):
 
             if primary:
                 bill.add_sponsorship(
-                    primary,
-                    classification="primary",
-                    entity_type="person",
-                    primary=True,
+                    primary, classification="primary", entity_type="person", primary=True,
                 )
 
-            version_url = (
-                "ftp://www.arkleg.state.ar.us/Bills/"
-                "%s/Public/Searchable/%s.pdf" % (self.slug, bill_id.replace(" ", ""))
+            version_url = "ftp://www.arkleg.state.ar.us/Bills/" "%s/Public/Searchable/%s.pdf" % (
+                self.slug,
+                bill_id.replace(" ", ""),
             )
             bill.add_version_link(bill_id, version_url, media_type="application/pdf")
 
@@ -107,18 +98,14 @@ class ARBillScraper(Scraper):
 
             actor = {"H": "lower", "S": "upper"}[row[7].upper()]
 
-            date = TIMEZONE.localize(
-                datetime.datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S.%f")
-            )
+            date = TIMEZONE.localize(datetime.datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S.%f"))
             date = "{:%Y-%m-%d}".format(date)
             action = row[6]
 
             action_type = []
             if action.startswith("Filed"):
                 action_type.append("introduction")
-            elif action.startswith("Read first time") or action.startswith(
-                "Read the first time"
-            ):
+            elif action.startswith("Read first time") or action.startswith("Read the first time"):
                 action_type.append("reading-1")
             if re.match("Read the first time, .*, read the second time", action):
                 action_type.append("reading-2")
@@ -147,9 +134,7 @@ class ARBillScraper(Scraper):
 
             if not action:
                 action = "[No text provided]"
-            self.bills[bill_id].add_action(
-                action, date, chamber=actor, classification=action_type
-            )
+            self.bills[bill_id].add_action(action, date, chamber=actor, classification=action_type)
 
     def scrape_bill_page(self, bill):
         # We need to scrape each bill page in order to grab associated votes.
@@ -159,9 +144,10 @@ class ARBillScraper(Scraper):
         session_year = int(self.slug[:4])
         odd_year = session_year if session_year % 2 else session_year - 1
         measureno = bill.identifier.replace(" ", "")
-        url = (
-            "http://www.arkleg.state.ar.us/assembly/%s/%s/"
-            "Pages/BillInformation.aspx?measureno=%s" % (odd_year, self.slug, measureno)
+        url = "http://www.arkleg.state.ar.us/assembly/%s/%s/" "Pages/BillInformation.aspx?measureno=%s" % (
+            odd_year,
+            self.slug,
+            measureno,
         )
         page = self.get(url).text
         bill.add_source(url)
@@ -169,9 +155,7 @@ class ARBillScraper(Scraper):
         for link in page.xpath("//a[contains(@href, 'Amendments')]"):
             num = link.xpath("string(../../td[2])")
             name = "Amendment %s" % num
-            bill.add_version_link(
-                name, link.attrib["href"], media_type="application/pdf"
-            )
+            bill.add_version_link(name, link.attrib["href"], media_type="application/pdf")
 
         try:
             cosponsor_link = page.xpath("//a[contains(@href, 'CoSponsors')]")[0]
@@ -182,9 +166,7 @@ class ARBillScraper(Scraper):
 
         for link in page.xpath("//a[contains(@href, 'votes.aspx')]"):
             date = link.xpath("string(../../td[2])")
-            date = TIMEZONE.localize(
-                datetime.datetime.strptime(date, "%m/%d/%Y %I:%M:%S %p")
-            )
+            date = TIMEZONE.localize(datetime.datetime.strptime(date, "%m/%d/%Y %I:%M:%S %p"))
 
             motion = link.xpath("string(../../td[3])")
             yield from self.scrape_vote(bill, date, motion, link.attrib["href"])
@@ -230,9 +212,7 @@ class ARBillScraper(Scraper):
             vote.set_count("other", other_count)
             vote.add_source(url)
 
-            xpath = (
-                '//*[contains(@class, "ms-standardheader")]/' "following-sibling::table"
-            )
+            xpath = '//*[contains(@class, "ms-standardheader")]/' "following-sibling::table"
             divs = page.xpath(xpath)
 
             for (voteval, div) in zip(votevals, divs):

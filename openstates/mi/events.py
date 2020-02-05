@@ -29,10 +29,7 @@ class MIEventScraper(Scraper):
             return
 
         # Wednesday, 5/16/2012 3:00 pm
-        datetime = "%s %s" % (
-            metainf["Date"]["txt"],
-            metainf["Time"]["txt"].replace(".", ""),
-        )
+        datetime = "%s %s" % (metainf["Date"]["txt"], metainf["Time"]["txt"].replace(".", ""),)
         if "Cancelled" in datetime:
             return
 
@@ -69,9 +66,7 @@ class MIEventScraper(Scraper):
         if chamber == "other":
             chamber = "joint"
 
-        event = Event(
-            name=title, start_date=self._tz.localize(datetime), location_name=where,
-        )
+        event = Event(name=title, start_date=self._tz.localize(datetime), location_name=where,)
         event.add_source(url)
         event.add_source(mi_events)
 
@@ -81,9 +76,7 @@ class MIEventScraper(Scraper):
         else:
             self.warning("No chair found for event '{}'".format(title))
 
-        event.add_participant(
-            metainf["Committee"]["txt"], type="committee", note="host"
-        )
+        event.add_participant(metainf["Committee"]["txt"], type="committee", note="host")
 
         agenda = metainf["Agenda"]["obj"]
         agendas = agenda.text_content().split("\r")

@@ -24,62 +24,18 @@ class Florida(Jurisdiction):
         # "events": FlEventScraper,
     }
     legislative_sessions = [
-        {
-            "name": "2011 Regular Session",
-            "identifier": "2011",
-            "classification": "primary",
-        },
-        {
-            "name": "2012 Regular Session",
-            "identifier": "2012",
-            "classification": "primary",
-        },
-        {
-            "name": "2012 Extraordinary Apportionment Session",
-            "identifier": "2012B",
-            "classification": "special",
-        },
-        {
-            "name": "2013 Regular Session",
-            "identifier": "2013",
-            "classification": "primary",
-        },
-        {
-            "name": "2014 Regular Session",
-            "identifier": "2014",
-            "classification": "primary",
-        },
-        {
-            "name": "2014 Special Session A",
-            "identifier": "2014A",
-            "classification": "special",
-        },
+        {"name": "2011 Regular Session", "identifier": "2011", "classification": "primary",},
+        {"name": "2012 Regular Session", "identifier": "2012", "classification": "primary",},
+        {"name": "2012 Extraordinary Apportionment Session", "identifier": "2012B", "classification": "special",},
+        {"name": "2013 Regular Session", "identifier": "2013", "classification": "primary",},
+        {"name": "2014 Regular Session", "identifier": "2014", "classification": "primary",},
+        {"name": "2014 Special Session A", "identifier": "2014A", "classification": "special",},
         # data for the below
-        {
-            "name": "2015 Regular Session",
-            "identifier": "2015",
-            "classification": "primary",
-        },
-        {
-            "name": "2015 Special Session A",
-            "identifier": "2015A",
-            "classification": "special",
-        },
-        {
-            "name": "2015 Special Session B",
-            "identifier": "2015B",
-            "classification": "special",
-        },
-        {
-            "name": "2015 Special Session C",
-            "identifier": "2015C",
-            "classification": "special",
-        },
-        {
-            "name": "2016 Regular Session",
-            "identifier": "2016",
-            "classification": "primary",
-        },
+        {"name": "2015 Regular Session", "identifier": "2015", "classification": "primary",},
+        {"name": "2015 Special Session A", "identifier": "2015A", "classification": "special",},
+        {"name": "2015 Special Session B", "identifier": "2015B", "classification": "special",},
+        {"name": "2015 Special Session C", "identifier": "2015C", "classification": "special",},
+        {"name": "2016 Regular Session", "identifier": "2016", "classification": "primary",},
         {
             "name": "2017 Regular Session",
             "identifier": "2017",
@@ -87,11 +43,7 @@ class Florida(Jurisdiction):
             "start_date": "2017-03-07",
             "end_date": "2017-05-05",
         },
-        {
-            "name": "2017 Special Session A",
-            "identifier": "2017A",
-            "classification": "special",
-        },
+        {"name": "2017 Special Session A", "identifier": "2017A", "classification": "special",},
         {
             "name": "2018 Regular Session",
             "identifier": "2018",
@@ -160,14 +112,8 @@ class Florida(Jurisdiction):
     def get_organizations(self):
         legis = Organization(name="Florida Legislature", classification="legislature")
 
-        upper = Organization(
-            "Florida Senate", classification="upper", parent_id=legis._id
-        )
-        lower = Organization(
-            "Florida House of Representatives",
-            classification="lower",
-            parent_id=legis._id,
-        )
+        upper = Organization("Florida Senate", classification="upper", parent_id=legis._id)
+        lower = Organization("Florida House of Representatives", classification="lower", parent_id=legis._id,)
 
         yield legis
         yield upper

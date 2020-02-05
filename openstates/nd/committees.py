@@ -7,9 +7,7 @@ class NDCommitteeScraper(Scraper):
         page = self.get(href).text
         page = lxml.html.fromstring(page)
         page.make_links_absolute(href)
-        members = page.xpath(
-            "//div[@class='view-content']" "//a[contains(@href, 'members')]"
-        )
+        members = page.xpath("//div[@class='view-content']" "//a[contains(@href, 'members')]")
 
         if "/joint/" in href:
             chamber = "legislature"
@@ -26,11 +24,7 @@ class NDCommitteeScraper(Scraper):
         for a in members:
             member = a.text
             role = a.xpath("ancestor::div/h2[@class='pane-title']/text()")[0].strip()
-            role = {
-                "Legislative Members": "member",
-                "Chairman": "chair",
-                "Vice Chairman": "member",
-            }[role]
+            role = {"Legislative Members": "member", "Chairman": "chair", "Vice Chairman": "member",}[role]
 
             if member is None or member.startswith("District"):
                 continue

@@ -26,10 +26,7 @@ def categorize_action(action):
         ("Introduced and Pass(ed)? First Reading", ["introduction", "reading-1"]),
         ("Introduced", "introduction"),
         ("Re(-re)?ferred to ", "referral-committee"),
-        (
-            "Passed Second Reading .* referred to the committee",
-            ["reading-2", "referral-committee"],
-        ),
+        ("Passed Second Reading .* referred to the committee", ["reading-2", "referral-committee"],),
         (".* that the measure be PASSED", "committee-passage-favorable"),
         ("Received from (House|Senate)", "introduction"),
         ("Floor amendment .* offered", "amendment-introduction"),
@@ -94,9 +91,7 @@ class HIBillScraper(Scraper):
         "CONAM": "Constitutional Amendment",
     }
 
-    def parse_bill_actions_table(
-        self, bill, action_table, bill_id, session, url, bill_chamber
-    ):
+    def parse_bill_actions_table(self, bill, action_table, bill_id, session, url, bill_chamber):
 
         # vote types that have been reconsidered since last vote of that type
         reconsiderations = set()
@@ -128,9 +123,7 @@ class HIBillScraper(Scraper):
 
             if vote:
                 v, motion = vote
-                motion_text = (
-                    ("Reconsider: " + motion) if actor in reconsiderations else motion
-                )
+                motion_text = ("Reconsider: " + motion) if actor in reconsiderations else motion
                 vote = VoteEvent(
                     start_date=date,
                     chamber=actor,
@@ -239,25 +232,15 @@ class HIBillScraper(Scraper):
         bill_id = "{}{}".format(qs["billtype"], qs["billnumber"])
         versions = bill_page.xpath("//table[contains(@id, 'GridViewVersions')]")[0]
 
-        metainf_table = bill_page.xpath(
-            '//div[contains(@id, "itemPlaceholder")]//table[1]'
-        )[0]
-        action_table = bill_page.xpath(
-            '//div[contains(@id, "UpdatePanel1")]//table[1]'
-        )[0]
+        metainf_table = bill_page.xpath('//div[contains(@id, "itemPlaceholder")]//table[1]')[0]
+        action_table = bill_page.xpath('//div[contains(@id, "UpdatePanel1")]//table[1]')[0]
 
         meta = self.parse_bill_metainf_table(metainf_table)
 
         subs = [s.strip() for s in meta["Report Title"].split(";")]
         if "" in subs:
             subs.remove("")
-        b = Bill(
-            bill_id,
-            session,
-            meta["Measure Title"],
-            chamber=chamber,
-            classification=bill_type,
-        )
+        b = Bill(bill_id, session, meta["Measure Title"], chamber=chamber, classification=bill_type,)
         if meta["Description"]:
             b.add_abstract(meta["Description"], "description")
         for subject in subs:
@@ -273,12 +256,8 @@ class HIBillScraper(Scraper):
                 legislative_session=prior_session,
                 relation_type="companion",
             )
-        if bill_page.xpath(
-            "//table[@id='ContentPlaceHolderCol1_GridViewStatus']/tr/td/font/text()"
-        ):
-            prior = bill_page.xpath(
-                "//table[@id='ContentPlaceHolderCol1_GridViewStatus']/tr/td/font/text()"
-            )[-1]
+        if bill_page.xpath("//table[@id='ContentPlaceHolderCol1_GridViewStatus']/tr/td/font/text()"):
+            prior = bill_page.xpath("//table[@id='ContentPlaceHolderCol1_GridViewStatus']/tr/td/font/text()")[-1]
             if "carried over" in prior.lower():
                 b.add_related_bill(
                     identifier=bill_id.replace(u"\xa0", " "),
@@ -292,9 +271,7 @@ class HIBillScraper(Scraper):
         self.parse_testimony(b, bill_page)
         self.parse_cmte_reports(b, bill_page)
 
-        yield from self.parse_bill_actions_table(
-            b, action_table, bill_id, session, url, chamber
-        )
+        yield from self.parse_bill_actions_table(b, action_table, bill_id, session, url, chamber)
         yield b
 
     def parse_vote(self, action):
@@ -318,11 +295,7 @@ class HIBillScraper(Scraper):
             if i["identifier"] == session:
                 session_urlslug = i["_scraped_name"]
         report_page_url = create_bill_report_url(chamber, session_urlslug, billtype)
-        billtype_map = {
-            "bill": "bill",
-            "cr": "concurrent resolution",
-            "r": "resolution",
-        }[billtype]
+        billtype_map = {"bill": "bill", "cr": "concurrent resolution", "r": "resolution",}[billtype]
 
         list_html = self.get(report_page_url).text
         list_page = lxml.html.fromstring(list_html)

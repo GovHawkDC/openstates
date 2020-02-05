@@ -65,19 +65,14 @@ _ACTIONS = (
     # committee actions
     (
         r"rpt prt - to\s(\w+/?\s?\w+)",
-        lambda mch, ch: ["referral-committee"]
-        if mch.groups()[0] in _COMMITTEES[ch]
-        else "other",
+        lambda mch, ch: ["referral-committee"] if mch.groups()[0] in _COMMITTEES[ch] else "other",
     ),
     # it is difficult to figure out which committee passed/reported out a bill
     # but i guess we at least know that only committees report out
     (r"rpt out - rec d/p", "committee-passage-favorable"),
     (r"^rpt out", "committee-passage"),
     (r"^rpt out", "committee-passage"),
-    (
-        r"Reported out of Committee with Do Pass Recommendation",
-        "committee-passage-favorable",
-    ),
+    (r"Reported out of Committee with Do Pass Recommendation", "committee-passage-favorable",),
     (r"Reported out of Committee without Recommendation", "committee-passage"),
     (r"^Reported Signed by Governor", "executive-signature"),
     (r"^Signed by Governor", "executive-signature"),
@@ -101,11 +96,7 @@ _ACTIONS = (
     # rules suspended
     (
         r"^Rls susp - (ADOPTED|PASSED|FAILED)",
-        lambda mch, ch: {
-            "ADOPTED": "passage",
-            "PASSED": "passage",
-            "FAILED": "failure",
-        }[mch.groups()[0]],
+        lambda mch, ch: {"ADOPTED": "passage", "PASSED": "passage", "FAILED": "failure",}[mch.groups()[0]],
     ),
     (r"^to governor", "executive-receipt"),
     (r"^Governor signed", "executive-signature"),
@@ -147,9 +138,7 @@ class IDBillScraper(Scraper):
     def scrape_subjects(self, session):
         self._subjects = defaultdict(list)
 
-        url = (
-            "https://legislature.idaho.gov/sessioninfo" "/{}/legislation/topicind/"
-        ).format(session)
+        url = ("https://legislature.idaho.gov/sessioninfo" "/{}/legislation/topicind/").format(session)
         html = self.get(url).text
         doc = lxml.html.fromstring(html)
 
@@ -185,8 +174,7 @@ class IDBillScraper(Scraper):
         # 'H' or 'S' to make sure I dont get any links from the menus
         # might not be necessary
         bill_rows = html.xpath(
-            '//tr[contains(@id, "bill") and '
-            'starts-with(descendant::td/a/text(), "%s")]' % _CHAMBERS[chamber][0]
+            '//tr[contains(@id, "bill") and ' 'starts-with(descendant::td/a/text(), "%s")]' % _CHAMBERS[chamber][0]
         )
         for row in bill_rows:
             matches = re.match(r"([A-Z]*)([0-9]+)", row[0].text_content().strip())
@@ -202,18 +190,12 @@ class IDBillScraper(Scraper):
         url = BILL_URL % (session, bill_id.replace(" ", ""))
         bill_page = self.get(url).text
         html = lxml.html.fromstring(bill_page)
-        html.make_links_absolute(
-            "http://legislature.idaho.gov/legislation/%s/" % session
-        )
+        html.make_links_absolute("http://legislature.idaho.gov/legislation/%s/" % session)
         bill_tables = html.xpath('//table[contains(@class, "bill-table")]')
         title = bill_tables[1].text_content().strip()
         bill_type = get_bill_type(bill_id)
         bill = Bill(
-            legislative_session=session,
-            chamber=chamber,
-            identifier=bill_id,
-            title=title,
-            classification=bill_type,
+            legislative_session=session, chamber=chamber, identifier=bill_id, title=title, classification=bill_type,
         )
         bill.add_source(url)
         for subject in self._subjects[bill_id.replace(" ", "")]:
@@ -230,9 +212,7 @@ class IDBillScraper(Scraper):
             if "Engrossment" in name or "Bill Text" in name or "Amendment" in name:
                 bill.add_version_link(note=name, url=href, media_type="application/pdf")
             else:
-                bill.add_document_link(
-                    note=name, url=href, media_type="application/pdf"
-                )
+                bill.add_document_link(note=name, url=href, media_type="application/pdf")
 
         def _split(string):
             return re.split(r"\w+[,|AND]\s+", string)
@@ -243,20 +223,14 @@ class IDBillScraper(Scraper):
             for sponsors in sponsor_lists[1:]:
                 if "COMMITTEE" in sponsors.upper():
                     bill.add_sponsorship(
-                        name=sponsors.strip(),
-                        entity_type="organization",
-                        primary=True,
-                        classification="primary",
+                        name=sponsors.strip(), entity_type="organization", primary=True, classification="primary",
                     )
                 else:
                     for person in _split(sponsors):
                         person = person.strip()
                         if person != "":
                             bill.add_sponsorship(
-                                classification="primary",
-                                name=person,
-                                entity_type="person",
-                                primary=True,
+                                classification="primary", name=person, entity_type="person", primary=True,
                             )
 
         actor = chamber
@@ -274,9 +248,7 @@ class IDBillScraper(Scraper):
                 last_date = date
             else:
                 date = last_date
-            date = datetime.datetime.strptime(
-                date + "/" + session[0:4], "%m/%d/%Y"
-            ).strftime("%Y-%m-%d")
+            date = datetime.datetime.strptime(date + "/" + session[0:4], "%m/%d/%Y").strftime("%Y-%m-%d")
             if action.startswith("House"):
                 actor = "lower"
             elif action.startswith("Senate"):
@@ -284,9 +256,7 @@ class IDBillScraper(Scraper):
 
             # votes
             if "AYES" in action or "NAYS" in action:
-                yield from self.parse_vote(
-                    actor, date, row[2], session, bill_id, chamber, url
-                )
+                yield from self.parse_vote(actor, date, row[2], session, bill_id, chamber, url)
                 # bill.add_vote_event(vote)
             # some td's text is seperated by br elements
             if len(row[2]):
@@ -313,11 +283,7 @@ class IDBillScraper(Scraper):
         if name_text:
             name_text = name_text.replace(u"\xa0--\xa0", "")
             name_text = name_text.replace(u"\u00a0", " ")
-            name_list = [
-                name.replace(u"\u2013", "").strip()
-                for name in name_text.split(",")
-                if name
-            ]
+            name_list = [name.replace(u"\u2013", "").strip() for name in name_text.split(",") if name]
             name_list = [name.split("(")[0] for name in name_list]
             return name_list
         return []
@@ -329,9 +295,7 @@ class IDBillScraper(Scraper):
         spans = row.xpath(".//span")
         motion = row.text.replace(u"\u00a0", " ").replace("-", "").strip()
         motion = motion if motion else "passage"
-        passed, yes_count, no_count, other_count = (
-            spans[0].text_content().rsplit("-", 3)
-        )
+        passed, yes_count, no_count, other_count = spans[0].text_content().rsplit("-", 3)
         yes_votes = self.get_names(spans[1].tail)
         no_votes = self.get_names(spans[2].tail)
 

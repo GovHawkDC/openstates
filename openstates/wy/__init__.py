@@ -20,42 +20,12 @@ class Wyoming(Jurisdiction):
         # 'committees': WYCommitteeScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2011",
-            "classification": "primary",
-            "identifier": "2011",
-            "name": "2011",
-        },
-        {
-            "_scraped_name": "2012",
-            "classification": "special",
-            "identifier": "2012",
-            "name": "2012",
-        },
-        {
-            "_scraped_name": "2013",
-            "classification": "primary",
-            "identifier": "2013",
-            "name": "2013",
-        },
-        {
-            "_scraped_name": "2014",
-            "classification": "primary",
-            "identifier": "2014",
-            "name": "2014",
-        },
-        {
-            "_scraped_name": "2015",
-            "classification": "primary",
-            "identifier": "2015",
-            "name": "2015",
-        },
-        {
-            "_scraped_name": "2016",
-            "classification": "primary",
-            "identifier": "2016",
-            "name": "2016",
-        },
+        {"_scraped_name": "2011", "classification": "primary", "identifier": "2011", "name": "2011",},
+        {"_scraped_name": "2012", "classification": "special", "identifier": "2012", "name": "2012",},
+        {"_scraped_name": "2013", "classification": "primary", "identifier": "2013", "name": "2013",},
+        {"_scraped_name": "2014", "classification": "primary", "identifier": "2014", "name": "2014",},
+        {"_scraped_name": "2015", "classification": "primary", "identifier": "2015", "name": "2015",},
+        {"_scraped_name": "2016", "classification": "primary", "identifier": "2016", "name": "2016",},
         {
             "_scraped_name": "2017",
             "classification": "primary",
@@ -110,9 +80,7 @@ class Wyoming(Jurisdiction):
         legislature_name = "Wyoming State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Governor of Wyoming", classification="executive")

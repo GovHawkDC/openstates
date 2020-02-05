@@ -216,9 +216,7 @@ class NMVoteScraper(Scraper):
                 if not sv_text:
                     continue
 
-                vote = self.parse_senate_vote(
-                    sv_text, doc_path + fname, session, bill_id
-                )
+                vote = self.parse_senate_vote(sv_text, doc_path + fname, session, bill_id)
                 if not vote:
                     self.warning("Bad parse on the senate vote for {}".format(bill_id))
                 else:
@@ -228,9 +226,7 @@ class NMVoteScraper(Scraper):
                 hv_text = self.scrape_vote_text(doc_path + fname)
                 if not hv_text:
                     continue
-                vote = self.parse_house_vote(
-                    hv_text, doc_path + fname, session, bill_id
-                )
+                vote = self.parse_house_vote(hv_text, doc_path + fname, session, bill_id)
                 if not vote:
                     self.warning("Bad parse on the house vote for {}".format(bill_id))
                 else:
@@ -265,9 +261,7 @@ class NMVoteScraper(Scraper):
         except ValueError:
             # This _should not be necessary_; fix ticketed out in
             # https://github.com/openstates/openstates/issues/2102
-            self.warning(
-                "Found inconsistencies; throwing out individual votes, keeping totals"
-            )
+            self.warning("Found inconsistencies; throwing out individual votes, keeping totals")
             vote.votes = []
         return vote
 
@@ -275,9 +269,7 @@ class NMVoteScraper(Scraper):
         """Sets any overrides and creates the vote instance"""
         overrides = {"ONEILL": "O'NEILL"}
         # Add new columns as they appear to be safe
-        vote_record, row_headers, sane_row = self.parse_visual_grid(
-            sv_text, overrides, s_vote_header, "TOTAL", "TOTAL"
-        )
+        vote_record, row_headers, sane_row = self.parse_visual_grid(sv_text, overrides, s_vote_header, "TOTAL", "TOTAL")
         vote = build_vote(session, bill_id, url, vote_record, "upper", "senate passage")
 
         validate_senate_vote(row_headers, sane_row, vote_record)
@@ -306,9 +298,7 @@ class NMVoteScraper(Scraper):
         # non-header cells.
         # Metadata hints that this doc is done by hand, tags appear in
         # chrono order not visual
-        for tag in lxml.etree.XML(v_text).xpath("//text/b") + lxml.etree.XML(
-            v_text
-        ).xpath("//text"):
+        for tag in lxml.etree.XML(v_text).xpath("//text/b") + lxml.etree.XML(v_text).xpath("//text"):
             if tag.text is None:
                 continue
             row_value = tag.text.strip()
@@ -332,17 +322,11 @@ class NMVoteScraper(Scraper):
             if date_regex.search(row_value):
                 # Date formats change depending on what document is being used
                 if len(row_value) == 8:
-                    vote_record["date"] = datetime.strptime(
-                        date_regex.search(row_value).group(), "%m/%d/%y"
-                    )
+                    vote_record["date"] = datetime.strptime(date_regex.search(row_value).group(), "%m/%d/%y")
                 else:
-                    vote_record["date"] = datetime.strptime(
-                        date_regex.search(row_value).group(), "%m/%d/%Y"
-                    )
+                    vote_record["date"] = datetime.strptime(date_regex.search(row_value).group(), "%m/%d/%Y")
             elif vote_header.match(row_value):
-                row_heads[
-                    int(tag.attrib["left"]) + int(tag.attrib["width"])
-                ] = row_value
+                row_heads[int(tag.attrib["left"]) + int(tag.attrib["width"])] = row_value
                 # Set the header begin sanity value
                 if t_begin == 0:
                     t_begin = top
@@ -350,13 +334,9 @@ class NMVoteScraper(Scraper):
                 # Create dictionary of row params and x,y
                 # location- y:{value, x, x(offset)}
                 if top in rows:
-                    rows[top].append(
-                        (row_value, int(tag.attrib["left"]), int(tag.attrib["width"]))
-                    )
+                    rows[top].append((row_value, int(tag.attrib["left"]), int(tag.attrib["width"])))
                 else:
-                    rows[top] = [
-                        (row_value, int(tag.attrib["left"]), int(tag.attrib["width"]))
-                    ]
+                    rows[top] = [(row_value, int(tag.attrib["left"]), int(tag.attrib["width"]))]
 
         # Mark the votes in the datagrid
         for row_x, cells in rows.items():
@@ -381,9 +361,7 @@ class NMVoteScraper(Scraper):
                     vote_cast = row_heads[column_map[cells[x + 1][1]]]
 
                     # Fix some odd encoding issues
-                    name = correct_name(
-                        "".join(convert_sv_char(c) for c in cells[x][0])
-                    )
+                    name = correct_name("".join(convert_sv_char(c) for c in cells[x][0]))
                     if "Y" == vote_cast[0]:
                         vote_record["yes"].append(name)
                     elif "N" == vote_cast[0]:

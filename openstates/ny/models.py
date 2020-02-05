@@ -20,15 +20,7 @@ class AssemblyBillPage(LXMLMixin):
     """
 
     def __init__(self, scraper, session, bill, details):
-        (
-            senate_url,
-            assembly_url,
-            bill_chamber,
-            bill_type,
-            bill_id,
-            title,
-            bill_id_parts,
-        ) = details
+        (senate_url, assembly_url, bill_chamber, bill_type, bill_id, title, bill_id_parts,) = details
 
         self.bill = bill
         self.bill_id = bill_id
@@ -37,13 +29,10 @@ class AssemblyBillPage(LXMLMixin):
         self.term_start_year = session.split("-")[0]
 
         self.letter, self.number, self.version = bill_id_parts
-        self.shared_url = (
-            "http://assembly.state.ny.us/leg/?default_fld="
-            "&bn={}&term={}".format(self.bill_id, self.term_start_year)
+        self.shared_url = "http://assembly.state.ny.us/leg/?default_fld=" "&bn={}&term={}".format(
+            self.bill_id, self.term_start_year
         )
-        self.urls = Urls(
-            scraper=scraper, urls={"assembly": assembly_url, "senate": senate_url}
-        )
+        self.urls = Urls(scraper=scraper, urls={"assembly": assembly_url, "senate": senate_url})
 
     def _scrub_name(self, name):
         junk = [

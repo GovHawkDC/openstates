@@ -84,17 +84,13 @@ class RIEventScraper(Scraper, LXMLMixin):
             except ValueError:
                 continue
 
-        event = Event(
-            name=event_desc, start_date=self._tz.localize(datetime), location_name=where
-        )
+        event = Event(name=event_desc, start_date=self._tz.localize(datetime), location_name=where)
         event.add_source(url)
         # aight. Let's get us some bills!
         bills = page.xpath("//b/a")
         for bill in bills:
             bill_ft = bill.attrib["href"]
-            event.add_document(
-                bill.text_content(), bill_ft, media_type="application/pdf"
-            )
+            event.add_document(bill.text_content(), bill_ft, media_type="application/pdf")
             root = bill.xpath("../../*")
             root = [x.text_content() for x in root]
             bill_id = "".join(root)
@@ -102,14 +98,7 @@ class RIEventScraper(Scraper, LXMLMixin):
             if "SCHEDULED FOR" in bill_id:
                 continue
 
-            descr = (
-                bill.getparent()
-                .getparent()
-                .getparent()
-                .getnext()
-                .getnext()
-                .text_content()
-            )
+            descr = bill.getparent().getparent().getparent().getnext().getnext().text_content()
 
             for thing in replace:
                 bill_id = bill_id.replace(thing, replace[thing])

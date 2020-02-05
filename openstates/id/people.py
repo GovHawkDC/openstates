@@ -92,37 +92,22 @@ class IDPersonScraper(Scraper):
             # for com in inner.xpath('p/a[contains(@href, "committees")]'):
             #     role = com.tail.strip()
 
-            person = Person(
-                name=name,
-                district=district,
-                party=party,
-                primary_org=chamber,
-                image=img_url,
-                role=role,
-            )
+            person = Person(name=name, district=district, party=party, primary_org=chamber, image=img_url, role=role,)
             phones = get_phones(inner)
             phone = phones.get("home") or phones.get("business")
             office_phone = phones.get("office")
             address = get_address(inner)
             fax = get_fax(inner)
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="District Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="District Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="District Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="District Office")
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="District Office")
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="District Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="District Office")
             if office_phone:
-                person.add_contact_detail(
-                    type="voice", value=office_phone, note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=office_phone, note="Capitol Office")
             person.add_source(url)
             person.add_link(person_url)
             yield person

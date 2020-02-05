@@ -59,34 +59,20 @@ def categorize_action(action):
 class MIBillScraper(Scraper):
     def scrape_bill(self, chamber, session, bill_id):
         # try and get bill for the first year of the session biennium
-        url = "http://legislature.mi.gov/doc.aspx?%s-%s" % (
-            session[:4],
-            bill_id.replace(" ", "-"),
-        )
+        url = "http://legislature.mi.gov/doc.aspx?%s-%s" % (session[:4], bill_id.replace(" ", "-"),)
         html = self.get(url).text
         # Otherwise, try second year of the session biennium
-        if (
-            "Page Not Found" in html
-            or "The bill you are looking for is not available yet" in html
-        ):
-            url = "http://legislature.mi.gov/doc.aspx?%s-%s" % (
-                session[-4:],
-                bill_id.replace(" ", "-"),
-            )
+        if "Page Not Found" in html or "The bill you are looking for is not available yet" in html:
+            url = "http://legislature.mi.gov/doc.aspx?%s-%s" % (session[-4:], bill_id.replace(" ", "-"),)
             html = self.get(url).text
-            if (
-                "Page Not Found" in html
-                or "The bill you are looking for is not available yet" in html
-            ):
+            if "Page Not Found" in html or "The bill you are looking for is not available yet" in html:
                 self.warning("Cannot open bill page for {}; skipping".format(bill_id))
                 return
 
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute("http://legislature.mi.gov")
 
-        title = doc.xpath('//span[@id="frg_billstatus_ObjectSubject"]')[
-            0
-        ].text_content()
+        title = doc.xpath('//span[@id="frg_billstatus_ObjectSubject"]')[0].text_content()
 
         # get B/R/JR/CR part and look up bill type
         bill_type = bill_types[bill_id.split(" ")[0][1:]]
@@ -103,11 +89,7 @@ class MIBillScraper(Scraper):
                 continue
 
             if len(sponsors) > 1:
-                classification = (
-                    "primary"
-                    if sponsor.tail and "primary" in sponsor.tail
-                    else "cosponsor"
-                )
+                classification = "primary" if sponsor.tail and "primary" in sponsor.tail else "cosponsor"
             else:
                 classification = "primary"
             bill.add_sponsorship(
@@ -133,9 +115,7 @@ class MIBillScraper(Scraper):
             bill.add_action(action, date, chamber=actor, classification=classification)
 
             # check if action mentions a sub
-            submatch = re.search(
-                r"WITH SUBSTITUTE\s+([\w\-\d]+)", action, re.IGNORECASE
-            )
+            submatch = re.search(r"WITH SUBSTITUTE\s+([\w\-\d]+)", action, re.IGNORECASE)
             if submatch and tds[2].xpath("a"):
                 version_url = tds[2].xpath("a/@href")[0]
                 version_name = tds[2].xpath("a/text()")[0].strip()
@@ -156,11 +136,7 @@ class MIBillScraper(Scraper):
                 if journal_link:
                     objectname = journal_link[0].rsplit("=", 1)[-1]
                     chamber_name = {"upper": "Senate", "lower": "House"}[actor]
-                    vote_url = BASE_URL + "/documents/%s/Journal/%s/htm/%s.htm" % (
-                        session,
-                        chamber_name,
-                        objectname,
-                    )
+                    vote_url = BASE_URL + "/documents/%s/Journal/%s/htm/%s.htm" % (session, chamber_name, objectname,)
                     results = self.parse_roll_call(vote_url, rc_num)
 
                     if results is not None:
@@ -186,8 +162,7 @@ class MIBillScraper(Scraper):
                         count = int(count.groups()[0]) if count else 0
                         if count != len(results["no"]):
                             self.warning(
-                                "vote count mismatch for %s %s, %d != %d"
-                                % (bill_id, action, count, len(results["no"]))
+                                "vote count mismatch for %s %s, %d != %d" % (bill_id, action, count, len(results["no"]))
                             )
 
                         vote.set_count("yes", len(results["yes"]))
@@ -269,9 +244,7 @@ class MIBillScraper(Scraper):
         try:
             resp = self.get(url)
         except scrapelib.HTTPError:
-            self.warning(
-                "Could not fetch roll call document at %s, unable to extract vote" % url
-            )
+            self.warning("Could not fetch roll call document at %s, unable to extract vote" % url)
             return
         html = resp.text
         vote_doc = lxml.html.fromstring(html)

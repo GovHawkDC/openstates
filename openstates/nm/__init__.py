@@ -19,41 +19,13 @@ class NewMexico(Jurisdiction):
         "votes": NMVoteScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2011 Regular",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-        },
-        {
-            "_scraped_name": "2011 1st Special",
-            "identifier": "2011S",
-            "name": "2011 Special Session",
-        },
-        {
-            "_scraped_name": "2012 Regular",
-            "identifier": "2012",
-            "name": "2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013 Regular",
-            "identifier": "2013",
-            "name": "2013 Regular Session",
-        },
-        {
-            "_scraped_name": "2014 Regular",
-            "identifier": "2014",
-            "name": "2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015 Regular",
-            "identifier": "2015",
-            "name": "2015 Regular Session",
-        },
-        {
-            "_scraped_name": "2015 1st Special",
-            "identifier": "2015S",
-            "name": "2015 Special Session",
-        },
+        {"_scraped_name": "2011 Regular", "identifier": "2011", "name": "2011 Regular Session",},
+        {"_scraped_name": "2011 1st Special", "identifier": "2011S", "name": "2011 Special Session",},
+        {"_scraped_name": "2012 Regular", "identifier": "2012", "name": "2012 Regular Session",},
+        {"_scraped_name": "2013 Regular", "identifier": "2013", "name": "2013 Regular Session",},
+        {"_scraped_name": "2014 Regular", "identifier": "2014", "name": "2014 Regular Session",},
+        {"_scraped_name": "2015 Regular", "identifier": "2015", "name": "2015 Regular Session",},
+        {"_scraped_name": "2015 1st Special", "identifier": "2015S", "name": "2015 Special Session",},
         {
             "_scraped_name": "2016 Regular",
             "classification": "primary",
@@ -143,18 +115,13 @@ class NewMexico(Jurisdiction):
     ]
 
     def get_session_list(self):
-        return url_xpath(
-            "http://www.nmlegis.gov/",
-            '//select[@name="ctl00$MainContent$ddlSessions"]' "/option/text()",
-        )
+        return url_xpath("http://www.nmlegis.gov/", '//select[@name="ctl00$MainContent$ddlSessions"]' "/option/text()",)
 
     def get_organizations(self):
         legislature_name = "New Mexico Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Office of the Governor", classification="executive")

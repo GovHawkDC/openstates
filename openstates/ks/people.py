@@ -29,21 +29,16 @@ class KSPersonScraper(Scraper, LXMLMixin):
         if party == "Democrat":
             party = "Democratic"
 
-        slug = {
-            "2013-2014": "b2013_14",
-            "2015-2016": "b2015_16",
-            "2017-2018": "b2017_18",
-            "2019-2020": "b2019_20",
-        }[session]
+        slug = {"2013-2014": "b2013_14", "2015-2016": "b2015_16", "2017-2018": "b2017_18", "2019-2020": "b2019_20",}[
+            session
+        ]
         leg_url = "http://www.kslegislature.org/li/%s/members/%s/" % (slug, kpid)
 
         try:
             legislator_page = self.lxmlize(leg_url)
             (photo_url,) = legislator_page.xpath('//img[@class="profile-picture"]/@src')
         except scrapelib.HTTPError:
-            self.warning(
-                "{}'s legislator bio page not found".format(content["FULLNAME"])
-            )
+            self.warning("{}'s legislator bio page not found".format(content["FULLNAME"]))
             leg_url = ""
             photo_url = ""
 

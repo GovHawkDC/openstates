@@ -70,11 +70,7 @@ class IlPersonScraper(Scraper):
             for chamber, district, start, end, party in self._join_contiguous(terms):
                 role = CHAMBER_ROLES[chamber]
                 legislator.add_term(
-                    role,
-                    chamber,
-                    district=district,
-                    start_date=str(start),
-                    end_date=str(end),
+                    role, chamber, district=district, start_date=str(start), end_date=str(end),
                 )
 
             yield legislator
@@ -91,9 +87,7 @@ class IlPersonScraper(Scraper):
                 self.warning("Garbage party: Skipping!")
                 continue
 
-            party = {"D": "Democratic", "R": "Republican", "I": "Independent"}[
-                party.text
-            ]
+            party = {"D": "Democratic", "R": "Republican", "I": "Independent"}[party.text]
             name = name.text_content().strip()
 
             # inactive legislator, skip them for now
@@ -122,10 +116,7 @@ class IlPersonScraper(Scraper):
             leg_doc = lxml.html.fromstring(leg_html)
             leg_doc.make_links_absolute(detail_url)
 
-            hotgarbage = (
-                "Senate Biography Information for the 98th General "
-                "Assembly is not currently available."
-            )
+            hotgarbage = "Senate Biography Information for the 98th General " "Assembly is not currently available."
 
             if hotgarbage in leg_html:
                 # The legislator's bio isn't available yet.
@@ -139,9 +130,7 @@ class IlPersonScraper(Scraper):
             # email
             email = leg_doc.xpath('//b[text()="Email: "]')
             if email:
-                p.add_contact_detail(
-                    type="email", value=email[0].tail.strip(), note="capitol"
-                )
+                p.add_contact_detail(type="email", value=email[0].tail.strip(), note="capitol")
 
             offices = {
                 "capitol": '//table[contains(string(), "Springfield Office")]',
@@ -152,9 +141,7 @@ class IlPersonScraper(Scraper):
                 table = leg_doc.xpath(xpath)
                 if table:
                     for type, value in self._table_to_office(table[3]):
-                        if type in ("fax", "voice") and not validate_phone_number(
-                            value
-                        ):
+                        if type in ("fax", "voice") and not validate_phone_number(value):
                             continue
 
                         p.add_contact_detail(type=type, value=value, note=location)

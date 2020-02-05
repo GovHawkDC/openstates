@@ -38,9 +38,7 @@ class DECommitteeScraper(Scraper, LXMLMixin):
 
         for item in data:
             comm_name = item["CommitteeName"]
-            committee = Organization(
-                name=comm_name, chamber=chamber, classification="committee"
-            )
+            committee = Organization(name=comm_name, chamber=chamber, classification="committee")
             chair_man = str(item["ChairName"])
             vice_chair = str(item["ViceChairName"])
             comm_id = item["CommitteeId"]
@@ -64,9 +62,8 @@ class DECommitteeScraper(Scraper, LXMLMixin):
 
     def scrape_joint_committees(self, session):
         chamber = "legislature"
-        url = (
-            "http://legis.delaware.gov/json/Committees/"
-            + "GetCommitteesByTypeId?assemblyId=%s&committeeTypeId=3" % (session,)
+        url = "http://legis.delaware.gov/json/Committees/" + "GetCommitteesByTypeId?assemblyId=%s&committeeTypeId=3" % (
+            session,
         )
         yield from self.scrape_comm(url, chamber)
 
@@ -88,7 +85,5 @@ class DECommitteeScraper(Scraper, LXMLMixin):
             else:
                 comm_url = "http://legis.delaware.gov/" + "".join(comm_name.split())
         else:
-            comm_url = "http://legis.delaware.gov/CommitteeDetail?committeeId=" + str(
-                comm_id
-            )
+            comm_url = "http://legis.delaware.gov/CommitteeDetail?committeeId=" + str(comm_id)
         return comm_url

@@ -64,31 +64,16 @@ class MAEventScraper(Scraper, LXMLMixin):
         title = title.replace("Hearing Details", "").strip()
         title = title.replace("Special Event Details", "")
 
-        start_day = page.xpath(
-            'string(//dl[contains(@class,"eventInformation")]/dd[2])'
-        ).strip()
-        start_time = page.xpath(
-            'string(//dl[contains(@class,"eventInformation")]/dd[3])'
-        ).strip()
+        start_day = page.xpath('string(//dl[contains(@class,"eventInformation")]/dd[2])').strip()
+        start_time = page.xpath('string(//dl[contains(@class,"eventInformation")]/dd[3])').strip()
 
-        location = page.xpath(
-            'string(//dl[contains(@class,"eventInformation")]/dd[4]//a)'
-        ).strip()
+        location = page.xpath('string(//dl[contains(@class,"eventInformation")]/dd[4]//a)').strip()
 
-        description = page.xpath(
-            'string(//dl[contains(@class,"eventInformation")]/dd[5])'
-        ).strip()
+        description = page.xpath('string(//dl[contains(@class,"eventInformation")]/dd[5])').strip()
 
-        start_date = self._TZ.localize(
-            dateutil.parser.parse("{} {}".format(start_day, start_time),)
-        )
+        start_date = self._TZ.localize(dateutil.parser.parse("{} {}".format(start_day, start_time),))
 
-        event = Event(
-            start_date=start_date,
-            name=title,
-            location_name=location,
-            description=description,
-        )
+        event = Event(start_date=start_date, name=title, location_name=location, description=description,)
 
         event.add_source(url)
 
@@ -99,14 +84,10 @@ class MAEventScraper(Scraper, LXMLMixin):
 
         for row in agenda_rows:
             # only select the text node, not the spans
-            agenda_title = row.xpath(
-                "string(.//h4/a/text()[normalize-space()])"
-            ).strip()
+            agenda_title = row.xpath("string(.//h4/a/text()[normalize-space()])").strip()
 
             if agenda_title == "":
-                agenda_title = row.xpath(
-                    "string(.//h4/text()[normalize-space()])"
-                ).strip()
+                agenda_title = row.xpath("string(.//h4/text()[normalize-space()])").strip()
 
             agenda = event.add_agenda_item(description=agenda_title)
 

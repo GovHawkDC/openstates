@@ -3,12 +3,7 @@ from openstates.utils.actions import Rule, BaseCategorizer
 
 # These are regex patterns that map to action categories.
 _categorizer_rules = (
-    Rule(
-        (
-            r"\(Ayes (?P<yes_votes>\d+)\.\s+Noes\s+"
-            r"(?P<no_votes>\d+)\.( Page \S+\.)?\)"
-        )
-    ),
+    Rule((r"\(Ayes (?P<yes_votes>\d+)\.\s+Noes\s+" r"(?P<no_votes>\d+)\.( Page \S+\.)?\)")),
     Rule(r"^Introduced", "introduction"),
     Rule(r"(?i)Referred to (?P<committees>.+)", "referral-committee"),
     Rule(r"(?i)Referred to (?P<committees>.+?)(\.\s+suspense)", "referral-committee"),
@@ -17,10 +12,7 @@ _categorizer_rules = (
     Rule(r"Read second time and amended", ["reading-2"]),
     Rule(r"Read third time", "reading-3"),
     Rule(r"Read third time. Refused passage\.", "failure"),
-    Rule(
-        [r"(?i)read third time.{,5}passed", r"(?i)Read third time.+?Passed"],
-        ["passage", "reading-3"],
-    ),
+    Rule([r"(?i)read third time.{,5}passed", r"(?i)Read third time.+?Passed"], ["passage", "reading-3"],),
     Rule(r"Approved by the Governor", "executive-signature"),
     Rule(r"Approved by the Governor with item veto", "executive-veto-line-item"),
     Rule("Vetoed by Governor", "executive-veto"),

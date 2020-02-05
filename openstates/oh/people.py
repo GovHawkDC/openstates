@@ -52,9 +52,7 @@ class OHLegislatorScraper(Scraper):
         page.make_links_absolute(a.attrib["href"])
         ret = {}
         for entry in page.xpath("//div[@class='committeeMembers']//td//a"):
-            person = re.sub(
-                r"\s+", " ", re.sub(r"\(.*\)", "", entry.text or "")
-            ).strip()
+            person = re.sub(r"\s+", " ", re.sub(r"\(.*\)", "", entry.text or "")).strip()
 
             if person == "":
                 continue
@@ -77,11 +75,7 @@ class OHLegislatorScraper(Scraper):
             leg.extras["biography"] = bio
 
         fax_line = [
-            x.strip()
-            for x in page.xpath(
-                "//div[@class='contactModule']/div[@class='data']/text()"
-            )
-            if "Fax" in x
+            x.strip() for x in page.xpath("//div[@class='contactModule']/div[@class='data']/text()") if "Fax" in x
         ]
         if fax_line:
             fax_number = re.search(r"(\(\d{3}\)\s\d{3}\-\d{4})", fax_line[0]).group(1)
@@ -111,9 +105,7 @@ class OHLegislatorScraper(Scraper):
                     self.warning("No subcommittee known: '%s'" % (entry))
                     raise Exception
             if (chmbr, entry) not in self.committees:
-                org = Organization(
-                    name=entry, chamber=chmbr, classification="committee",
-                )
+                org = Organization(name=entry, chamber=chmbr, classification="committee",)
                 self.committees[(chmbr, entry)] = org
             else:
                 org = self.committees[(chmbr, entry)]
@@ -125,10 +117,7 @@ class OHLegislatorScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
-        for legislator in page.xpath(
-            "//div[contains(concat(' ', normalize-space(@class), ' '), "
-            "' memberModule ')]"
-        ):
+        for legislator in page.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), " "' memberModule ')]"):
             img = legislator.xpath(".//div[@class='thumbnail']//img")[0].attrib["src"]
             data = legislator.xpath(".//div[@class='data']")[0]
             homepage = data.xpath(".//a[@class='black']")[0]
@@ -148,24 +137,14 @@ class OHLegislatorScraper(Scraper):
                 h3 = h3[0]
                 district = h3.xpath("./br")[0].tail.replace("District", "").strip()
             else:
-                district = re.findall(r"\d+\.png", legislator.attrib["style"])[
-                    -1
-                ].split(".", 1)[0]
+                district = re.findall(r"\d+\.png", legislator.attrib["style"])[-1].split(".", 1)[0]
 
             full_name = re.sub(r"\s+", " ", full_name).strip()
-            email = (
-                "rep{0:0{width}}@ohiohouse.gov"
-                if chamber == "lower"
-                else "sd{0:0{width}}@ohiosenate.gov"
-            ).format(int(district), width=2)
-
-            leg = Person(
-                name=full_name,
-                district=district,
-                party=party,
-                primary_org=chamber,
-                image=img,
+            email = ("rep{0:0{width}}@ohiohouse.gov" if chamber == "lower" else "sd{0:0{width}}@ohiosenate.gov").format(
+                int(district), width=2
             )
+
+            leg = Person(name=full_name, district=district, party=party, primary_org=chamber, image=img,)
 
             leg.add_contact_detail(type="address", value=office, note="Capitol Office")
             leg.add_contact_detail(type="voice", value=phone, note="Capitol Office")
@@ -183,20 +162,13 @@ class OHLegislatorScraper(Scraper):
         page.make_links_absolute(url)
 
         for legislator in page.xpath(
-            "//div[@id='senators']//div[contains(concat(' ', normalize-space(@class), ' '), "
-            "' portraitContainer ')]"
+            "//div[@id='senators']//div[contains(concat(' ', normalize-space(@class), ' '), " "' portraitContainer ')]"
         ):
-            img = legislator.xpath(
-                ".//div[@class='profileThumbnailBoundingBox']/@style"
-            )[0]
+            img = legislator.xpath(".//div[@class='profileThumbnailBoundingBox']/@style")[0]
             img = img[img.find("(") + 1 : img.find(")")]
             full_name = legislator.xpath(".//div[@class='profileName']/a/text()")[0]
-            homepage_url = legislator.xpath(".//a[@class='profileImageLink']")[
-                0
-            ].attrib["href"]
-            district = legislator.xpath(".//div[@class='profileDistrict']" "/a/text()")[
-                0
-            ].split("#")[1]
+            homepage_url = legislator.xpath(".//a[@class='profileImageLink']")[0].attrib["href"]
+            district = legislator.xpath(".//div[@class='profileDistrict']" "/a/text()")[0].split("#")[1]
 
             if "Vacant" in full_name:
                 continue
@@ -214,19 +186,11 @@ class OHLegislatorScraper(Scraper):
             elif "Democrat" in party_image:
                 party = "Democratic"
 
-            email = (
-                "rep{0:0{width}}@ohiohouse.gov"
-                if chamber == "lower"
-                else "sd{0:0{width}}@ohiosenate.gov"
-            ).format(int(district), width=2)
-
-            leg = Person(
-                name=full_name,
-                district=district,
-                primary_org=chamber,
-                image=img,
-                party=party,
+            email = ("rep{0:0{width}}@ohiohouse.gov" if chamber == "lower" else "sd{0:0{width}}@ohiosenate.gov").format(
+                int(district), width=2
             )
+
+            leg = Person(name=full_name, district=district, primary_org=chamber, image=img, party=party,)
 
             leg.add_contact_detail(type="address", value=address, note="Capitol Office")
             leg.add_contact_detail(type="voice", value=phone, note="Capitol Office")

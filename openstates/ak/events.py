@@ -52,13 +52,10 @@ class AKEventScraper(Scraper, LXMLMixin):
         # sample event available at http://www.akleg.gov/apptester.html
         committee_code = row.xpath("string(Sponsor)").strip()
         committee_name = "{} {}".format(
-            self.COMMITTEES_PRETTY[chamber],
-            self.COMMITTEES[chamber][committee_code]["name"],
+            self.COMMITTEES_PRETTY[chamber], self.COMMITTEES[chamber][committee_code]["name"],
         )
 
-        name = "{} {}".format(
-            self.COMMITTEES_PRETTY[chamber], row.xpath("string(Title)").strip()
-        )
+        name = "{} {}".format(self.COMMITTEES_PRETTY[chamber], row.xpath("string(Title)").strip())
 
         # If name is missing, make it "<CHAMBER> <COMMITTEE NAME>"
         if name == "":

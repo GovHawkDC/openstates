@@ -18,16 +18,8 @@ class Mississippi(Jurisdiction):
         "bills": MSBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2008 Regular Session",
-            "identifier": "2008",
-            "name": "2008 Regular Session",
-        },
-        {
-            "_scraped_name": "2009 Regular Session",
-            "identifier": "2009",
-            "name": "2009 Regular Session",
-        },
+        {"_scraped_name": "2008 Regular Session", "identifier": "2008", "name": "2008 Regular Session",},
+        {"_scraped_name": "2009 Regular Session", "identifier": "2009", "name": "2009 Regular Session",},
         {
             "_scraped_name": "2009 First Extraordinary Session",
             "identifier": "20091E",
@@ -43,11 +35,7 @@ class Mississippi(Jurisdiction):
             "identifier": "20093E",
             "name": "2009, 3rd Extraordinary Session",
         },
-        {
-            "_scraped_name": "2010 Regular Session",
-            "identifier": "2010",
-            "name": "2010 Regular Session",
-        },
+        {"_scraped_name": "2010 Regular Session", "identifier": "2010", "name": "2010 Regular Session",},
         {
             "_scraped_name": "2010 First Extraordinary Session",
             "identifier": "20101E",
@@ -58,26 +46,14 @@ class Mississippi(Jurisdiction):
             "identifier": "20102E",
             "name": "2010, 2nd Extraordinary Session",
         },
-        {
-            "_scraped_name": "2011 Regular Session",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-        },
+        {"_scraped_name": "2011 Regular Session", "identifier": "2011", "name": "2011 Regular Session",},
         {
             "_scraped_name": "2011 First Extraordinary Session",
             "identifier": "20111E",
             "name": "2011, 1st Extraordinary Session",
         },
-        {
-            "_scraped_name": "2012 Regular Session",
-            "identifier": "2012",
-            "name": "2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013 Regular Session",
-            "identifier": "2013",
-            "name": "2013 Regular Session",
-        },
+        {"_scraped_name": "2012 Regular Session", "identifier": "2012", "name": "2012 Regular Session",},
+        {"_scraped_name": "2013 Regular Session", "identifier": "2013", "name": "2013 Regular Session",},
         {
             "_scraped_name": "2013 First Extraordinary Session",
             "identifier": "20131E",
@@ -88,11 +64,7 @@ class Mississippi(Jurisdiction):
             "identifier": "20132E",
             "name": "2013 Second Extraordinary Session",
         },
-        {
-            "_scraped_name": "2014 Regular Session",
-            "identifier": "2014",
-            "name": "2014 Regular Session",
-        },
+        {"_scraped_name": "2014 Regular Session", "identifier": "2014", "name": "2014 Regular Session",},
         {
             "_scraped_name": "2014 First Extraordinary Session",
             "identifier": "20141E",
@@ -103,11 +75,7 @@ class Mississippi(Jurisdiction):
             "identifier": "20142E",
             "name": "2014 Second Extraordinary Session",
         },
-        {
-            "_scraped_name": "2015 Regular Session",
-            "identifier": "2015",
-            "name": "2015 Regular Session",
-        },
+        {"_scraped_name": "2015 Regular Session", "identifier": "2015", "name": "2015 Regular Session",},
         {
             "_scraped_name": "2016 Regular Session",
             "classification": "primary",
@@ -209,12 +177,8 @@ class Mississippi(Jurisdiction):
         legislature_name = "Mississippi Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        executive = Organization(
-            name="Office of the Governor", classification="executive"
-        )
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        executive = Organization(name="Office of the Governor", classification="executive")
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

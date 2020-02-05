@@ -22,11 +22,7 @@ class SenDetail(Page):
             type_ = "district"
 
         address_lines = [
-            x.strip()
-            for x in office.xpath("following-sibling::div[1]")[0]
-            .text_content()
-            .splitlines()
-            if x.strip()
+            x.strip() for x in office.xpath("following-sibling::div[1]")[0].text_content().splitlines() if x.strip()
         ]
 
         clean_address_lines = []
@@ -59,11 +55,7 @@ class SenDetail(Page):
 
     def handle_page(self):
         list(super().handle_page())
-        email = (
-            self.doc.xpath('//a[contains(@href, "mailto:")]')[0]
-            .get("href")
-            .split(":")[-1]
-        )
+        email = self.doc.xpath('//a[contains(@href, "mailto:")]')[0].get("href").split(":")[-1]
         self.obj.add_contact_detail(type="email", value=email)
 
         self.obj.image = self.doc.xpath('//div[@id="sidebar"]//img/@src').pop()
@@ -88,13 +80,7 @@ class SenList(Page):
         leg_url = item.get("href")
 
         name = fix_name(name)
-        leg = Person(
-            name=name,
-            district=district,
-            party=party,
-            primary_org="upper",
-            role="Senator",
-        )
+        leg = Person(name=name, district=district, party=party, primary_org="upper", role="Senator",)
         leg.add_link(leg_url)
         leg.add_source(self.url)
         leg.add_source(leg_url)
@@ -107,8 +93,7 @@ class SenList(Page):
 class RepList(Page):
     url = "http://www.flhouse.gov/Sections/Representatives/representatives.aspx"
     directory_pdf_url = (
-        "http://www.myfloridahouse.gov/FileStores/Web/"
-        "HouseContent/Approved/ClerksOffice/HouseDirectory.pdf"
+        "http://www.myfloridahouse.gov/FileStores/Web/" "HouseContent/Approved/ClerksOffice/HouseDirectory.pdf"
     )
     list_xpath = '//div[@id="MemberListing"]/div[@class="rep_listing1"]'
 
@@ -129,9 +114,7 @@ class RepList(Page):
         # pull out member email addresses from the XML salad produced
         # above - there's no obvious way to match these to names, but
         # fortunately they have names in them
-        return set(
-            directory.xpath('//text[contains(text(), "@myfloridahouse.gov")]/text()')
-        )
+        return set(directory.xpath('//text[contains(text(), "@myfloridahouse.gov")]/text()'))
 
     def handle_list_item(self, item):
         link = item.xpath('.//div[contains(@class, "rep_style")]/a')[0]
@@ -143,25 +126,16 @@ class RepList(Page):
         party = item.xpath('.//div[contains(@class, "party_style")]/text()')[0].strip()
         party = {"D": "Democratic", "R": "Republican"}[party]
 
-        district = item.xpath('.//div[contains(@class, "district_style")]/text()')[
-            0
-        ].strip()
+        district = item.xpath('.//div[contains(@class, "district_style")]/text()')[0].strip()
 
         leg_url = link.get("href")
         split_url = parse.urlsplit(leg_url)
         member_id = parse.parse_qs(split_url.query)["MemberId"][0]
-        image = "http://www.flhouse.gov/FileStores/Web/Imaging/Member/{}.jpg".format(
-            member_id
-        )
+        image = "http://www.flhouse.gov/FileStores/Web/Imaging/Member/{}.jpg".format(member_id)
 
         name = fix_name(name)
         rep = Person(
-            name=name,
-            district=district,
-            party=party,
-            primary_org="lower",
-            role="Representative",
-            image=image,
+            name=name, district=district, party=party, primary_org="lower", role="Representative", image=image,
         )
         rep.add_link(leg_url)
         rep.add_source(leg_url)
@@ -206,9 +180,7 @@ class RepList(Page):
                 break
 
         if not found_email:
-            log.warning(
-                "Rep %s does not have an email in the directory PDF." % (rep.name,)
-            )
+            log.warning("Rep %s does not have an email in the directory PDF." % (rep.name,))
 
         return rep
 
@@ -219,12 +191,7 @@ class RepDetail(Page):
         self.scrape_office("District Office")
 
     def scrape_office(self, name):
-        pieces = [
-            x.tail.strip()
-            for x in self.doc.xpath(
-                '//strong[text()="{}"]/following-sibling::br'.format(name)
-            )
-        ]
+        pieces = [x.tail.strip() for x in self.doc.xpath('//strong[text()="{}"]/following-sibling::br'.format(name))]
 
         if not pieces:
             # TODO: warn?
@@ -243,9 +210,7 @@ class RepDetail(Page):
 
         type_ = "capitol" if "Capitol" in name else "district"
 
-        self.obj.add_contact_detail(
-            type="address", value="\n".join(address), note=type_
-        )
+        self.obj.add_contact_detail(type="address", value="\n".join(address), note=type_)
         if phone:
             self.obj.add_contact_detail(type="voice", value=phone, note=type_)
 

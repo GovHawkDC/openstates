@@ -23,35 +23,23 @@ class ORCommitteeScraper(Scraper):
 
         for committee in committees_response:
             org = Organization(
-                chamber={"S": "upper", "H": "lower", "J": "legislature"}[
-                    committee["HouseOfAction"]
-                ],
+                chamber={"S": "upper", "H": "lower", "J": "legislature"}[committee["HouseOfAction"]],
                 name=committee["CommitteeName"],
                 classification="committee",
             )
             org.add_source(
                 "https://olis.leg.state.or.us/liz/{session}"
-                "/Committees/{committee}/Overview".format(
-                    session=session_key, committee=committee["CommitteeName"]
-                )
+                "/Committees/{committee}/Overview".format(session=session_key, committee=committee["CommitteeName"])
             )
             members_response = self.api_client.get(
-                "committee_members",
-                session=session_key,
-                committee=committee["CommitteeCode"],
+                "committee_members", session=session_key, committee=committee["CommitteeCode"],
             )
             for member in members_response:
                 try:
                     member_name = legislators[member["LegislatorCode"]]
                 except KeyError:
-                    logger.warn(
-                        "Legislator {} not found in session {}".format(
-                            member["LegislatorCode"], session_key
-                        )
-                    )
+                    logger.warn("Legislator {} not found in session {}".format(member["LegislatorCode"], session_key))
                     member_name = member["LegislatorCode"]
-                org.add_member(
-                    member_name, role=member["Title"] if member["Title"] else ""
-                )
+                org.add_member(member_name, role=member["Title"] if member["Title"] else "")
 
             yield org

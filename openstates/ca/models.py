@@ -38,21 +38,11 @@ class CABill(Base):
     current_house = Column(String(60))
     current_status = Column(String(60))
 
-    actions = relation(
-        "CABillAction", backref=backref("bill"), order_by="CABillAction.bill_history_id"
-    )
+    actions = relation("CABillAction", backref=backref("bill"), order_by="CABillAction.bill_history_id")
 
-    versions = relation(
-        "CABillVersion",
-        backref=backref("bill"),
-        order_by="desc(CABillVersion.version_num)",
-    )
+    versions = relation("CABillVersion", backref=backref("bill"), order_by="desc(CABillVersion.version_num)",)
 
-    votes = relation(
-        "CAVoteSummary",
-        backref=backref("bill"),
-        order_by="CAVoteSummary.vote_date_time",
-    )
+    votes = relation("CAVoteSummary", backref=backref("bill"), order_by="CAVoteSummary.vote_date_time",)
 
     @property
     def short_bill_id(self):
@@ -84,9 +74,7 @@ class CABillVersion(Base):
     @property
     def xml(self):
         if "_xml" not in self.__dict__:
-            self._xml = etree.fromstring(
-                self.bill_xml.encode("utf-8"), etree.XMLParser(recover=True)
-            )
+            self._xml = etree.fromstring(self.bill_xml.encode("utf-8"), etree.XMLParser(recover=True))
         return self._xml
 
     @property
@@ -206,9 +194,7 @@ class CAVoteSummary(Base):
     __tablename__ = "bill_summary_vote_tbl"
 
     bill_id = Column(String(20), ForeignKey(CABill.bill_id), primary_key=True)
-    location_code = Column(
-        String(6), ForeignKey(CALocation.location_code), primary_key=True
-    )
+    location_code = Column(String(6), ForeignKey(CALocation.location_code), primary_key=True)
     vote_date_time = Column(DateTime, primary_key=True)
     vote_date_seq = Column(Integer, primary_key=True)
     motion_id = Column(Integer, ForeignKey(CAMotion.motion_id), primary_key=True)
@@ -229,12 +215,7 @@ class CAVoteSummary(Base):
             return "1/2"
 
         # Get the associated bill version (probably?)
-        version = next(
-            filter(
-                lambda v: v.bill_version_action_date <= self.vote_date_time,
-                self.bill.versions,
-            )
-        )
+        version = next(filter(lambda v: v.bill_version_action_date <= self.vote_date_time, self.bill.versions,))
 
         if version.vote_required == "Majority":
             return "1/2"
@@ -246,25 +227,17 @@ class CAVoteDetail(Base):
     __tablename__ = "bill_detail_vote_tbl"
 
     bill_id = Column(String(20), ForeignKey(CABill.bill_id), primary_key=True)
-    location_code = Column(
-        String(6), ForeignKey(CAVoteSummary.location_code), primary_key=True
-    )
+    location_code = Column(String(6), ForeignKey(CAVoteSummary.location_code), primary_key=True)
     legislator_name = Column(String(50), primary_key=True)
-    vote_date_time = Column(
-        DateTime, ForeignKey(CAVoteSummary.vote_date_time), primary_key=True
-    )
-    vote_date_seq = Column(
-        Integer, ForeignKey(CAVoteSummary.vote_date_seq), primary_key=True
-    )
+    vote_date_time = Column(DateTime, ForeignKey(CAVoteSummary.vote_date_time), primary_key=True)
+    vote_date_seq = Column(Integer, ForeignKey(CAVoteSummary.vote_date_seq), primary_key=True)
     vote_code = Column(String(5), primary_key=True)
     motion_id = Column(Integer, ForeignKey(CAVoteSummary.motion_id), primary_key=True)
     trans_uid = Column(String(30), primary_key=True)
     trans_update = Column(DateTime, primary_key=True)
 
     bill = relation(
-        CABill,
-        primaryjoin="CABill.bill_id == foreign(CAVoteDetail.bill_id)",
-        backref=backref("detail_votes"),
+        CABill, primaryjoin="CABill.bill_id == foreign(CAVoteDetail.bill_id)", backref=backref("detail_votes"),
     )
     summary = relation(
         CAVoteSummary,
@@ -282,12 +255,7 @@ class CAVoteDetail(Base):
 class CACommitteeHearing(Base):
     __tablename__ = "committee_hearing_tbl"
 
-    bill_id = Column(
-        String(20),
-        ForeignKey(CABill.bill_id),
-        ForeignKey(CAVoteSummary.bill_id),
-        primary_key=True,
-    )
+    bill_id = Column(String(20), ForeignKey(CABill.bill_id), ForeignKey(CAVoteSummary.bill_id), primary_key=True,)
     committee_type = Column(String(2), primary_key=True)
     committee_nr = Column(Integer, primary_key=True)
     hearing_date = Column(DateTime, primary_key=True)

@@ -17,42 +17,12 @@ class WestVirginia(Jurisdiction):
         "bills": WVBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2011",
-            "classification": "primary",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-        },
-        {
-            "_scraped_name": "2012",
-            "classification": "primary",
-            "identifier": "2012",
-            "name": "2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013",
-            "classification": "primary",
-            "identifier": "2013",
-            "name": "2013 Regular Session",
-        },
-        {
-            "_scraped_name": "2014",
-            "classification": "primary",
-            "identifier": "2014",
-            "name": "2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015",
-            "classification": "primary",
-            "identifier": "2015",
-            "name": "2015 Regular Session",
-        },
-        {
-            "_scraped_name": "2016",
-            "classification": "primary",
-            "identifier": "2016",
-            "name": "2016 Regular Session",
-        },
+        {"_scraped_name": "2011", "classification": "primary", "identifier": "2011", "name": "2011 Regular Session",},
+        {"_scraped_name": "2012", "classification": "primary", "identifier": "2012", "name": "2012 Regular Session",},
+        {"_scraped_name": "2013", "classification": "primary", "identifier": "2013", "name": "2013 Regular Session",},
+        {"_scraped_name": "2014", "classification": "primary", "identifier": "2014", "name": "2014 Regular Session",},
+        {"_scraped_name": "2015", "classification": "primary", "identifier": "2015", "name": "2015 Regular Session",},
+        {"_scraped_name": "2016", "classification": "primary", "identifier": "2016", "name": "2016 Regular Session",},
         {
             "_scraped_name": "2016",
             "classification": "special",
@@ -156,9 +126,7 @@ class WestVirginia(Jurisdiction):
         legislature_name = "West Virginia Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -169,6 +137,5 @@ class WestVirginia(Jurisdiction):
         from openstates.utils import url_xpath
 
         return url_xpath(
-            "http://www.legis.state.wv.us/Bill_Status/Bill_Status.cfm",
-            '//select[@name="year"]/option/text()',
+            "http://www.legis.state.wv.us/Bill_Status/Bill_Status.cfm", '//select[@name="year"]/option/text()',
         )

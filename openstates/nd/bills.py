@@ -15,12 +15,8 @@ class NDBillScraper(Scraper, LXMLMixin):
     categorizer = NDCategorizer()
 
     house_list_url = "http://www.legis.nd.gov/assembly/%s-%s/bill-text/house-bill.html"
-    senate_list_url = (
-        "http://www.legis.nd.gov/assembly/%s-%s/bill-text/senate-bill.html"
-    )
-    subjects_url = (
-        "http://www.legis.nd.gov/assembly/%s-%s/subject-index/major-topic.html"
-    )
+    senate_list_url = "http://www.legis.nd.gov/assembly/%s-%s/bill-text/senate-bill.html"
+    subjects_url = "http://www.legis.nd.gov/assembly/%s-%s/subject-index/major-topic.html"
 
     def scrape_actions(self, session, href):
         page = self.lxmlize(href)
@@ -51,13 +47,7 @@ class NDBillScraper(Scraper, LXMLMixin):
         if type_ == "CR":
             bill_type = "concurrent resolution"
 
-        bill = Bill(
-            bid,
-            legislative_session=session,
-            chamber=chamber,
-            title=title,
-            classification=bill_type,
-        )
+        bill = Bill(bid, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
         bill.subject = subjects
         bill.add_source(href)
 
@@ -65,17 +55,12 @@ class NDBillScraper(Scraper, LXMLMixin):
             if isinstance(row, lxml.html.HtmlComment):
                 continue  # ignore HTML comments, no text_content()
             sponsors = row.text_content().strip()
-            sinf = re.match(
-                r"(?i)introduced by( (rep\.|sen\.))? (?P<sponsors>.*)", sponsors
-            )
+            sinf = re.match(r"(?i)introduced by( (rep\.|sen\.))? (?P<sponsors>.*)", sponsors)
             if sinf:
                 sponsors = sinf.groupdict()
                 for sponsor in [x.strip() for x in sponsors["sponsors"].split(",")]:
                     bill.add_sponsorship(
-                        sponsor,
-                        classification="primary",
-                        entity_type="person",
-                        primary=True,
+                        sponsor, classification="primary", entity_type="person", primary=True,
                     )
 
         dt = None
@@ -136,9 +121,7 @@ class NDBillScraper(Scraper, LXMLMixin):
             try:
                 (marked_up_url,) = row.xpath("td[3]/a/@href")
                 bill.add_version_link(
-                    "{} (Marked Up)".format(name),
-                    marked_up_url,
-                    media_type="application/pdf",
+                    "{} (Marked Up)".format(name), marked_up_url, media_type="application/pdf",
                 )
             except ValueError:
                 pass
@@ -149,16 +132,10 @@ class NDBillScraper(Scraper, LXMLMixin):
         page = self.get(self.subjects_url).text
         page = lxml.html.fromstring(page)
         page.make_links_absolute(self.subjects_url)
-        subjects = page.xpath(
-            "//div[@id='application']//a[not(contains(@href, 'major-topic'))]"
-        )
+        subjects = page.xpath("//div[@id='application']//a[not(contains(@href, 'major-topic'))]")
         for subject in subjects:
             subject_name = subject.xpath("text()")
-            if (
-                subject_name == []
-                or subject_name[0].strip() == ""
-                or "href" not in subject.attrib
-            ):
+            if subject_name == [] or subject_name[0].strip() == "" or "href" not in subject.attrib:
                 continue
 
             href = subject.attrib["href"]
@@ -203,10 +180,7 @@ class NDBillScraper(Scraper, LXMLMixin):
         }.items():
             doc = self.lxmlize(url)
             bill_urls = doc.xpath(
-                "//table["
-                'contains(@summary, "Bills")'
-                'or contains(@summary, "Resolutions")'
-                "]//tr/th/a/@href"
+                "//table[" 'contains(@summary, "Bills")' 'or contains(@summary, "Resolutions")' "]//tr/th/a/@href"
             )
             # Each version of a bill is its own row, so de-dup the links
             for bill_url in set(bill_urls):

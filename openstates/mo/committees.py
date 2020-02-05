@@ -19,23 +19,11 @@ class MOCommitteeScraper(Scraper, LXMLMixin):
             session = self.latest_session()
             self.info("no session specified, using %s", session)
 
-        meta = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == session
-        )
-        session_start_date = datetime.datetime.strptime(
-            meta["start_date"], "%Y-%m-%d"
-        ).date()
+        meta = next(each for each in self.jurisdiction.legislative_sessions if each["identifier"] == session)
+        session_start_date = datetime.datetime.strptime(meta["start_date"], "%Y-%m-%d").date()
 
-        meta_2016 = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == "2016"
-        )
-        session_start_date_2016 = datetime.datetime.strptime(
-            meta_2016["start_date"], "%Y-%m-%d",
-        ).date()
+        meta_2016 = next(each for each in self.jurisdiction.legislative_sessions if each["identifier"] == "2016")
+        session_start_date_2016 = datetime.datetime.strptime(meta_2016["start_date"], "%Y-%m-%d",).date()
 
         if session_start_date > datetime.date.today():
             self.info("{} session has not begun - ignoring.".format(session))
@@ -55,24 +43,18 @@ class MOCommitteeScraper(Scraper, LXMLMixin):
         chamber = "upper"
 
         if self._is_post_2015 and self.latest_session() != session:
-            url = "{base}{year}web/standing-committees".format(
-                base=self._senate_url_base, year=session[2:]
-            )
+            url = "{base}{year}web/standing-committees".format(base=self._senate_url_base, year=session[2:])
             comm_container_id = "primary"
         elif session == self.latest_session():
             url = "{base}standing-committees".format(base=self._senate_url_base)
             comm_container_id = "primary"
         else:
-            url = "{base}{year}info/com-standing.htm".format(
-                base=self._senate_url_base, year=session[2:]
-            )
+            url = "{base}{year}info/com-standing.htm".format(base=self._senate_url_base, year=session[2:])
             comm_container_id = "mainContent"
 
         page = self.lxmlize(url)
 
-        comm_links = self.get_nodes(
-            page, '//div[@id = "{}"]//p/a'.format(comm_container_id)
-        )
+        comm_links = self.get_nodes(page, '//div[@id = "{}"]//p/a'.format(comm_container_id))
 
         for comm_link in comm_links:
             # Normalize to uppercase - varies between "Assigned bills" and "Assigned Bills"
@@ -91,24 +73,16 @@ class MOCommitteeScraper(Scraper, LXMLMixin):
             comm_page = self.lxmlize(comm_link)
 
             if self._is_post_2015:
-                comm_name = self.get_node(
-                    comm_page, '//h1[@class="entry-title"]/text()'
-                )
-                members = self.get_nodes(
-                    comm_page, '//div[@id="bwg_standart_thumbnails_0"]/a'
-                )
+                comm_name = self.get_node(comm_page, '//h1[@class="entry-title"]/text()')
+                members = self.get_nodes(comm_page, '//div[@id="bwg_standart_thumbnails_0"]/a')
             else:
-                comm_name = self.get_node(
-                    comm_page, '//div[@id="mainContent"]/p/text()'
-                )
+                comm_name = self.get_node(comm_page, '//div[@id="mainContent"]/p/text()')
                 members = self.get_nodes(comm_page, '//div[@id="mainContent"]//td/a')
 
             comm_name = comm_name.replace(" Committee", "")
             comm_name = comm_name.strip()
 
-            committee = Organization(
-                comm_name, chamber=chamber, classification="committee"
-            )
+            committee = Organization(comm_name, chamber=chamber, classification="committee")
 
             for member in members:
                 mem_link = member.attrib.get("href", "")
@@ -116,9 +90,7 @@ class MOCommitteeScraper(Scraper, LXMLMixin):
                     continue
 
                 if self._is_post_2015:
-                    mem_parts = self.get_node(
-                        member, './/span[@class="bwg_title_spun2_0"]'
-                    )
+                    mem_parts = self.get_node(member, './/span[@class="bwg_title_spun2_0"]')
 
                 mem_parts = member.text_content().strip().split(",")
                 # Senator title stripping mainly for post-2015.
@@ -185,16 +157,12 @@ class MOCommitteeScraper(Scraper, LXMLMixin):
             committee_name = committee_name.replace(" Committee", "")
             committee_name = committee_name.strip()
 
-            committee = Organization(
-                committee_name, chamber=actual_chamber, classification="committee",
-            )
+            committee = Organization(committee_name, chamber=actual_chamber, classification="committee",)
 
             committee_page_string = self.get(committee_url).text
             committee_page = lxml.html.fromstring(committee_page_string)
             # First tr has the title (sigh)
-            mem_trs = committee_page.xpath(
-                "//table[@id='gvMembers_DXMainTable']//tr[contains(@class, 'dxgvDataRow')]"
-            )
+            mem_trs = committee_page.xpath("//table[@id='gvMembers_DXMainTable']//tr[contains(@class, 'dxgvDataRow')]")
             for mem_tr in mem_trs:
                 mem_code = None
                 mem_links = mem_tr.xpath("td/a[1]")

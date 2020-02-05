@@ -10,9 +10,7 @@ def index_legislators(scraper, session_key):
 
     legislators = {}
     for leg in legislators_response:
-        legislators[leg["LegislatorCode"]] = "{} {}".format(
-            leg["FirstName"], leg["LastName"]
-        )
+        legislators[leg["LegislatorCode"]] = "{} {}".format(leg["FirstName"], leg["LastName"])
 
     return legislators
 

@@ -26,11 +26,7 @@ class AZCommitteeScraper(Scraper):
             legislativeBody="S" if chamber == "upper" else "H",
         )
         for committee in committees.json():
-            c = Organization(
-                name=committee["CommitteeName"],
-                chamber=chamber,
-                classification="committee",
-            )
+            c = Organization(name=committee["CommitteeName"], chamber=chamber, classification="committee",)
             details = client.get_standing_committee(
                 sessionId=session_id,
                 legislativeBody="S" if chamber == "upper" else "H",
@@ -39,8 +35,7 @@ class AZCommitteeScraper(Scraper):
             )
             for member in details.json()[0]["Members"]:
                 c.add_member(
-                    u"{} {}".format(member["FirstName"], member["LastName"]),
-                    role=parse_role(member),
+                    u"{} {}".format(member["FirstName"], member["LastName"]), role=parse_role(member),
                 )
                 c.add_source(details.url)
 

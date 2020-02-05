@@ -14,10 +14,7 @@ class SDBillScraper(Scraper, LXMLMixin):
             session = self.latest_session()
             self.info("no session specified, using %s", session)
 
-        url = (
-            "https://sdlegislature.gov/Legislative_Session"
-            "/Bills/Default.aspx?Session={}".format(session)
-        )
+        url = "https://sdlegislature.gov/Legislative_Session" "/Bills/Default.aspx?Session={}".format(session)
         chambers = [chambers] if chambers else ["upper", "lower"]
 
         for chamber in chambers:
@@ -28,17 +25,12 @@ class SDBillScraper(Scraper, LXMLMixin):
 
             page = self.lxmlize(url)
 
-            for link in page.xpath(
-                "//a[contains(@href, 'Bill.aspx') and"
-                " starts-with(., '%s')]" % bill_abbr
-            ):
+            for link in page.xpath("//a[contains(@href, 'Bill.aspx') and" " starts-with(., '%s')]" % bill_abbr):
                 bill_id = link.text.strip().replace(u"\xa0", " ")
 
                 title = link.xpath("string(../../td[2])").strip()
 
-                yield from self.scrape_bill(
-                    chamber, session, bill_id, title, link.attrib["href"]
-                )
+                yield from self.scrape_bill(chamber, session, bill_id, title, link.attrib["href"])
 
     def scrape_bill(self, chamber, session, bill_id, title, url):
         page = self.lxmlize(url)
@@ -54,26 +46,14 @@ class SDBillScraper(Scraper, LXMLMixin):
         else:
             btype = ["bill"]
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=title,
-            classification=btype,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=btype,)
         bill.add_source(url)
 
         regex_ns = "http://exslt.org/regular-expressions"
-        version_links = page.xpath(
-            r"//a[re:test(@href, 'Bill.aspx\?File=.*\.htm', 'i')]",
-            namespaces={"re": regex_ns},
-        )
+        version_links = page.xpath(r"//a[re:test(@href, 'Bill.aspx\?File=.*\.htm', 'i')]", namespaces={"re": regex_ns},)
         for link in version_links:
             bill.add_version_link(
-                link.xpath("string()").strip(),
-                link.attrib["href"],
-                media_type="text/html",
-                on_duplicate="ignore",
+                link.xpath("string()").strip(), link.attrib["href"], media_type="text/html", on_duplicate="ignore",
             )
 
         sponsor_links = page.xpath(
@@ -84,19 +64,12 @@ class SDBillScraper(Scraper, LXMLMixin):
         for link in sponsor_links:
             if link.attrib["href"].startswith("https://sdlegislature.gov/Legislators/"):
                 sponsor_type = "person"
-            elif link.attrib["href"].startswith(
-                "https://sdlegislature.gov/Legislative_Session/Committees"
-            ):
+            elif link.attrib["href"].startswith("https://sdlegislature.gov/Legislative_Session/Committees"):
                 sponsor_type = "organization"
             else:
-                raise ScrapeError(
-                    "Found unexpected sponsor, URL: " + link.attrib["href"]
-                )
+                raise ScrapeError("Found unexpected sponsor, URL: " + link.attrib["href"])
             bill.add_sponsorship(
-                link.text,
-                classification="primary",
-                primary=True,
-                entity_type=sponsor_type,
+                link.text, classification="primary", primary=True, entity_type=sponsor_type,
             )
 
         actor = chamber
@@ -153,10 +126,7 @@ class SDBillScraper(Scraper, LXMLMixin):
                     elif "pdf" in version_url:
                         mimetype = "application/pdf"
                     bill.add_version_link(
-                        version_name,
-                        version_url,
-                        media_type=mimetype,
-                        on_duplicate="ignore",
+                        version_name, version_url, media_type=mimetype, on_duplicate="ignore",
                     )
 
             if "Veto override, Passed" in action:
@@ -216,9 +186,7 @@ class SDBillScraper(Scraper, LXMLMixin):
             # If we can't detect a motion, skip this vote
             yes_count = int(page.xpath("string(//span[contains(@id, 'tdAyes')])"))
             no_count = int(page.xpath("string(//span[contains(@id, 'tdNays')])"))
-            excused_count = int(
-                page.xpath("string(//span[contains(@id, 'tdExcused')])")
-            )
+            excused_count = int(page.xpath("string(//span[contains(@id, 'tdExcused')])"))
             absent_count = int(page.xpath("string(//span[contains(@id, 'tdAbsent')])"))
 
             passed = yes_count > no_count

@@ -14,10 +14,8 @@ class NHCommitteeScraper(Scraper, LXMLMixin):
         "h": "lower",
     }
     _url_map = {
-        "s": "http://www.gencourt.state.nh.us/Senate/"
-        "committees/committee_details.aspx?cc={}",
-        "h": "http://www.gencourt.state.nh.us/house/"
-        "committees/committeedetails.aspx?code={}",
+        "s": "http://www.gencourt.state.nh.us/Senate/" "committees/committee_details.aspx?cc={}",
+        "h": "http://www.gencourt.state.nh.us/house/" "committees/committeedetails.aspx?code={}",
     }
     _role_map = {
         "chairman": "chair",
@@ -34,11 +32,7 @@ class NHCommitteeScraper(Scraper, LXMLMixin):
                 committees[committee] = com_chamber
             except TypeError:
                 self.warning("Skipping Bad Row")
-        return [
-            committee
-            for committee, com_chamber in committees.items()
-            if committee and com_chamber == chamber
-        ]
+        return [committee for committee, com_chamber in committees.items() if committee and com_chamber == chamber]
 
     def _parse_row(self, row):
         code, name, _ = row
@@ -69,9 +63,7 @@ class NHCommitteeScraper(Scraper, LXMLMixin):
         page = self.lxmlize(url)
         links = page.xpath('//a[contains(@href, "members/member")]')
         for link in links:
-            name = (
-                re.sub(r"\s+", " ", link.text_content()).replace(u"\xa0", " ").strip()
-            )
+            name = re.sub(r"\s+", " ", link.text_content()).replace(u"\xa0", " ").strip()
             role = "member"
             # Check whether member has a non-default role
             for ancestor in link.iterancestors():
@@ -89,11 +81,7 @@ class NHCommitteeScraper(Scraper, LXMLMixin):
         if not names:
             return
         # Get intermingled list of members and roles
-        rows = [
-            each.strip()
-            for each in links[0].getparent().text_content().strip().split("\r\n")
-            if each.strip()
-        ]
+        rows = [each.strip() for each in links[0].getparent().text_content().strip().split("\r\n") if each.strip()]
         while rows:
             name = rows.pop(0).replace(u"\xa0", " ")
             role = "member"

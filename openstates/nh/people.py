@@ -8,12 +8,8 @@ import requests
 class NHPersonScraper(Scraper, LXMLMixin):
     members_url = "http://www.gencourt.state.nh.us/downloads/Members.csv"
     lookup_url = "http://www.gencourt.state.nh.us/house/members/memberlookup.aspx"
-    house_profile_url = (
-        "http://www.gencourt.state.nh.us/house/members/member.aspx?member={}"
-    )
-    senate_profile_url = (
-        "http://www.gencourt.state.nh.us/Senate/members/webpages/district{}.aspx"
-    )
+    house_profile_url = "http://www.gencourt.state.nh.us/house/members/member.aspx?member={}"
+    senate_profile_url = "http://www.gencourt.state.nh.us/Senate/members/webpages/district{}.aspx"
 
     chamber_map = {"H": "lower", "S": "upper"}
     party_map = {
@@ -33,8 +29,7 @@ class NHPersonScraper(Scraper, LXMLMixin):
 
         if chamber == "upper":
             src = doc.xpath(
-                '//div[@id="page_content"]//img[contains(@src, '
-                '"images/senators") or contains(@src, "Senator")]/@src'
+                '//div[@id="page_content"]//img[contains(@src, ' '"images/senators") or contains(@src, "Senator")]/@src'
             )
         elif chamber == "lower":
             src = doc.xpath('//img[contains(@src, "images/memberpics")]/@src')
@@ -66,9 +61,7 @@ class NHPersonScraper(Scraper, LXMLMixin):
             self.warning("Skipping {}, district is set to 0".format(full_name))
             return
 
-        person = Person(
-            primary_org=chamber, district=district, name=full_name, party=party
-        )
+        person = Person(primary_org=chamber, district=district, name=full_name, party=party)
 
         extras = {
             "first_name": first_name,
@@ -79,9 +72,7 @@ class NHPersonScraper(Scraper, LXMLMixin):
         person.extras = extras
         if email:
             office = "Capitol" if email.endswith("@leg.state.nh.us") else "District"
-            person.add_contact_detail(
-                type="email", value=email, note=office + " Office"
-            )
+            person.add_contact_detail(type="email", value=email, note=office + " Office")
 
         # Capture legislator office contact information.
         district_address = "{}\n{}\n{}, {} {}".format(
@@ -94,14 +85,10 @@ class NHPersonScraper(Scraper, LXMLMixin):
 
         if district_address:
             office = "Capitol" if chamber == "upper" else "District"
-            person.add_contact_detail(
-                type="address", value=district_address, note=office + " Office"
-            )
+            person.add_contact_detail(type="address", value=district_address, note=office + " Office")
         if phone:
             office = "Capitol" if "271-" in phone else "District"
-            person.add_contact_detail(
-                type="voice", value=phone, note=office + " Office"
-            )
+            person.add_contact_detail(type="voice", value=phone, note=office + " Office")
 
         # Retrieve legislator portrait.
         profile_url = None

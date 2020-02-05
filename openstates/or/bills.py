@@ -50,9 +50,7 @@ class ORBillScraper(Scraper):
 
     def scrape_bills(self, session):
         session_key = SESSION_KEYS[session]
-        measures_response = self.api_client.get(
-            "measures", page=500, session=session_key
-        )
+        measures_response = self.api_client.get("measures", page=500, session=session_key)
 
         legislators = index_legislators(self, session_key)
 
@@ -75,17 +73,11 @@ class ORBillScraper(Scraper):
                     try:
                         legislator = legislators[legislator_code]
                     except KeyError:
-                        logger.warn(
-                            "Legislator {} not found in session {}".format(
-                                legislator_code, session
-                            )
-                        )
+                        logger.warn("Legislator {} not found in session {}".format(legislator_code, session))
                         legislator = legislator_code
                     bill.add_sponsorship(
                         name=legislator,
-                        classification={"Chief": "primary", "Regular": "cosponsor"}[
-                            sponsor["SponsorLevel"]
-                        ],
+                        classification={"Chief": "primary", "Regular": "cosponsor"}[sponsor["SponsorLevel"]],
                         entity_type="person",
                         primary=True if sponsor["SponsorLevel"] == "Chief" else False,
                     )
@@ -99,21 +91,15 @@ class ORBillScraper(Scraper):
                 # TODO: probably mixing documents & versions here - should revisit
                 try:
                     bill.add_version_link(
-                        document["VersionDescription"],
-                        document["DocumentUrl"],
-                        media_type="application/pdf",
+                        document["VersionDescription"], document["DocumentUrl"], media_type="application/pdf",
                     )
                 except ValueError:
-                    logger.warn(
-                        "Duplicate link found for {}".format(document["DocumentUrl"])
-                    )
+                    logger.warn("Duplicate link found for {}".format(document["DocumentUrl"]))
 
             for agenda_item in measure["CommitteeAgendaItems"]:
                 for document in agenda_item["CommitteeProposedAmendments"]:
                     if "adopted" in document["Meaning"].lower():
-                        amd_name = "{} Amendment {}".format(
-                            document["CommitteeCode"], document["AmendmentNumber"]
-                        )
+                        amd_name = "{} Amendment {}".format(document["CommitteeCode"], document["AmendmentNumber"])
                         bill.add_version_link(
                             amd_name,
                             document["ProposedAmendmentUrl"],
@@ -123,9 +109,7 @@ class ORBillScraper(Scraper):
 
             for action in measure["MeasureHistoryActions"]:
                 classifiers = self.determine_action_classifiers(action["ActionText"])
-                when = datetime.datetime.strptime(
-                    action["ActionDate"], "%Y-%m-%dT%H:%M:%S"
-                )
+                when = datetime.datetime.strptime(action["ActionDate"], "%Y-%m-%dT%H:%M:%S")
                 when = self.tz.localize(when)
                 bill.add_action(
                     action["ActionText"],

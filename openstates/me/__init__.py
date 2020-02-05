@@ -20,41 +20,13 @@ class Maine(Jurisdiction):
         # 'committees': MECommitteeScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "121st Legislature",
-            "identifier": "121",
-            "name": "121st Legislature (2003-2004)",
-        },
-        {
-            "_scraped_name": "122nd Legislature",
-            "identifier": "122",
-            "name": "122nd Legislature (2005-2006)",
-        },
-        {
-            "_scraped_name": "123rd Legislature",
-            "identifier": "123",
-            "name": "123rd Legislature (2007-2008)",
-        },
-        {
-            "_scraped_name": "124th Legislature",
-            "identifier": "124",
-            "name": "124th Legislature (2009-2010)",
-        },
-        {
-            "_scraped_name": "125th Legislature",
-            "identifier": "125",
-            "name": "125th Legislature (2011-2012)",
-        },
-        {
-            "_scraped_name": "126th Legislature",
-            "identifier": "126",
-            "name": "126th Legislature (2013-2014)",
-        },
-        {
-            "_scraped_name": "127th Legislature",
-            "identifier": "127",
-            "name": "127th Legislature (2015-2016)",
-        },
+        {"_scraped_name": "121st Legislature", "identifier": "121", "name": "121st Legislature (2003-2004)",},
+        {"_scraped_name": "122nd Legislature", "identifier": "122", "name": "122nd Legislature (2005-2006)",},
+        {"_scraped_name": "123rd Legislature", "identifier": "123", "name": "123rd Legislature (2007-2008)",},
+        {"_scraped_name": "124th Legislature", "identifier": "124", "name": "124th Legislature (2009-2010)",},
+        {"_scraped_name": "125th Legislature", "identifier": "125", "name": "125th Legislature (2011-2012)",},
+        {"_scraped_name": "126th Legislature", "identifier": "126", "name": "126th Legislature (2013-2014)",},
+        {"_scraped_name": "127th Legislature", "identifier": "127", "name": "127th Legislature (2015-2016)",},
         {
             "_scraped_name": "128th Legislature",
             "identifier": "128",
@@ -76,9 +48,7 @@ class Maine(Jurisdiction):
         legislature_name = "Maine Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

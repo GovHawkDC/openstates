@@ -40,21 +40,13 @@ class AZEventScraper(Scraper):
         # session_id = self.session_metadata.session_id_meta_data[session]
 
         # could use &ShowAll=ON doesn't seem to work though
-        url = (
-            "http://www.azleg.gov/CommitteeAgendas.asp?Body=%s"
-            % self._chamber_short[chamber]
-        )
+        url = "http://www.azleg.gov/CommitteeAgendas.asp?Body=%s" % self._chamber_short[chamber]
         html_ = self.get(url).text
         doc = html.fromstring(html_)
         if chamber == "upper":
-            event_table = doc.xpath(
-                '//table[@id="body"]/tr/td/table[2]/' "tr/td/table/tr/td/table"
-            )[0]
+            event_table = doc.xpath('//table[@id="body"]/tr/td/table[2]/' "tr/td/table/tr/td/table")[0]
         else:
-            event_table = doc.xpath(
-                '//table[@id="body"]/tr/td/table[2]/tr'
-                "/td/table/tr/td/table/tr/td/table"
-            )[0]
+            event_table = doc.xpath('//table[@id="body"]/tr/td/table[2]/tr' "/td/table/tr/td/table/tr/td/table")[0]
         for row in event_table.xpath("tr")[2:]:
             # Agenda Date, Committee, Revised, Addendum, Cancelled, Time, Room,
             # HTML Document, PDF Document for house
@@ -78,11 +70,7 @@ class AZEventScraper(Scraper):
                 when = text[0]
                 when = datetime.datetime.strptime(when, "%m/%d/%Y")
 
-            title = "Committee Meeting:\n%s %s %s\n" % (
-                self._chamber_long[chamber],
-                committee,
-                room,
-            )
+            title = "Committee Meeting:\n%s %s %s\n" % (self._chamber_long[chamber], committee, room,)
             agenda_info = self.parse_agenda(chamber, link)
 
             description = agenda_info["description"]
@@ -94,12 +82,7 @@ class AZEventScraper(Scraper):
                           location=room, link=link, details=description,
                           related_bills=related_bills)
             """
-            event = Event(
-                location_name=room,
-                start_date=self._tz.localize(when),
-                name=title,
-                description=description,
-            )
+            event = Event(location_name=room, start_date=self._tz.localize(when), name=title, description=description,)
             event.add_participant(committee, type="committee", note="host")
 
             event.participants.extend(member_list)
@@ -179,9 +162,7 @@ class AZEventScraper(Scraper):
                     member_list.append(person)
             members = members.getnext()
         description = ""
-        agenda_items = div.xpath(
-            '//p[contains(a/@name, "AgendaItems")]' "/following-sibling::table[1]"
-        )
+        agenda_items = div.xpath('//p[contains(a/@name, "AgendaItems")]' "/following-sibling::table[1]")
         if agenda_items:
             agenda_items = [
                 tr.text_content().strip().replace("\r\n", "")
@@ -189,15 +170,11 @@ class AZEventScraper(Scraper):
                 if tr.text_content().strip()
             ]
             description = ",\n".join(agenda_items)
-        bill_list = div.xpath(
-            '//p[contains(a/@name, "Agenda_Bills")]' "/following-sibling::table[1]"
-        )
+        bill_list = div.xpath('//p[contains(a/@name, "Agenda_Bills")]' "/following-sibling::table[1]")
         if bill_list:
             try:
                 bill_list = [
-                    tr[1].text_content().strip()
-                    + " "
-                    + tr[3].text_content().strip().replace("\r\n", "")
+                    tr[1].text_content().strip() + " " + tr[3].text_content().strip().replace("\r\n", "")
                     for tr in bill_list[0].xpath("tr")
                     if tr.text_content().strip()
                 ]

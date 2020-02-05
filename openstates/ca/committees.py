@@ -78,19 +78,14 @@ class CACommitteeScraper(Scraper, LXMLMixin):
                 _found = False
                 if not org._related:
                     try:
-                        for member, role in self.scrape_lower_members(
-                            _url + "/membersstaff"
-                        ):
+                        for member, role in self.scrape_lower_members(_url + "/membersstaff"):
                             _found = True
                             org.add_member(member, role)
                         if _found:
                             source = _url + "/membersstaff"
                             org.add_source(source)
                     except requests.exceptions.HTTPError:
-                        self.error(
-                            "Unable to access member list for {} "
-                            "committee.".format(c)
-                        )
+                        self.error("Unable to access member list for {} " "committee.".format(c))
 
                 if org._related:
                     yield org
@@ -125,36 +120,26 @@ class CACommitteeScraper(Scraper, LXMLMixin):
                 _found = False
                 if not org._related:
                     try:
-                        for member, role in self.scrape_lower_members(
-                            _url + "/membersstaff"
-                        ):
+                        for member, role in self.scrape_lower_members(_url + "/membersstaff"):
                             _found = True
                             org.add_member(member, role)
                         if _found:
                             source = _url + "/membersstaff"
                             org.add_source(source)
                     except requests.exceptions.HTTPError:
-                        self.error(
-                            "Unable to access member list for {} subcommittee.".format(
-                                org.name
-                            )
-                        )
+                        self.error("Unable to access member list for {} subcommittee.".format(org.name))
 
                 if org._related:
                     yield org
                 else:
-                    self.warning(
-                        "No members found for {} subcommittee of {} "
-                        "committee".format(org.name)
-                    )
+                    self.warning("No members found for {} subcommittee of {} " "committee".format(org.name))
 
     def scrape_lower_members(self, url):
         """ Scrape the members from this page. """
 
         doc = self.lxmlize(url)
         members = doc.xpath(
-            '//table/thead/tr//*[contains(text(), "Committee Members")]/'
-            "ancestor::table//tr/td[1]/a/text()"
+            '//table/thead/tr//*[contains(text(), "Committee Members")]/' "ancestor::table//tr/td[1]/a/text()"
         )
 
         for member in members:
@@ -175,30 +160,18 @@ class CACommitteeScraper(Scraper, LXMLMixin):
         url = "http://senate.ca.gov/committees"
         doc = self.lxmlize(url)
 
-        standing_committees = doc.xpath(
-            '//h2[text()="Standing Committees"]/../following-sibling::div//a'
-        )
-        sub_committees = doc.xpath(
-            '//h2[text()="Sub Committees"]/../following-sibling::div//a'
-        )
-        joint_committees = doc.xpath(
-            '//h2[text()="Joint Committees"]/../following-sibling::div//a'
-        )
-        other_committees = doc.xpath(
-            '//h2[text()="Other"]/../following-sibling::div//a'
-        )
+        standing_committees = doc.xpath('//h2[text()="Standing Committees"]/../following-sibling::div//a')
+        sub_committees = doc.xpath('//h2[text()="Sub Committees"]/../following-sibling::div//a')
+        joint_committees = doc.xpath('//h2[text()="Joint Committees"]/../following-sibling::div//a')
+        other_committees = doc.xpath('//h2[text()="Other"]/../following-sibling::div//a')
 
         # Iterates over each committee [link] found.
-        for committee in (
-            standing_committees + sub_committees + joint_committees + other_committees
-        ):
+        for committee in standing_committees + sub_committees + joint_committees + other_committees:
             # Get the text of the committee link, which should be the name of
             # the committee.
             (comm_name,) = committee.xpath("text()")
 
-            org = Organization(
-                chamber="upper", name=comm_name, classification="committee"
-            )
+            org = Organization(chamber="upper", name=comm_name, classification="committee")
 
             (comm_url,) = committee.xpath("@href")
             org.add_source(comm_url)
@@ -207,18 +180,12 @@ class CACommitteeScraper(Scraper, LXMLMixin):
             if comm_name.startswith("Joint"):
                 org["chamber"] = "legislature"
                 org["committee"] = (
-                    comm_name.replace("Joint ", "")
-                    .replace("Committee on ", "")
-                    .replace(" Committee", "")
+                    comm_name.replace("Joint ", "").replace("Committee on ", "").replace(" Committee", "")
                 )
 
             if comm_name.startswith("Subcommittee"):
-                (full_comm_name,) = comm_doc.xpath(
-                    '//div[@class="banner-sitename"]/a/text()'
-                )
-                full_comm_name = re.search(
-                    r"^Senate (.*) Committee$", full_comm_name
-                ).group(1)
+                (full_comm_name,) = comm_doc.xpath('//div[@class="banner-sitename"]/a/text()')
+                full_comm_name = re.search(r"^Senate (.*) Committee$", full_comm_name).group(1)
                 org["committee"] = full_comm_name
 
                 comm_name = re.search(r"^Subcommittee.*?on (.*)$", comm_name).group(1)
@@ -235,9 +202,7 @@ class CACommitteeScraper(Scraper, LXMLMixin):
                 # This should strip the header from assembly membership
                 # string automatically.
                 delimiter = "Assembly Membership:\n"
-                senate_members, delimiter, assembly_members = member_blob.partition(
-                    delimiter
-                )
+                senate_members, delimiter, assembly_members = member_blob.partition(delimiter)
 
                 # Strip header from senate membership string.
                 senate_members = senate_members.replace("Senate Membership:\n", "")

@@ -64,49 +64,30 @@ class NJPersonScraper(Scraper, MDBMixin):
             except KeyError:
                 photo_url = ""
                 self.warning("no photo url for %s", rec["Roster Key"])
-            url = "http://www.njleg.state.nj.us/members/bio.asp?Leg=" + str(
-                int(rec["Roster Key"])
-            )
-            address = "{0}\n{1}, {2} {3}".format(
-                rec["Address"], rec["City"], rec["State"], rec["Zipcode"]
-            )
+            url = "http://www.njleg.state.nj.us/members/bio.asp?Leg=" + str(int(rec["Roster Key"]))
+            address = "{0}\n{1}, {2} {3}".format(rec["Address"], rec["City"], rec["State"], rec["Zipcode"])
             gender = {"M": "Male", "F": "Female"}[rec["Sex"]]
 
             person = Person(
-                name=full_name,
-                district=district,
-                primary_org=chamber,
-                party=party,
-                image=photo_url,
-                gender=gender,
+                name=full_name, district=district, primary_org=chamber, party=party, image=photo_url, gender=gender,
             )
 
             person.add_link(url)
             person.add_source(url)
             person.add_source("http://www.njleg.state.nj.us/downloads.asp")
 
-            person.add_contact_detail(
-                type="address", value=address, note="District Office"
-            )
+            person.add_contact_detail(type="address", value=address, note="District Office")
             if phone is not None:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="District Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="District Office")
             if email is not None:
-                person.add_contact_detail(
-                    type="email", value=email, note="District Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="District Office")
 
             yield person
 
     def _construct_email(self, chamber, sex, last_name):
         # translate accents to non-accented versions for use in an
         # email and drop apostrophes and hyphens
-        last_name = "".join(
-            c
-            for c in unicodedata.normalize("NFD", str(last_name))
-            if unicodedata.category(c) != "Mn"
-        )
+        last_name = "".join(c for c in unicodedata.normalize("NFD", str(last_name)) if unicodedata.category(c) != "Mn")
         last_name = last_name.replace("'", "").replace("-", "").replace(" ", "")
         sex_noun = {"M": "m", "F": "w"}[sex]
 

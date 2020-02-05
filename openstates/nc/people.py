@@ -47,9 +47,7 @@ class NCPersonScraper(Scraper):
             photo_url = ldoc.xpath("//figure/a/@href")[0]
 
             address_xpath = '//h6[@class="mt-3"]/following-sibling::p'
-            address = "\n".join(
-                [element.text_content() for element in ldoc.xpath(address_xpath)]
-            )
+            address = "\n".join([element.text_content() for element in ldoc.xpath(address_xpath)])
             self.warning(address)
 
             link_xpath = '//a[starts-with(@href, "{}:")]'
@@ -57,13 +55,7 @@ class NCPersonScraper(Scraper):
             phone = ldoc.xpath(link_xpath.format("tel"))[0].text
 
             # save legislator
-            person = Person(
-                name=full_name,
-                district=district,
-                party=party,
-                primary_org=chamber,
-                image=photo_url,
-            )
+            person = Person(name=full_name, district=district, party=party, primary_org=chamber, image=photo_url,)
             person.extras["counties"] = counties.text_content().split(", ")
             person.extras["notice"] = notice
             person.add_link(link)
@@ -74,15 +66,9 @@ class NCPersonScraper(Scraper):
             self.warning(email)
 
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="Capitol Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="Capitol Office")
             yield person

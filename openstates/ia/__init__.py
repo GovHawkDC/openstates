@@ -27,16 +27,8 @@ class Iowa(Jurisdiction):
             "name": "2011-2012 Regular Session",
             "start_date": "2011-01-10",
         },
-        {
-            "_scraped_name": "General Assembly: 85",
-            "identifier": "2013-2014",
-            "name": "2013-2014 Regular Session",
-        },
-        {
-            "_scraped_name": "General Assembly: 86",
-            "identifier": "2015-2016",
-            "name": "2015-2016 Regular Session",
-        },
+        {"_scraped_name": "General Assembly: 85", "identifier": "2013-2014", "name": "2013-2014 Regular Session",},
+        {"_scraped_name": "General Assembly: 86", "identifier": "2015-2016", "name": "2015-2016 Regular Session",},
         {
             "_scraped_name": "General Assembly: 87",
             "identifier": "2017-2018",
@@ -71,9 +63,7 @@ class Iowa(Jurisdiction):
         legislature_name = "Iowa General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -88,8 +78,5 @@ class Iowa(Jurisdiction):
 
         return [
             x[0]
-            for x in filter(
-                lambda x: x != [],
-                [re.findall(r"^.*Assembly: [0-9]+", session) for session in sessions],
-            )
+            for x in filter(lambda x: x != [], [re.findall(r"^.*Assembly: [0-9]+", session) for session in sessions],)
         ]

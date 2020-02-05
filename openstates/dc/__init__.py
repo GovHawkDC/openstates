@@ -21,21 +21,9 @@ class DistrictOfColumbia(Jurisdiction):
         "bills": DCBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "19",
-            "identifier": "19",
-            "name": "19th Council Period (2011-2012)",
-        },
-        {
-            "_scraped_name": "20",
-            "identifier": "20",
-            "name": "20th Council Period (2013-2014)",
-        },
-        {
-            "_scraped_name": "21",
-            "identifier": "21",
-            "name": "21st Council Period (2015-2016)",
-        },
+        {"_scraped_name": "19", "identifier": "19", "name": "19th Council Period (2011-2012)",},
+        {"_scraped_name": "20", "identifier": "20", "name": "20th Council Period (2013-2014)",},
+        {"_scraped_name": "21", "identifier": "21", "name": "21st Council Period (2015-2016)",},
         {
             "_scraped_name": "22",
             "identifier": "22",
@@ -66,12 +54,8 @@ class DistrictOfColumbia(Jurisdiction):
     ]
 
     def get_organizations(self):
-        yield Organization(
-            name="Council of the District of Columbia", classification="legislature"
-        )
-        yield Organization(
-            name="Executive Office of the Mayor", classification="executive"
-        )
+        yield Organization(name="Council of the District of Columbia", classification="legislature")
+        yield Organization(name="Executive Office of the Mayor", classification="executive")
 
     def get_session_list(self):
         data = api_request("/LIMSLookups")

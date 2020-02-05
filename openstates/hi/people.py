@@ -38,10 +38,7 @@ class HIPersonScraper(Scraper):
             cttys = table.xpath("./tr/td/a")
             for ctty in cttys:
                 ret["ctty"].append(
-                    {
-                        "name": ctty.text,
-                        "page": "%s/%s" % (HI_BASE_URL, ctty.attrib["href"]),
-                    }
+                    {"name": ctty.text, "page": "%s/%s" % (HI_BASE_URL, ctty.attrib["href"]),}
                 )
         return ret
 
@@ -102,10 +99,7 @@ class HIPersonScraper(Scraper):
         return district[2].text_content()
 
     def scrape_contact_info(self, contact):
-        homepage = "%s/%s" % (  # XXX: Dispatch a read on this page
-            HI_BASE_URL,
-            contact.xpath("./a")[0].attrib["href"],
-        )
+        homepage = "%s/%s" % (HI_BASE_URL, contact.xpath("./a")[0].attrib["href"],)  # XXX: Dispatch a read on this page
 
         els = self.br_split(contact)
 
@@ -179,11 +173,7 @@ class HIPersonScraper(Scraper):
                 continue
 
             person = Person(
-                name=leg["name"],
-                district=leg["district"],
-                party=leg["party"],
-                primary_org=chamber,
-                image=leg["image"],
+                name=leg["name"], district=leg["district"], party=leg["party"], primary_org=chamber, image=leg["image"],
             )
 
             for source in leg["source"]:
@@ -197,11 +187,7 @@ class HIPersonScraper(Scraper):
                     else:
                         ctty_chamber = chamber
 
-                    comm = Organization(
-                        name=ctty["name"],
-                        classification="committee",
-                        chamber=ctty_chamber,
-                    )
+                    comm = Organization(name=ctty["name"], classification="committee", chamber=ctty_chamber,)
                     comm.add_member(person, role="member")
 
             except KeyError:
@@ -210,21 +196,13 @@ class HIPersonScraper(Scraper):
             person.add_link(leg["homepage"])
 
             if leg["addr"]:
-                person.add_contact_detail(
-                    type="address", value=leg["addr"], note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=leg["addr"], note="Capitol Office")
             if leg["phone"]:
-                person.add_contact_detail(
-                    type="voice", value=leg["phone"], note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=leg["phone"], note="Capitol Office")
             if leg["email"]:
-                person.add_contact_detail(
-                    type="email", value=leg["email"], note="Capitol Office"
-                )
+                person.add_contact_detail(type="email", value=leg["email"], note="Capitol Office")
             if leg["fax"]:
-                person.add_contact_detail(
-                    type="fax", value=leg["fax"], note="Capitol Office"
-                )
+                person.add_contact_detail(type="fax", value=leg["fax"], note="Capitol Office")
             yield person
 
     def scrape(self, chamber=None):

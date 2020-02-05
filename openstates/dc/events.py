@@ -18,9 +18,7 @@ class DCEventScraper(Scraper):
 
         event_list = doc.xpath("//div[@class='event-description-dev']")
         for event in event_list:
-            place_and_time = event.xpath(
-                ".//div[@class='event-description-dev-metabox']/p/text()"
-            )
+            place_and_time = event.xpath(".//div[@class='event-description-dev-metabox']/p/text()")
             when = " ".join([place_and_time[0].strip(), place_and_time[1].strip()])
             if len(place_and_time) > 2:
                 location = place_and_time[2]
@@ -29,17 +27,11 @@ class DCEventScraper(Scraper):
             # when is now of the following format:
             # Wednesday, 2/25/2015 9:30am
             when = datetime.datetime.strptime(when, "%A, %m/%d/%Y %I:%M%p")
-            description_content = event.xpath(
-                ".//div[@class='event-description-content-dev']"
-            )[0]
+            description_content = event.xpath(".//div[@class='event-description-content-dev']")[0]
             description_lines = description_content.xpath("./*")
             name = description_lines[0].text_content()
-            desc_without_title = " ".join(
-                d.text_content() for d in description_lines[1:]
-            )
-            description = re.sub(
-                r"\s+", " ", description_content.text_content()
-            ).strip()
+            desc_without_title = " ".join(d.text_content() for d in description_lines[1:])
+            description = re.sub(r"\s+", " ", description_content.text_content()).strip()
             potential_bills = description_content.xpath(".//li")
 
             committee = committee_regex.search(desc_without_title)

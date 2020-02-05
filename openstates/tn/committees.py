@@ -85,37 +85,19 @@ class TNCommitteeScraper(Scraper):
         if is_subcommittee:
             # All TN subcommittees are just the name of the parent committee with " Subcommittee"
             # at the end
-            parent_committee_name = re.sub(
-                r"\s*(Study )?Subcommittee\s*", "", committee_name
-            )
+            parent_committee_name = re.sub(r"\s*(Study )?Subcommittee\s*", "", committee_name)
             com = Organization(
-                committee_name,
-                classification="committee",
-                parent_id=self.parents[parent_committee_name],
+                committee_name, classification="committee", parent_id=self.parents[parent_committee_name],
             )
         else:
-            com = Organization(
-                committee_name, chamber=chamber, classification="committee"
-            )
+            com = Organization(committee_name, chamber=chamber, classification="committee")
             self.parents[committee_name] = com._id
 
-        OFFICER_SEARCH = (
-            '//h2[contains(text(), "Committee Officers")]/'
-            "following-sibling::div/ul/li/a"
-        )
-        MEMBER_SEARCH = (
-            '//h2[contains(text(), "Committee Members")]/'
-            "following-sibling::div/ul/li/a"
-        )
+        OFFICER_SEARCH = '//h2[contains(text(), "Committee Officers")]/' "following-sibling::div/ul/li/a"
+        MEMBER_SEARCH = '//h2[contains(text(), "Committee Members")]/' "following-sibling::div/ul/li/a"
         for a in page.xpath(OFFICER_SEARCH) + page.xpath(MEMBER_SEARCH):
 
-            member_name = " ".join(
-                [
-                    x.strip()
-                    for x in a.xpath("text()") + a.xpath("span/text()")
-                    if x.strip()
-                ]
-            )
+            member_name = " ".join([x.strip() for x in a.xpath("text()") + a.xpath("span/text()") if x.strip()])
             role = a.xpath("small")
             if role:
                 role = role[0].xpath("text()")[0].strip()
@@ -148,9 +130,7 @@ class TNCommitteeScraper(Scraper):
     # Scrapes the individual joint committee - most of it is special case
     def scrape_joint_committee(self, committee_name, url):
         if "state.tn.us" in url:
-            com = Organization(
-                committee_name, chamber="legislature", classification="committee"
-            )
+            com = Organization(committee_name, chamber="legislature", classification="committee")
             try:
                 page = self.get(url).text
             except requests.exceptions.ConnectionError:
@@ -159,9 +139,7 @@ class TNCommitteeScraper(Scraper):
 
             page = lxml.html.fromstring(page)
 
-            for el in page.xpath(
-                "//div[@class='Blurb']/table//tr[2 <= position() and  position() < 10]/td[1]"
-            ):
+            for el in page.xpath("//div[@class='Blurb']/table//tr[2 <= position() and  position() < 10]/td[1]"):
                 if el.xpath("text()") == ["Vacant"]:
                     continue
 
@@ -181,9 +159,7 @@ class TNCommitteeScraper(Scraper):
             return com
 
         elif "gov-opps" in url:
-            com = Organization(
-                committee_name, chamber="legislature", classification="committee"
-            )
+            com = Organization(committee_name, chamber="legislature", classification="committee")
             page = self.get(url).text
             page = lxml.html.fromstring(page)
 
@@ -193,20 +169,10 @@ class TNCommitteeScraper(Scraper):
                 chamber_page = self.get(chamber_link).text
                 chamber_page = lxml.html.fromstring(chamber_page)
 
-                OFFICER_SEARCH = (
-                    '//h2[contains(text(), "Committee Officers")]/'
-                    "following-sibling::div/ul/li/a"
-                )
-                MEMBER_SEARCH = (
-                    '//h2[contains(text(), "Committee Members")]/'
-                    "following-sibling::div/ul/li/a"
-                )
-                for a in chamber_page.xpath(OFFICER_SEARCH) + chamber_page.xpath(
-                    MEMBER_SEARCH
-                ):
-                    member_name = " ".join(
-                        [x.strip() for x in a.xpath(".//text()") if x.strip()]
-                    )
+                OFFICER_SEARCH = '//h2[contains(text(), "Committee Officers")]/' "following-sibling::div/ul/li/a"
+                MEMBER_SEARCH = '//h2[contains(text(), "Committee Members")]/' "following-sibling::div/ul/li/a"
+                for a in chamber_page.xpath(OFFICER_SEARCH) + chamber_page.xpath(MEMBER_SEARCH):
+                    member_name = " ".join([x.strip() for x in a.xpath(".//text()") if x.strip()])
                     role = a.xpath("small")
                     if role:
                         role = role[0].xpath("text()")[0].strip()

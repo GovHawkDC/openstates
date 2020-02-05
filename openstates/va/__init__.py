@@ -35,11 +35,7 @@ class Virginia(Jurisdiction):
             "name": "2011 Regular Session",
             "start_date": "2011-01-12",
         },
-        {
-            "_scraped_name": "2011 Special Session I",
-            "identifier": "2011specialI",
-            "name": "2011, 1st Special Session",
-        },
+        {"_scraped_name": "2011 Special Session I", "identifier": "2011specialI", "name": "2011, 1st Special Session",},
         {
             "_scraped_name": "2012 Session",
             "identifier": "2012",
@@ -58,22 +54,14 @@ class Virginia(Jurisdiction):
             "name": "2013 Regular Session",
             "start_date": "2013-01-09",
         },
-        {
-            "_scraped_name": "2013 Special Session I",
-            "identifier": "2013specialI",
-            "name": "2013, 1st Special Session",
-        },
+        {"_scraped_name": "2013 Special Session I", "identifier": "2013specialI", "name": "2013, 1st Special Session",},
         {
             "_scraped_name": "2014 Session",
             "identifier": "2014",
             "name": "2014 Regular Session",
             "start_date": "2014-01-09",
         },
-        {
-            "_scraped_name": "2014 Special Session I",
-            "identifier": "2014specialI",
-            "name": "2014, 1st Special Session",
-        },
+        {"_scraped_name": "2014 Special Session I", "identifier": "2014specialI", "name": "2014, 1st Special Session",},
         {
             "_scraped_name": "2015 Session",
             "end_date": "2015-02-27",
@@ -184,9 +172,7 @@ class Virginia(Jurisdiction):
         legislature_name = "Virginia General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Office of the Governor", classification="executive")
@@ -195,7 +181,5 @@ class Virginia(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        sessions = url_xpath(
-            "http://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
-        )
+        sessions = url_xpath("http://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()")
         return [s.strip() for s in sessions if "Session" in s]

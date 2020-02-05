@@ -81,14 +81,8 @@ action_map = {
     "House1stWaived": {"name": "House First Reading Waived", "action": ["reading-1"]},
     "House2ndRead": {"name": "House Second Reading", "action": ["reading-2"]},
     "House2ndWaived": {"name": "House Second Reading Waived.", "action": ["reading-2"]},
-    "HouseCaucusConcurRefuse": {
-        "name": "House Caucus Refuse to Concur",
-        "action": None,
-    },
-    "HouseConsentCalendarDate": {
-        "name": "House Placed on Consent Calendar",
-        "action": None,
-    },
+    "HouseCaucusConcurRefuse": {"name": "House Caucus Refuse to Concur", "action": None,},
+    "HouseConsentCalendarDate": {"name": "House Placed on Consent Calendar", "action": None,},
     "HouseConsentCalendarObject": {"name": "", "action": None},
     "HouseConsentObjectDate": {"name": "", "action": None},
     "HouseMajCaucusDate": {"name": "", "action": None},
@@ -105,10 +99,7 @@ action_map = {
     "Senate1stRead": {"name": "Senate First Reading", "action": ["reading-1"]},
     "Senate1stWaived": {"name": "Senate First Reading Waived", "action": ["reading-1"]},
     "Senate2ndRead": {"name": "Senate Second Reading", "action": ["reading-2"]},
-    "Senate2ndWaived": {
-        "name": "Senate Second Reading Waived",
-        "action": ["reading-2"],
-    },
+    "Senate2ndWaived": {"name": "Senate Second Reading Waived", "action": ["reading-2"],},
     "SenateCaucusConcurRefuse": {"name": "", "action": None},
     "SenateConsentCalendarDate": {"name": "", "action": None},
     "SenateConsentCalendarObject": {"name": "", "action": None},

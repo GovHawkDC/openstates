@@ -81,15 +81,9 @@ class WVCommitteeScraper(Scraper):
             if parent is None:
                 parent = name.partition("Subcommittee")[0].strip()
 
-            comm = Organization(
-                name=name,
-                classification="committee",
-                parent_id=self._joint_committees[parent],
-            )
+            comm = Organization(name=name, classification="committee", parent_id=self._joint_committees[parent],)
         else:
-            comm = Organization(
-                name=name, classification="committee", chamber="legislature"
-            )
+            comm = Organization(name=name, classification="committee", chamber="legislature")
             self._joint_committees[name] = comm
         comm.add_source(url)
 

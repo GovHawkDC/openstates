@@ -98,19 +98,13 @@ class NYEventScraper(Scraper, LXMLMixin):
             title_key = list(title_key).pop()
             title = metainf[title_key]
 
-            title = re.sub(
-                r"\*\*Click here to view public hearing notice\*\*", "", title
-            )
+            title = re.sub(r"\*\*Click here to view public hearing notice\*\*", "", title)
 
             # If event was postponed, add a warning to the title.
             if postponed:
                 title = "POSTPONED: %s" % title
 
-            event = Event(
-                name=title,
-                start_date=self._tz.localize(datetime),
-                location_name=metainf["Place:"],
-            )
+            event = Event(name=title, start_date=self._tz.localize(datetime), location_name=metainf["Place:"],)
             event.extras = {"contact": metainf["Contact:"]}
             if "Media Contact:" in metainf:
                 event.extras.update(media_contact=metainf["Media Contact:"])

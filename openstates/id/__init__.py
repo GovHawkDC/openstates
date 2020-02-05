@@ -123,9 +123,7 @@ class Idaho(Jurisdiction):
         legislature_name = "Idaho State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -133,7 +131,4 @@ class Idaho(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        return url_xpath(
-            "https://legislature.idaho.gov/sessioninfo/",
-            '//select[@id="ddlsessions"]/option/text()',
-        )
+        return url_xpath("https://legislature.idaho.gov/sessioninfo/", '//select[@id="ddlsessions"]/option/text()',)

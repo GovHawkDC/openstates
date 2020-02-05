@@ -7,18 +7,12 @@ from pupa.utils.generic import convert_pdf
 
 committee_urls = {
     "lower": {
-        "2013": (
-            "http://leg.mt.gov/content/Committees/Session/"
-            "2013%20house%20committees%20-%20columns.pdf"
-        ),
+        "2013": ("http://leg.mt.gov/content/Committees/Session/" "2013%20house%20committees%20-%20columns.pdf"),
         "2015": "http://leg.mt.gov/content/Sessions/64th/2015-house-committees.pdf",
         "2017": "http://leg.mt.gov/content/Committees/Session/2017-house-committees.pdf",
     },
     "upper": {
-        "2013": (
-            "http://leg.mt.gov/content/Committees/Session/"
-            "2013%20senate%20committees%20-%20columns.pdf"
-        ),
+        "2013": ("http://leg.mt.gov/content/Committees/Session/" "2013%20senate%20committees%20-%20columns.pdf"),
         "2015": "http://leg.mt.gov/content/Sessions/64th/2015-senate-committees.pdf",
         "2017": "http://leg.mt.gov/content/Committees/Session/2017-senate-committees.pdf",
     },
@@ -43,14 +37,8 @@ class MTCommitteeScraper(Scraper):
             text = convert_pdf(filename, type="text-nolayout").decode()
 
         for hotgarbage, replacement in (
-            (
-                r"Judicial Branch, Law Enforcement,\s+and\s+Justice",
-                "Judicial Branch, Law Enforcement, and Justice",
-            ),
-            (
-                r"Natural Resources and\s+Transportation",
-                "Natural Resources and Transportation",
-            ),
+            (r"Judicial Branch, Law Enforcement,\s+and\s+Justice", "Judicial Branch, Law Enforcement, and Justice",),
+            (r"Natural Resources and\s+Transportation", "Natural Resources and Transportation",),
             (
                 r"(?u)Federal Relations, Energy,?\s+and\s+Telecommunications",
                 "Federal Relations, Energy, and Telecommunications",
@@ -77,9 +65,7 @@ class MTCommitteeScraper(Scraper):
                     yield comm
 
                 committee = line.strip()
-                comm = Organization(
-                    name=committee, chamber=chamber, classification="committee"
-                )
+                comm = Organization(name=committee, chamber=chamber, classification="committee")
 
                 comm.add_source(url)
 
@@ -131,17 +117,10 @@ class MTCommitteeScraper(Scraper):
         alternate_lines = alternate_text.split("\n")
 
         HEADER_OF_COLUMN_TO_REPLACE = "State Administration (cont.)      "
-        (text_of_line_to_replace,) = [
-            x for x in alternate_lines if HEADER_OF_COLUMN_TO_REPLACE in x
-        ]
+        (text_of_line_to_replace,) = [x for x in alternate_lines if HEADER_OF_COLUMN_TO_REPLACE in x]
         first_line_to_replace = alternate_lines.index(text_of_line_to_replace)
-        first_character_to_replace = (
-            alternate_lines[first_line_to_replace].index(HEADER_OF_COLUMN_TO_REPLACE)
-            - 1
-        )
-        last_character_to_replace = first_character_to_replace + len(
-            HEADER_OF_COLUMN_TO_REPLACE
-        )
+        first_character_to_replace = alternate_lines[first_line_to_replace].index(HEADER_OF_COLUMN_TO_REPLACE) - 1
+        last_character_to_replace = first_character_to_replace + len(HEADER_OF_COLUMN_TO_REPLACE)
 
         column_lines_to_add = [
             x[first_character_to_replace:last_character_to_replace]

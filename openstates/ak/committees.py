@@ -12,9 +12,7 @@ class AKCommitteeScraper(Scraper):
             yield from self.scrape_chamber(chamber, session)
 
     def scrape_chamber(self, chamber, session):
-        url = (
-            "http://www.legis.state.ak.us/basis/commbr_info.asp" "?session=%s" % session
-        )
+        url = "http://www.legis.state.ak.us/basis/commbr_info.asp" "?session=%s" % session
 
         page = self.get(url).text
         page = lxml.html.fromstring(page)
@@ -44,9 +42,7 @@ class AKCommitteeScraper(Scraper):
             comm = Organization(chamber=chamber, name=name, classification="committee")
         else:
             comm = Organization(
-                name=subcommittee,
-                classification="committee",
-                parent_id={"classification": chamber, "name": name},
+                name=subcommittee, classification="committee", parent_id={"classification": chamber, "name": name},
             )
 
         comm.add_source(url)

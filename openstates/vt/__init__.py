@@ -91,12 +91,8 @@ class Vermont(Jurisdiction):
     def get_organizations(self):
         legislature_name = "Vermont General Assembly"
         legislature = Organization(name=legislature_name, classification="legislature")
-        governor = Organization(
-            name="Office of the Governor", classification="executive"
-        )
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        governor = Organization(name="Office of the Governor", classification="executive")
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -107,8 +103,7 @@ class Vermont(Jurisdiction):
     def get_session_list(self):
         sessions = url_xpath(
             "http://legislature.vermont.gov/bill/search/2016",
-            '//fieldset/div[@id="Form_SelectSession_selected_session_Holder"]'
-            "/div/select/option/text()",
+            '//fieldset/div[@id="Form_SelectSession_selected_session_Holder"]' "/div/select/option/text()",
         )
         sessions = (session.replace(",", "").strip() for session in sessions)
         return sessions

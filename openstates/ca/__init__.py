@@ -83,11 +83,7 @@ class California(Jurisdiction):
             "identifier": "20112012 Special Session 1",
             "name": "2011-2012, 1st Special Session",
         },
-        {
-            "classification": "primary",
-            "identifier": "20132014",
-            "name": "2013-2014 Regular Session",
-        },
+        {"classification": "primary", "identifier": "20132014", "name": "2013-2014 Regular Session",},
         {
             "classification": "special",
             "identifier": "20132014 Special Session 1",
@@ -149,12 +145,8 @@ class California(Jurisdiction):
         legislature_name = "California State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
-        lower = Organization(
-            "Assembly", classification="lower", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
+        lower = Organization("Assembly", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Office of the Governor", classification="executive")
         yield legislature
@@ -162,8 +154,5 @@ class California(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        sessions = url_xpath(
-            "http://www.leginfo.ca.gov/bilinfo.html",
-            "//select[@name='sess']/option/text()",
-        )
+        sessions = url_xpath("http://www.leginfo.ca.gov/bilinfo.html", "//select[@name='sess']/option/text()",)
         return [re.findall(r"\(.*\)", session)[0][1:-1] for session in sessions]

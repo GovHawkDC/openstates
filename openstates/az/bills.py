@@ -22,9 +22,8 @@ class AZBillScraper(Scraper):
     }
 
     def scrape_bill(self, chamber, session, bill_id, session_id):
-        bill_json_url = (
-            "https://apps.azleg.gov/api/Bill/?billNumber={}&sessionId={}&"
-            "legislativeBody={}".format(bill_id, session_id, self.chamber_map[chamber])
+        bill_json_url = "https://apps.azleg.gov/api/Bill/?billNumber={}&sessionId={}&" "legislativeBody={}".format(
+            bill_id, session_id, self.chamber_map[chamber]
         )
         response = self.get(bill_json_url)
         page = json.loads(response.content.decode("utf-8"))
@@ -37,13 +36,7 @@ class AZBillScraper(Scraper):
         bill_id = page["Number"]
         internal_id = page["BillId"]
         bill_type = self.get_bill_type(bill_id)
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=bill_title,
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=bill_title, classification=bill_type,)
 
         self.scrape_actions(bill, page, chamber)
         self.scrape_versions_and_documents(bill, internal_id)
@@ -51,9 +44,7 @@ class AZBillScraper(Scraper):
         self.scrape_subjects(bill, internal_id)
         yield from self.scrape_votes(bill, page)
 
-        bill_url = "https://apps.azleg.gov/BillStatus/BillOverview/{}?SessionId={}".format(
-            internal_id, session_id
-        )
+        bill_url = "https://apps.azleg.gov/BillStatus/BillOverview/{}?SessionId={}".format(internal_id, session_id)
         bill.add_source(bill_url)
 
         self.sort_bill_actions(bill)
@@ -67,9 +58,7 @@ class AZBillScraper(Scraper):
         # These DocumentGroupName items will be saved as versions not documents
         version_types = ["Bill Versions", "Adopted Amendments", "Proposed Amendments"]
 
-        versions_url = "https://apps.azleg.gov/api/DocType/?billStatusId={}".format(
-            internal_id
-        )
+        versions_url = "https://apps.azleg.gov/api/DocType/?billStatusId={}".format(internal_id)
         page = json.loads(self.get(versions_url).content.decode("utf-8"))
         for document_set in page:
             type_ = document_set["DocumentGroupName"]
@@ -77,28 +66,20 @@ class AZBillScraper(Scraper):
                 media_type = "text/html" if doc["HtmlPath"] else "application/pdf"
                 url = doc["HtmlPath"] or doc["PdfPath"]
                 if not url:
-                    self.warning(
-                        "No PDF or HTML version found for %s" % doc["DocumentName"]
-                    )
+                    self.warning("No PDF or HTML version found for %s" % doc["DocumentName"])
                 # Sometimes the URL is just a relative path; make it absolute
                 if not url.startswith("http"):
                     url = "https://apps.azleg.gov{}".format(url)
 
                 if type_ in version_types:
-                    bill.add_version_link(
-                        note=doc["DocumentName"], url=url, media_type=media_type
-                    )
+                    bill.add_version_link(note=doc["DocumentName"], url=url, media_type=media_type)
                 else:
-                    bill.add_document_link(
-                        note=doc["DocumentName"], url=url, media_type=media_type
-                    )
+                    bill.add_document_link(note=doc["DocumentName"], url=url, media_type=media_type)
 
     def scrape_sponsors(self, bill, internal_id):
         # Careful, this sends XML to a browser but JSON to machines
         # https://apps.azleg.gov/api/BillSponsor/?id=68398
-        sponsors_url = "https://apps.azleg.gov/api/BillSponsor/?id={}".format(
-            internal_id
-        )
+        sponsors_url = "https://apps.azleg.gov/api/BillSponsor/?id={}".format(internal_id)
         page = json.loads(self.get(sponsors_url).content.decode("utf-8"))
         for sponsor in page:
             if "Prime" in sponsor["SponsorType"]:
@@ -110,10 +91,7 @@ class AZBillScraper(Scraper):
             if "FullName" in sponsor["Legislator"]:
                 sponsor_name = sponsor["Legislator"]["FullName"]
             else:
-                sponsor_name = "{} {}".format(
-                    sponsor["Legislator"]["FirstName"],
-                    sponsor["Legislator"]["LastName"],
-                )
+                sponsor_name = "{} {}".format(sponsor["Legislator"]["FirstName"], sponsor["Legislator"]["LastName"],)
             bill.add_sponsorship(
                 classification=str(sponsor_type),
                 name=sponsor_name,
@@ -123,9 +101,7 @@ class AZBillScraper(Scraper):
 
     def scrape_subjects(self, bill, internal_id):
         # https://apps.azleg.gov/api/Keyword/?billStatusId=68149
-        subjects_url = "https://apps.azleg.gov/api/Keyword/?billStatusId={}".format(
-            internal_id
-        )
+        subjects_url = "https://apps.azleg.gov/api/Keyword/?billStatusId={}".format(internal_id)
         page = json.loads(self.get(subjects_url).content.decode("utf-8"))
         for subject in page:
             bill.add_subject(subject["Name"])
@@ -154,9 +130,7 @@ class AZBillScraper(Scraper):
                         classification=utils.action_map[action]["action"],
                     )
                 except (ValueError, TypeError):
-                    self.info(
-                        "Invalid Action Time {} for {}".format(page[action], action)
-                    )
+                    self.info("Invalid Action Time {} for {}".format(page[action], action))
 
         # Governor Signs and Vetos get different treatment
         if page["GovernorAction"] == "Signed":
@@ -193,10 +167,7 @@ class AZBillScraper(Scraper):
                 action_type = None
 
             bill.add_action(
-                chamber=action_actor,
-                description=action_text,
-                date=action_date,
-                classification=action_type,
+                chamber=action_actor, description=action_text, date=action_date, classification=action_type,
             )
 
     def action_from_struct(self, bill, status):
@@ -213,11 +184,7 @@ class AZBillScraper(Scraper):
                 else:
                     categories = [category]
             else:
-                raise ValueError(
-                    "Unexpected committee type: {}".format(
-                        status["Committee"]["TypeName"]
-                    )
-                )
+                raise ValueError("Unexpected committee type: {}".format(status["Committee"]["TypeName"]))
             if status["ReportDate"]:
                 action_date = datetime.datetime.strptime(
                     self.strip_microseconds(status["ReportDate"]), "%Y-%m-%dT%H:%M:%S"
@@ -231,9 +198,7 @@ class AZBillScraper(Scraper):
 
                 bill.add_action(
                     description=action_text,
-                    chamber={"S": "upper", "H": "lower"}[
-                        status["Committee"]["LegislativeBody"]
-                    ],
+                    chamber={"S": "upper", "H": "lower"}[status["Committee"]["LegislativeBody"]],
                     date=action_date,
                     classification=categories,
                 )
@@ -253,9 +218,7 @@ class AZBillScraper(Scraper):
                 ).strftime("%Y-%m-%d")
                 bill.add_action(
                     description=action_text,
-                    chamber={"S": "upper", "H": "lower"}[
-                        status["Committee"]["LegislativeBody"]
-                    ],
+                    chamber={"S": "upper", "H": "lower"}[status["Committee"]["LegislativeBody"]],
                     date=action_date,
                     classification=["referral-committee"],
                 )
@@ -265,15 +228,12 @@ class AZBillScraper(Scraper):
             ).strftime("%Y-%m-%d")
 
             action_text = "HELD in committee {} {}".format(
-                self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]],
-                status["Committee"]["CommitteeName"],
+                self.chamber_map_rev_eng[status["Committee"]["LegislativeBody"]], status["Committee"]["CommitteeName"],
             )
 
             bill.add_action(
                 description=action_text,
-                chamber={"S": "upper", "H": "lower"}[
-                    status["Committee"]["LegislativeBody"]
-                ],
+                chamber={"S": "upper", "H": "lower"}[status["Committee"]["LegislativeBody"]],
                 date=action_date,
             )
         else:
@@ -308,19 +268,12 @@ class AZBillScraper(Scraper):
             for action in actions:
                 if action["Action"] == "No Action":
                     continue
-                action_date = datetime.datetime.strptime(
-                    action["ReportDate"], "%Y-%m-%dT%H:%M:%S"
-                )
+                action_date = datetime.datetime.strptime(action["ReportDate"], "%Y-%m-%dT%H:%M:%S")
                 vote = VoteEvent(
                     chamber={"S": "upper", "H": "lower"}[header["LegislativeBody"]],
                     motion_text=action["Action"],
                     classification="passage",
-                    result=(
-                        "pass"
-                        if action["UnanimouslyAdopted"]
-                        or action["Ayes"] > action["Nays"]
-                        else "fail"
-                    ),
+                    result=("pass" if action["UnanimouslyAdopted"] or action["Ayes"] > action["Nays"] else "fail"),
                     start_date=action_date.strftime("%Y-%m-%d"),
                     bill=bill,
                 )
@@ -349,9 +302,7 @@ class AZBillScraper(Scraper):
 
         session_form_url = "https://www.azleg.gov/azlegwp/setsession.php"
         form = {"sessionID": session_id}
-        req = self.post(
-            url=session_form_url, data=form, cookies=req.cookies, allow_redirects=True
-        )
+        req = self.post(url=session_form_url, data=form, cookies=req.cookies, allow_redirects=True)
 
         bill_list_url = "https://www.azleg.gov/bills/"
 

@@ -18,16 +18,8 @@ class Alaska(Jurisdiction):
         "events": AKEventScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "28th Legislature (2013-2014)",
-            "identifier": "28",
-            "name": "28th Legislature (2013-2014)",
-        },
-        {
-            "_scraped_name": "29th Legislature (2015-2016)",
-            "identifier": "29",
-            "name": "29th Legislature (2015-2016)",
-        },
+        {"_scraped_name": "28th Legislature (2013-2014)", "identifier": "28", "name": "28th Legislature (2013-2014)",},
+        {"_scraped_name": "29th Legislature (2015-2016)", "identifier": "29", "name": "29th Legislature (2015-2016)",},
         {
             "_scraped_name": "30th Legislature (2017-2018)",
             "end_date": "2017-04-16",
@@ -59,9 +51,7 @@ class Alaska(Jurisdiction):
         legislature_name = "Alaska State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

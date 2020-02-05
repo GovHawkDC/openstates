@@ -42,11 +42,7 @@ _classifiers = (
     (u"Remitido a Comisión", "", "referral-committee"),
     (u"Referido a Comisión", "", "referral-committee"),
     ("Retirada por su Autor", "", "withdrawal"),
-    (
-        "Comisión : * no recomienda aprobación de la medida",
-        "",
-        "committee-passage-unfavorable",
-    ),
+    ("Comisión : * no recomienda aprobación de la medida", "", "committee-passage-unfavorable",),
     ("Ley N", "executive", "executive-signature"),
 )
 
@@ -77,9 +73,7 @@ class PRBillScraper(Scraper):
 
     def scrape_chamber(self, chamber, session):
         year = session[0:4]
-        self.base_url = (
-            "http://www.oslpr.org/legislatura/tl%s/tl_medida_print2.asp" % year
-        )
+        self.base_url = "http://www.oslpr.org/legislatura/tl%s/tl_medida_print2.asp" % year
         chamber_letter = {"lower": "C", "upper": "S"}[chamber]
         for code, bill_type in self.bill_types.items():
             counter = itertools.count(1)
@@ -120,10 +114,7 @@ class PRBillScraper(Scraper):
                 elif action_url.endswith(".pdf"):
                     media_type = "application/pdf"
                 elif action_url.endswith(("docx", "dotx")):
-                    media_type = (
-                        "application/vnd.openxmlformats-officedocument"
-                        + ".wordprocessingml.document"
-                    )
+                    media_type = "application/vnd.openxmlformats-officedocument" + ".wordprocessingml.document"
                 elif action_url.endswith("docm"):
                     self.warning("Erroneous filename found: {}".format(action_url))
                     erroneous_filename = True
@@ -131,10 +122,7 @@ class PRBillScraper(Scraper):
                     raise Exception("unknown version type: %s" % action_url)
                 if not erroneous_filename:
                     bill.add_version_link(
-                        note=action,
-                        url=action_url,
-                        media_type=media_type,
-                        on_duplicate="ignore",
+                        note=action, url=action_url, media_type=media_type, on_duplicate="ignore",
                     )
             else:
                 bill.add_document_link(action, action_url, on_duplicate="ignore")
@@ -172,36 +160,23 @@ class PRBillScraper(Scraper):
             return
         doc = lxml.html.fromstring(html)
         # search for Titulo, accent over i messes up lxml, so use 'tulo'
-        title = doc.xpath(
-            u'//td/b[contains(text(),"tulo")]/../following-sibling::td/text()'
-        )
+        title = doc.xpath(u'//td/b[contains(text(),"tulo")]/../following-sibling::td/text()')
         if not title:
             raise NoSuchBill()
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=title[0],
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title[0], classification=bill_type,)
 
         author = doc.xpath(u'//td/b[contains(text(),"Autor")]/../text()')[0]
         for aname in author.split(","):
             aname = self.clean_name(aname).strip()
             if aname:
-                bill.add_sponsorship(
-                    aname, classification="primary", entity_type="person", primary=True
-                )
+                bill.add_sponsorship(aname, classification="primary", entity_type="person", primary=True)
 
         co_authors = doc.xpath(u'//td/b[contains(text(),"Co-autor")]/../text()')
         if len(co_authors) != 0:
             for co_author in co_authors[1].split(","):
                 bill.add_sponsorship(
-                    self.clean_name(co_author).strip(),
-                    classification="cosponsor",
-                    entity_type="person",
-                    primary=False,
+                    self.clean_name(co_author).strip(), classification="cosponsor", entity_type="person", primary=False,
                 )
 
         action_table = doc.xpath("//table")[-1]
@@ -231,24 +206,19 @@ class PRBillScraper(Scraper):
                 vote_name = vote_info.group(1)
 
                 if u"Votación Final" in vote_name:
-                    (vote_chamber, vote_name) = re.search(
-                        r"(?u)^\w+ por (.*?) en (.*)$", vote_name
-                    ).groups()
+                    (vote_chamber, vote_name) = re.search(r"(?u)^\w+ por (.*?) en (.*)$", vote_name).groups()
                     if "Senado" in vote_chamber:
                         vote_chamber = "upper"
                     else:
                         vote_chamber = "lower"
 
                 elif "Cuerpo de Origen" in vote_name:
-                    vote_name = re.search(
-                        r"(?u)^Cuerpo de Origen (.*)$", vote_name
-                    ).group(1)
+                    vote_name = re.search(r"(?u)^Cuerpo de Origen (.*)$", vote_name).group(1)
                     vote_chamber = chamber
 
                 elif u"informe de Comisión de Conferencia" in vote_name:
                     (vote_chamber, vote_name) = re.search(
-                        r"(?u)^(\w+) (\w+ informe de Comisi\wn de Conferencia)$",
-                        vote_name,
+                        r"(?u)^(\w+) (\w+ informe de Comisi\wn de Conferencia)$", vote_name,
                     ).groups()
                     if vote_chamber == "Senado":
                         vote_chamber = "upper"
@@ -263,9 +233,7 @@ class PRBillScraper(Scraper):
                         vote_chamber = chamber
 
                 else:
-                    raise AssertionError(
-                        u"Unknown vote text found: {}".format(vote_name)
-                    )
+                    raise AssertionError(u"Unknown vote text found: {}".format(vote_name))
 
                 vote_name = vote_name.title()
 

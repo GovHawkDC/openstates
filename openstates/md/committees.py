@@ -95,9 +95,7 @@ class MDCommitteeScraper(Scraper):
             elif "Other" in chamber_name:
                 chamber = "legislature"
             else:
-                self.logger.warning(
-                    "No committee chamber available for committee '%s'" % com_name
-                )
+                self.logger.warning("No committee chamber available for committee '%s'" % com_name)
                 continue
 
             com = self.scrape_committee(chamber, com_name, url)
@@ -134,9 +132,7 @@ class MDCommitteeScraper(Scraper):
                 if sub_name != "Full Committee":
                     sub_name = sub_name.replace("Subcommittee", "").strip()
                     com = Organization(
-                        name=sub_name,
-                        classification="committee",
-                        parent_id=self.parents[(chamber, com_name)],
+                        name=sub_name, classification="committee", parent_id=self.parents[(chamber, com_name)],
                     )
                     com.add_source(url)
 
@@ -158,9 +154,7 @@ class MDCommitteeScraper(Scraper):
                         sub_name = sub_name_source[0]
                         sub_name = sub_name.replace("Subcommittee", "").strip()
                         com = Organization(
-                            name=sub_name,
-                            classification="committee",
-                            parent_id=self.parents[(chamber, com_name)],
+                            name=sub_name, classification="committee", parent_id=self.parents[(chamber, com_name)],
                         )
                         com.add_source(url)
 

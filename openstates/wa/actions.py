@@ -79,21 +79,13 @@ _categorizer_rules = (
          (at)? .*\.",
         "",
     ),
-    Rule(
-        r"(?i)(?P<committees>\w+) \- Majority; do pass .* \(Majority Report\)",
-        "passage",
-    ),
+    Rule(r"(?i)(?P<committees>\w+) \- Majority; do pass .* \(Majority Report\)", "passage",),
     Rule(r"(?i)Conference committee appointed.", ""),
     Rule(r"(?i)Conference committee report;", ""),
-    Rule(
-        r"(?i).+ - Majority; \d+.+ substitute bill be substituted, do pass", "passage"
-    ),
+    Rule(r"(?i).+ - Majority; \d+.+ substitute bill be substituted, do pass", "passage"),
     Rule(r"President signed", "passage"),
     Rule(r"Speaker signed", "passage"),
-    Rule(
-        r"(?i)Signed by (?P<signed_chamber>(Representatives|Senators)) (?P<legislators>.*)",
-        "passage",
-    ),
+    Rule(r"(?i)Signed by (?P<signed_chamber>(Representatives|Senators)) (?P<legislators>.*)", "passage",),
     Rule(r"(?i)Referred to (?P<committees>.*)(\.)?"),
     Rule(
         r"(?i)(?P<from_committee>.*) relieved of further consideration. On motion, referred to \

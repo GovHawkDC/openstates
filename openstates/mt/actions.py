@@ -26,9 +26,7 @@ _categories = {
     "veto-override-passage": {"rgxs": [u"Veto Overridden in House",]},
     # ???
     # The chamber attempted a veto override and failed
-    "veto-override-failure": {
-        "rgxs": [u"Veto Override Motion Failed", u"Veto Override Failed",],
-    },
+    "veto-override-failure": {"rgxs": [u"Veto Override Motion Failed", u"Veto Override Failed",],},
     # ???
     # A bill has undergone its first reading
     "reading-1": {"rgxs": ["First Reading"], "funcs": {},},
@@ -82,9 +80,7 @@ _categories = {
     # The bill has been vetoed by the governor
     "executive-veto": {"rgxs": ["Vetoed by Governor"], "funcs": {},},
     # The governor has issued a line-item (partial) veto
-    "executive-veto-line-item": {
-        "rgxs": [u"Returned with Governor's Line-item Veto",],
-    },
+    "executive-veto-line-item": {"rgxs": [u"Returned with Governor's Line-item Veto",],},
     # An amendment has been offered on the bill
     "amendment-introduction": {"rgxs": ["^(?i)amendment.{,200}introduced"],},
     # The bill has been amended
@@ -126,9 +122,7 @@ _categories = {
     # TODO: restore this once py-ocd-django has this classification
     "amendment-deferral": {"rgxs": ["Tabled in Committee"],},
     # The bill has been referred to a committee
-    "referral-committee": {
-        "rgxs": ["Referred to Committee", "Rereferred to Committee"],
-    },
+    "referral-committee": {"rgxs": ["Referred to Committee", "Rereferred to Committee"],},
     # The bill has been passed out of a committee
     "committee-passage": {
         "rgxs": [

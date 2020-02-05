@@ -90,18 +90,9 @@ class MSLegislatorScraper(Scraper):
             home_address_total = ""
             if home_address and home_city:
                 if not home_address2:
-                    home_address_total = "%s\n%s, MS %s" % (
-                        home_address,
-                        home_city,
-                        home_zip,
-                    )
+                    home_address_total = "%s\n%s, MS %s" % (home_address, home_city, home_zip,)
                 else:
-                    home_address_total = "%s\n%s\n%s, MS %s" % (
-                        home_address,
-                        home_address2,
-                        home_city,
-                        home_zip,
-                    )
+                    home_address_total = "%s\n%s\n%s, MS %s" % (home_address, home_address2, home_city, home_zip,)
 
             # bis_phone = root.xpath('string(//B_PHONE)')
             capital_phone = root.xpath("string(//CAP_PHONE)")
@@ -111,33 +102,22 @@ class MSLegislatorScraper(Scraper):
             cap_room = root.xpath("string(//CAP_ROOM)")
 
             if leg_name in ("Lataisha Jackson", "John G. Faulkner", "Jeffery Harness"):
-                assert not party, (
-                    "Remove special-casing for this Democrat without a "
-                    "listed party: {}"
-                ).format(leg_name)
+                assert not party, ("Remove special-casing for this Democrat without a " "listed party: {}").format(
+                    leg_name
+                )
                 party = "Democratic"
             elif leg_name in ("James W. Mathis", "John Glen Corley"):
-                assert not party, (
-                    "Remove special-casing for this Republican without"
-                    " a listed party: {}"
-                ).format(leg_name)
+                assert not party, ("Remove special-casing for this Republican without" " a listed party: {}").format(
+                    leg_name
+                )
                 party = "Republican"
             elif party == "D":
                 party = "Democratic"
             elif party == "R":
                 party = "Republican"
             else:
-                raise AssertionError(
-                    "A member with no identifiable party was found: {}".format(leg_name)
-                )
-            leg = Person(
-                primary_org=chamber,
-                district=district,
-                party=party,
-                image=photo,
-                name=leg_name,
-                role=role,
-            )
+                raise AssertionError("A member with no identifiable party was found: {}".format(leg_name))
+            leg = Person(primary_org=chamber, district=district, party=party, image=photo, name=leg_name, role=role,)
             leg.extras["org_info"] = org_info
             leg.add_source(url)
             leg.add_link(url)
@@ -146,16 +126,11 @@ class MSLegislatorScraper(Scraper):
                 if "@" in email_name:
                     email = email_name
                 else:
-                    email = "%s@%s.ms.gov" % (
-                        email_name,
-                        {"upper": "senate", "lower": "house"}[chamber],
-                    )
+                    email = "%s@%s.ms.gov" % (email_name, {"upper": "senate", "lower": "house"}[chamber],)
                 leg.add_contact_detail(type="email", value=email, note="Capitol Office")
 
             if capital_phone != "":
-                leg.add_contact_detail(
-                    type="voice", value=capital_phone, note="Capitol Office"
-                )
+                leg.add_contact_detail(type="voice", value=capital_phone, note="Capitol Office")
 
             if cap_room != "":
                 address = "Room %s\n%s" % (cap_room, CAP_ADDRESS)
@@ -164,14 +139,10 @@ class MSLegislatorScraper(Scraper):
             leg.add_contact_detail(type="address", value=address, note="Capitol Office")
 
             if home_phone != "":
-                leg.add_contact_detail(
-                    type="voice", value=home_phone, note="District Office"
-                )
+                leg.add_contact_detail(type="voice", value=home_phone, note="District Office")
 
             if home_address_total != "":
-                leg.add_contact_detail(
-                    type="address", value=home_address_total, note="District Office"
-                )
+                leg.add_contact_detail(type="address", value=home_address_total, note="District Office")
 
             yield leg
         except scrapelib.HTTPError as e:

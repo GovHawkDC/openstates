@@ -208,9 +208,7 @@ class Pennsylvania(Jurisdiction):
         legislature_name = "Pennsylvania General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -224,6 +222,5 @@ class Pennsylvania(Jurisdiction):
             self.ignored_scraped_sessions.append("{} Special Session #1".format(i))
 
         return url_xpath(
-            "http://www.legis.state.pa.us/cfdocs/legis/home/bills/",
-            '//select[@id="billSessions"]/option/text()',
+            "http://www.legis.state.pa.us/cfdocs/legis/home/bills/", '//select[@id="billSessions"]/option/text()',
         )

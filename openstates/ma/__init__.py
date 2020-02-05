@@ -69,9 +69,7 @@ class Massachusetts(Jurisdiction):
     def get_organizations(self):
         legislature_name = "Massachusetts General Court"
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Office of the Governor", classification="executive")
@@ -80,17 +78,8 @@ class Massachusetts(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        doc = lxml.html.fromstring(
-            requests.get("https://malegislature.gov/Bills/Search", verify=False).text
-        )
-        sessions = doc.xpath(
-            "//div[@data-refinername='lawsgeneralcourt']/div/label/text()"
-        )
+        doc = lxml.html.fromstring(requests.get("https://malegislature.gov/Bills/Search", verify=False).text)
+        sessions = doc.xpath("//div[@data-refinername='lawsgeneralcourt']/div/label/text()")
 
         # Remove all text between parens, like (Current) (7364)
-        return list(
-            filter(
-                None,
-                [re.sub(r"\([^)]*\)", "", session).strip() for session in sessions],
-            )
-        )
+        return list(filter(None, [re.sub(r"\([^)]*\)", "", session).strip() for session in sessions],))

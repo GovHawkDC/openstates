@@ -40,9 +40,7 @@ class MDEventScraper(Scraper, LXMLMixin):
             yield from self.scrape_chamber(page, chamber)
 
     def scrape_chamber(self, page, chamber):
-        xpath = '//div[@id="ContentPlaceHolder1_div{}SingleColumn"]' "/div".format(
-            self.chambers[chamber]
-        )
+        xpath = '//div[@id="ContentPlaceHolder1_div{}SingleColumn"]' "/div".format(self.chambers[chamber])
         com = None
         rows = page.xpath(xpath)
 
@@ -58,9 +56,7 @@ class MDEventScraper(Scraper, LXMLMixin):
         # event_date = row.xpath('string(.//div[contains(@class,"ItemDate")])').strip()
         title, location, start_date, end_date = self.parse_gcal(cal_link)
 
-        event = Event(
-            start_date=start_date, end_date=end_date, name=title, location_name=location
-        )
+        event = Event(start_date=start_date, end_date=end_date, name=title, location_name=location)
 
         event.add_source("http://mgaleg.maryland.gov/webmga/frmHearingSchedule.aspx")
 
@@ -73,15 +69,10 @@ class MDEventScraper(Scraper, LXMLMixin):
             agenda = event.add_agenda_item(description=description)
 
             event.add_document(
-                description,
-                item.xpath("@href")[0],
-                media_type="application/pdf",
-                on_duplicate="ignore",
+                description, item.xpath("@href")[0], media_type="application/pdf", on_duplicate="ignore",
             )
 
-        for item in row.xpath(
-            './/div[contains(@class,"ItemContainer")]' '[./div[@class="col-xs-1 Item"]]'
-        ):
+        for item in row.xpath('.//div[contains(@class,"ItemContainer")]' '[./div[@class="col-xs-1 Item"]]'):
             description = item.xpath("string(.)").strip()
             agenda = event.add_agenda_item(description=description)
 
@@ -90,9 +81,7 @@ class MDEventScraper(Scraper, LXMLMixin):
 
         video = row.xpath('.//a[./span[@class="OnDemand"]]')
         if video:
-            event.add_media_link(
-                "Video of Hearing", video[0].xpath("@href")[0], "text/html"
-            )
+            event.add_media_link("Video of Hearing", video[0].xpath("@href")[0], "text/html")
 
         if "subcommittee" in title.lower():
             subcom = title.split("-")[0].strip()

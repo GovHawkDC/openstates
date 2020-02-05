@@ -32,17 +32,13 @@ class IlCommitteeScraper(Scraper):
         for chamber, chamber_name in chambers:
 
             CURRENT_SESSION = 101
-            sessions = (
-                [CURRENT_SESSION] if latest_only else range(93, CURRENT_SESSION + 1)
-            )
+            sessions = [CURRENT_SESSION] if latest_only else range(93, CURRENT_SESSION + 1)
 
             for session in sessions:
 
                 bad_keys = []
 
-                url = "http://ilga.gov/{0}/committees/default.asp?GA={1}".format(
-                    chamber_name, session
-                )
+                url = "http://ilga.gov/{0}/committees/default.asp?GA={1}".format(chamber_name, session)
                 html = self.get(url).text
                 doc = lxml.html.fromstring(html)
                 doc.make_links_absolute(url)
@@ -98,21 +94,11 @@ class IlCommitteeScraper(Scraper):
                 if len(bad_keys) > 0:
                     bad_keys.sort(key=lambda tup: tup[0])
                     # formatted for quick copy-paste insertion into _committees.py
-                    bad_keys_str = "\n".join(
-                        ["('" + "', '".join(bad) + "'): ''," for bad in bad_keys]
-                    )
+                    bad_keys_str = "\n".join(["('" + "', '".join(bad) + "'): ''," for bad in bad_keys])
                     raise ValueError("unknown committees:\n" + bad_keys_str)
-        top_level = {
-            o_id: committee
-            for o_id, committee in committees.items()
-            if "chamber" in committee
-        }
+        top_level = {o_id: committee for o_id, committee in committees.items() if "chamber" in committee}
 
-        sub_committees = {
-            o_id: committee
-            for o_id, committee in committees.items()
-            if "parent" in committee
-        }
+        sub_committees = {o_id: committee for o_id, committee in committees.items() if "parent" in committee}
 
         for o_id, committee in list(top_level.items()):
             o = self.dict_to_org(committee)
@@ -128,13 +114,9 @@ class IlCommitteeScraper(Scraper):
         names = sorted(committee["name"])
         first_name = names.pop()
         if "chamber" in committee:
-            o = Organization(
-                first_name, classification="committee", chamber=committee["chamber"]
-            )
+            o = Organization(first_name, classification="committee", chamber=committee["chamber"])
         else:
-            o = Organization(
-                first_name, classification="committee", parent_id=committee["parent"]
-            )
+            o = Organization(first_name, classification="committee", parent_id=committee["parent"])
         for other_name in names:
             o.add_name(other_name)
         for code in committee["code"]:

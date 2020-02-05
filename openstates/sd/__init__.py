@@ -14,17 +14,8 @@ class SouthDakota(Jurisdiction):
     legislative_sessions = [
         {"_scraped_name": "2009", "identifier": "2009", "name": "2009 Regular Session"},
         {"_scraped_name": "2010", "identifier": "2010", "name": "2010 Regular Session"},
-        {
-            "_scraped_name": "2011",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-            "start_date": "2011-01-11",
-        },
-        {
-            "_scraped_name": "2011 Special",
-            "identifier": "2011s",
-            "name": "2011 Special Session",
-        },
+        {"_scraped_name": "2011", "identifier": "2011", "name": "2011 Regular Session", "start_date": "2011-01-11",},
+        {"_scraped_name": "2011 Special", "identifier": "2011s", "name": "2011 Special Session",},
         {"_scraped_name": "2012", "identifier": "2012", "name": "2012 Regular Session"},
         {"_scraped_name": "2013", "identifier": "2013", "name": "2013 Regular Session"},
         {"_scraped_name": "2014", "identifier": "2014", "name": "2014 Regular Session"},
@@ -97,13 +88,9 @@ class SouthDakota(Jurisdiction):
         legislature_name = "South Dakota State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
-        executive = Organization(
-            name="Office of the Governor", classification="executive"
-        )
+        executive = Organization(name="Office of the Governor", classification="executive")
 
         yield legislature
         yield executive
@@ -111,23 +98,13 @@ class SouthDakota(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        html = (
-            scrapelib.Scraper()
-            .get("http://www.sdlegislature.gov/" "Legislative_Session/archive.aspx")
-            .text
-        )
+        html = scrapelib.Scraper().get("http://www.sdlegislature.gov/" "Legislative_Session/archive.aspx").text
         doc = lxml.html.fromstring(html)
-        sessions = [
-            x.strip() for x in doc.xpath('//table//td[@data-title="Year"]/text()')
-        ]
+        sessions = [x.strip() for x in doc.xpath('//table//td[@data-title="Year"]/text()')]
 
         # Archive page lacks the latest session
-        current_session_url = doc.xpath(
-            '//*[@id="ctl00_divHeader_mnuMain"]/li[6]/ul/li[1]/a/@href'
-        )[0]
-        current_session = current_session_url.replace(
-            "/Legislative_Session/Bills/Default.aspx?Session=", ""
-        )
+        current_session_url = doc.xpath('//*[@id="ctl00_divHeader_mnuMain"]/li[6]/ul/li[1]/a/@href')[0]
+        current_session = current_session_url.replace("/Legislative_Session/Bills/Default.aspx?Session=", "")
         if current_session not in sessions:
             sessions.append(current_session)
 

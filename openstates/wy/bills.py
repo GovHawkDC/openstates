@@ -64,9 +64,8 @@ class WYBillScraper(Scraper, LXMLMixin):
     def scrape_bill(self, bill_num, session):
         chamber_map = {"House": "lower", "Senate": "upper", "LSO": "executive"}
         # Sample with all keys: https://gist.github.com/showerst/d6cd03eff3e8b12ab01dbb219876db45
-        bill_json_url = (
-            "http://wyoleg.gov/LsoService/api/BillInformation/{}/"
-            "{}?calendarDate=".format(session, bill_num)
+        bill_json_url = "http://wyoleg.gov/LsoService/api/BillInformation/{}/" "{}?calendarDate=".format(
+            session, bill_num
         )
         response = self.get(bill_json_url)
         bill_json = json.loads(response.content.decode("utf-8"))
@@ -83,9 +82,7 @@ class WYBillScraper(Scraper, LXMLMixin):
 
         bill.add_title(bill_json["billTitle"])
 
-        source_url = "http://lso.wyoleg.gov/Legislation/{}/{}".format(
-            session, bill_json["bill"]
-        )
+        source_url = "http://lso.wyoleg.gov/Legislation/{}/{}".format(session, bill_json["bill"])
         bill.add_source(source_url)
 
         for action_json in bill_json["billActions"]:
@@ -108,68 +105,49 @@ class WYBillScraper(Scraper, LXMLMixin):
             url = "http://wyoleg.gov/{}".format(bill_json["introduced"])
 
             bill.add_version_link(
-                note="Introduced",
-                url=url,
-                media_type="application/pdf",  # optional but useful!
+                note="Introduced", url=url, media_type="application/pdf",  # optional but useful!
             )
 
         if bill_json["enrolledAct"]:
             url = "http://wyoleg.gov/{}".format(bill_json["enrolledAct"])
 
             bill.add_version_link(
-                note="Enrolled",
-                url=url,
-                media_type="application/pdf",  # optional but useful!
+                note="Enrolled", url=url, media_type="application/pdf",  # optional but useful!
             )
 
         if bill_json["fiscalNote"]:
             url = "http://wyoleg.gov/{}".format(bill_json["fiscalNote"])
 
             bill.add_document_link(
-                note="Fiscal Note",
-                url=url,
-                media_type="application/pdf",  # optional but useful!
+                note="Fiscal Note", url=url, media_type="application/pdf",  # optional but useful!
             )
 
         if bill_json["digest"]:
             url = "http://wyoleg.gov/{}".format(bill_json["digest"])
 
             bill.add_document_link(
-                note="Bill Digest",
-                url=url,
-                media_type="application/pdf",  # optional but useful!
+                note="Bill Digest", url=url, media_type="application/pdf",  # optional but useful!
             )
 
         if bill_json["vetoes"]:
             for veto in bill_json["vetoes"]:
                 url = "http://wyoleg.gov/{}".format(veto["vetoLinkPath"])
                 bill.add_version_link(
-                    note=veto["vetoLinkText"],
-                    url=url,
-                    media_type="application/pdf",  # optional but useful!
+                    note=veto["vetoLinkText"], url=url, media_type="application/pdf",  # optional but useful!
                 )
 
         for amendment in bill_json["amendments"]:
             # http://wyoleg.gov/2018/Amends/SF0050H2001.pdf
-            url = "http://wyoleg.gov/{}/Amends/{}.pdf".format(
-                session, amendment["amendmentNumber"]
-            )
+            url = "http://wyoleg.gov/{}/Amends/{}.pdf".format(session, amendment["amendmentNumber"])
 
             if amendment["sponsor"] and amendment["status"]:
                 title = "Amendment {} ({}) - {} ({})".format(
-                    amendment["amendmentNumber"],
-                    amendment["order"],
-                    amendment["sponsor"],
-                    amendment["status"],
+                    amendment["amendmentNumber"], amendment["order"], amendment["sponsor"], amendment["status"],
                 )
             else:
-                title = "Amendment {} ({})".format(
-                    amendment["amendmentNumber"], amendment["order"]
-                )
+                title = "Amendment {} ({})".format(amendment["amendmentNumber"], amendment["order"])
             # add versions of the bill text
-            version = bill.add_version_link(
-                note=title, url=url, media_type="application/pdf"
-            )
+            version = bill.add_version_link(note=title, url=url, media_type="application/pdf")
             version["extras"] = {
                 "amendmentNumber": amendment["amendmentNumber"],
                 "sponsor": amendment["sponsor"],
@@ -212,9 +190,7 @@ class WYBillScraper(Scraper, LXMLMixin):
         else:
             motion = vote_json["action"]
 
-        result = (
-            "pass" if vote_json["yesVotesCount"] > vote_json["noVotesCount"] else "fail"
-        )
+        result = "pass" if vote_json["yesVotesCount"] > vote_json["noVotesCount"] else "fail"
 
         v = VoteEvent(
             chamber=self.chamber_abbrev_map[vote_json["chamber"]],
@@ -255,9 +231,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             if name.strip():
                 v.vote(option="other", voter=name)
 
-        source_url = "http://lso.wyoleg.gov/Legislation/{}/{}".format(
-            session, vote_json["billNumber"]
-        )
+        source_url = "http://lso.wyoleg.gov/Legislation/{}/{}".format(session, vote_json["billNumber"])
         v.add_source(source_url)
 
         yield v

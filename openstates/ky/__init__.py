@@ -173,9 +173,7 @@ class Kentucky(Jurisdiction):
         legislature_name = "Kentucky General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -183,9 +181,7 @@ class Kentucky(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        sessions = url_xpath(
-            "https://apps.legislature.ky.gov/record/pastses.html", "//td/div/a/text()"
-        )
+        sessions = url_xpath("https://apps.legislature.ky.gov/record/pastses.html", "//td/div/a/text()")
 
         for index, session in enumerate(sessions):
             # Remove escaped whitespace characters.

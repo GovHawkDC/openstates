@@ -53,10 +53,7 @@ class MEEventScraper(Scraper, LXMLMixin):
 
         bills_by_event = {}
 
-        bills_url = (
-            "http://legislature.maine.gov/backend/breeze/data/"
-            "getCalendarEventsBills?startDate={}&endDate={}"
-        )
+        bills_url = "http://legislature.maine.gov/backend/breeze/data/" "getCalendarEventsBills?startDate={}&endDate={}"
         bills_url = bills_url.format(start_date, end_date)
         page = json.loads(self.get(bills_url).content)
 
@@ -86,27 +83,13 @@ class MEEventScraper(Scraper, LXMLMixin):
                 name = row["Host"]
 
             address = row["Location"]
-            address = address.replace(
-                "Cross Building",
-                "Cross Office Building, 111 Sewall St, Augusta, ME 04330",
-            )
+            address = address.replace("Cross Building", "Cross Office Building, 111 Sewall St, Augusta, ME 04330",)
 
-            address = address.replace(
-                "State House", "Maine State House, 210 State St, Augusta, ME 04330"
-            )
+            address = address.replace("State House", "Maine State House, 210 State St, Augusta, ME 04330")
 
-            event = Event(
-                start_date=start_date,
-                end_date=end_date,
-                name=name,
-                location_name=address,
-            )
+            event = Event(start_date=start_date, end_date=end_date, name=name, location_name=address,)
 
-            event.add_source(
-                "http://legislature.maine.gov/committee/#Committees/{}".format(
-                    row["CommitteeCode"]
-                )
-            )
+            event.add_source("http://legislature.maine.gov/committee/#Committees/{}".format(row["CommitteeCode"]))
 
             if bills_by_event.get(row["Id"]):
                 for bill in bills_by_event[row["Id"]]:
@@ -115,30 +98,20 @@ class MEEventScraper(Scraper, LXMLMixin):
                     agenda.add_bill("LD {}".format(bill["LD"]))
 
                     if bill["TestimonyCount"] > 0:
-                        test_url = testimony_url_base.format(
-                            bill["PaperNumber"], session
-                        )
+                        test_url = testimony_url_base.format(bill["PaperNumber"], session)
                         test_page = json.loads(self.get(test_url).content)
                         for test in test_page:
-                            title = "{} {} - {}".format(
-                                test["FirstName"],
-                                test["LastName"],
-                                test["Organization"],
-                            )
+                            title = "{} {} - {}".format(test["FirstName"], test["LastName"], test["Organization"],)
                             if test["NamePrefix"] is not None:
                                 title = "{} {}".format(test["NamePrefix"], title)
 
                             test_url = (
                                 "http://legislature.maine.gov/backend/app/services"
-                                "/getDocument.aspx?doctype=test&documentId={}".format(
-                                    test["Id"]
-                                )
+                                "/getDocument.aspx?doctype=test&documentId={}".format(test["Id"])
                             )
 
                             if test["FileType"] == "pdf":
                                 media_type = "application/pdf"
 
-                            event.add_document(
-                                note=title, url=test_url, media_type=media_type
-                            )
+                            event.add_document(note=title, url=test_url, media_type=media_type)
             yield event

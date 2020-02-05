@@ -91,24 +91,16 @@ class INCommitteeScraper(Scraper):
                 owning_comm = subcomms[name]
             except KeyError:
                 name = name.replace("Statutory Committee on", "").strip()
-                comm = Organization(
-                    name=name, chamber=chamber, classification="committee"
-                )
+                comm = Organization(name=name, chamber=chamber, classification="committee")
                 if name in subcomms.values():
                     # Avoid identification issues, if committee names are re-used
                     # between upper and lower chambers
                     assert self._parent_committees.get(name) is None
                     self._parent_committees[name] = comm
             else:
-                name = (
-                    name.replace("Statutory Committee on", "")
-                    .replace("Subcommittee", "")
-                    .strip()
-                )
+                name = name.replace("Statutory Committee on", "").replace("Subcommittee", "").strip()
                 comm = Organization(
-                    name=name,
-                    parent_id=self._parent_committees[owning_comm],
-                    classification="committee",
+                    name=name, parent_id=self._parent_committees[owning_comm], classification="committee",
                 )
 
             chair = self.process_special_members(comm, comm_json, "chair")

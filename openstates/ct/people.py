@@ -83,10 +83,7 @@ class CTPersonScraper(Scraper):
 
             leg.add_party(party=party)
 
-            office_address = "%s\nRoom %s\nHartford, CT 06106" % (
-                row["capitol street address"],
-                row["room number"],
-            )
+            office_address = "%s\nRoom %s\nHartford, CT 06106" % (row["capitol street address"], row["room number"],)
             # extra_office_fields = dict()
             email = row["email"].strip()
             if "@" not in email:
@@ -97,29 +94,18 @@ class CTPersonScraper(Scraper):
                     email = None
                 else:
                     raise ValueError("Problematic email found: {}".format(email))
-            leg.add_contact_detail(
-                type="address", value=office_address, note="Capitol Office"
-            )
-            leg.add_contact_detail(
-                type="voice", value=row["capitol phone"], note="Capitol Office"
-            )
+            leg.add_contact_detail(type="address", value=office_address, note="Capitol Office")
+            leg.add_contact_detail(type="voice", value=row["capitol phone"], note="Capitol Office")
             if email:
                 leg.add_contact_detail(type="email", value=email)
 
             home_address = "{}\n{}, {} {}".format(
-                row["home street address"],
-                row["home city"],
-                row["home state"],
-                row["home zip code"],
+                row["home street address"], row["home city"], row["home state"], row["home zip code"],
             )
             if "Legislative Office Building" not in home_address:
-                leg.add_contact_detail(
-                    type="address", value=home_address, note="District Office"
-                )
+                leg.add_contact_detail(type="address", value=home_address, note="District Office")
                 if row["home phone"].strip():
-                    leg.add_contact_detail(
-                        type="voice", value=row["home phone"], note="District Office"
-                    )
+                    leg.add_contact_detail(type="voice", value=row["home phone"], note="District Office")
             leg.add_source(leg_url)
 
             for comm_name in row["committee member1"].split(";"):
@@ -133,9 +119,7 @@ class CTPersonScraper(Scraper):
                     if comm_name in committees:
                         com = committees[comm_name]
                     else:
-                        com = Organization(
-                            comm_name, classification="committee", chamber=chamber
-                        )
+                        com = Organization(comm_name, classification="committee", chamber=chamber)
                         com.add_source(leg_url)
                         committees[comm_name] = com
                         yield com

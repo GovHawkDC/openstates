@@ -21,25 +21,19 @@ class DEPersonScraper(Scraper, LXMLMixin):
             "upper": "https://legis.delaware.gov/json/Senate/GetSenators",
             "lower": "https://legis.delaware.gov/json/House/" + "GetRepresentatives",
         }[chamber]
-        source_url = {
-            "upper": "https://legis.delaware.gov/Senate",
-            "lower": "https://legis.delaware.gov/House",
-        }[chamber]
+        source_url = {"upper": "https://legis.delaware.gov/Senate", "lower": "https://legis.delaware.gov/House",}[
+            chamber
+        ]
 
         data = self.post(url).json()["Data"]
 
         for item in data:
             if item["PersonFullName"] is None:
                 # Vacant district
-                self.warning(
-                    "District {} was detected as vacant".format(item["DistrictNumber"])
-                )
+                self.warning("District {} was detected as vacant".format(item["DistrictNumber"]))
                 continue
 
-            leg_url = (
-                "https://legis.delaware.gov/"
-                + "LegislatorDetail?personId={}".format(item["PersonId"])
-            )
+            leg_url = "https://legis.delaware.gov/" + "LegislatorDetail?personId={}".format(item["PersonId"])
 
             doc = self.lxmlize(leg_url)
             image_url = doc.xpath("//img/@src")[0]

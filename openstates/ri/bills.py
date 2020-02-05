@@ -26,10 +26,7 @@ def bill_start_numbers(session):
 def get_postable_subjects():
     global subjects
     if subjects is None:
-        subs = url_xpath(
-            "http://status.rilin.state.ri.us/",
-            "//select[@id='rilinContent_cbCategory']",
-        )[0].xpath("./*")
+        subs = url_xpath("http://status.rilin.state.ri.us/", "//select[@id='rilinContent_cbCategory']",)[0].xpath("./*")
         subjects = {o.text: o.attrib["value"] for o in subs}
         subjects.pop(None)
     return subjects
@@ -113,10 +110,7 @@ class RIBillScraper(Scraper):
 
             for line in lines:
                 line, node = line
-                if (
-                    "Total Bills:" in line
-                    and "State House, Providence, Rhode Island" in line
-                ):
+                if "Total Bills:" in line and "State House, Providence, Rhode Island" in line:
                     continue
 
                 found = False
@@ -153,9 +147,7 @@ class RIBillScraper(Scraper):
             default_headers["ctl00$rilinContent$cbCategory"] = subjects[subject]
             default_headers["ctl00$rilinContent$cbYear"] = session
 
-            blocks = self.parse_results_page(
-                self.post(SEARCH_URL, data=default_headers).text
-            )
+            blocks = self.parse_results_page(self.post(SEARCH_URL, data=default_headers).text)
             blocks = blocks[1:-1]
             blocks = self.digest_results_page(blocks)
             for block in blocks:
@@ -183,10 +175,7 @@ class RIBillScraper(Scraper):
             date = action.split(" ")[0]
             date = dt.datetime.strptime(date, "%m/%d/%Y")
             bill.add_action(
-                action,
-                date.strftime("%Y-%m-%d"),
-                chamber=actor,
-                classification=self.get_type_by_action(action),
+                action, date.strftime("%Y-%m-%d"), chamber=actor, classification=self.get_type_by_action(action),
             )
 
     def get_type_by_name(self, name):
@@ -238,9 +227,7 @@ class RIBillScraper(Scraper):
             default_headers[TO] = idex + MAXQUERY
             default_headers[YEAR] = session
             idex += MAXQUERY
-            blocks = self.parse_results_page(
-                self.post(SEARCH_URL, data=default_headers).text
-            )
+            blocks = self.parse_results_page(self.post(SEARCH_URL, data=default_headers).text)
             blocks = blocks[1:-1]
             blocks = self.digest_results_page(blocks)
 
@@ -261,9 +248,7 @@ class RIBillScraper(Scraper):
 
                 for b in BILL_NAME_TRANSLATIONS:
                     if billid[: len(b)] == b:
-                        billid = (
-                            BILL_NAME_TRANSLATIONS[b] + billid[len(b) + 1 :].split()[0]
-                        )
+                        billid = BILL_NAME_TRANSLATIONS[b] + billid[len(b) + 1 :].split()[0]
 
                 b = Bill(
                     billid,
@@ -283,16 +268,11 @@ class RIBillScraper(Scraper):
                 sponsors = [s.strip() for s in sponsors]
 
                 for href in bill["bill_id_hrefs"]:
-                    b.add_version_link(
-                        href.text, href.attrib["href"], media_type="application/pdf"
-                    )
+                    b.add_version_link(href.text, href.attrib["href"], media_type="application/pdf")
 
                 for sponsor in sponsors:
                     b.add_sponsorship(
-                        sponsor,
-                        entity_type="person",
-                        classification="primary",
-                        primary=True,
+                        sponsor, entity_type="person", classification="primary", primary=True,
                     )
 
                 b.add_source(SEARCH_URL)
@@ -312,10 +292,7 @@ class RIBillScraper(Scraper):
             yield from self.scrape_chamber_votes(chamber, session)
 
     def scrape_chamber_votes(self, chamber, session):
-        url = {
-            "upper": "%s/%s" % (RI_URL_BASE, "SVotes"),
-            "lower": "%s/%s" % (RI_URL_BASE, "HVotes"),
-        }[chamber]
+        url = {"upper": "%s/%s" % (RI_URL_BASE, "SVotes"), "lower": "%s/%s" % (RI_URL_BASE, "HVotes"),}[chamber]
         action = "%s/%s" % (url, "votes.asp")
         dates = self.get_vote_dates(url, session)
         for date in dates:
@@ -328,9 +305,7 @@ class RIBillScraper(Scraper):
                     try:
                         bill_id = self._bill_id_by_type[(chamber, vote["meta"]["bill"])]
                     except KeyError:
-                        self.warning(
-                            "no such bill_id %s %s", chamber, vote["meta"]["bill"]
-                        )
+                        self.warning("no such bill_id %s %s", chamber, vote["meta"]["bill"])
                         continue
 
                     v = VoteEvent(
@@ -452,8 +427,6 @@ class RIBillScraper(Scraper):
         p = lxml.html.fromstring(page)
         votes = p.xpath("//center/div[@class='vote']")
         for vote in votes:
-            votes = self.get_votes(
-                context_url + "/" + vote.xpath("./a")[0].attrib["href"], session
-            )
+            votes = self.get_votes(context_url + "/" + vote.xpath("./a")[0].attrib["href"], session)
             ret.append(votes)
         return ret

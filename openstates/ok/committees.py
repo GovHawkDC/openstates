@@ -17,8 +17,7 @@ class OKCommitteeScraper(Scraper, LXMLMixinOK):
         parents = {}
 
         for link in page.xpath(
-            "//table[@id='ctl00_ContentPlace"
-            "Holder1_dgrdCommittee_ctl00']//a[contains(@href, 'Members')]"
+            "//table[@id='ctl00_ContentPlace" "Holder1_dgrdCommittee_ctl00']//a[contains(@href, 'Members')]"
         ):
             name = link.xpath("string()").strip()
 
@@ -45,12 +44,8 @@ class OKCommitteeScraper(Scraper, LXMLMixinOK):
             chamber = "lower"
 
         if parent:
-            comm = Organization(
-                name=parent, chamber=chamber, classification="committee"
-            )
-            subcomm = Organization(
-                name=name, parent_id=comm, classification="committee"
-            )
+            comm = Organization(name=parent, chamber=chamber, classification="committee")
+            subcomm = Organization(name=name, parent_id=comm, classification="committee")
         else:
             comm = Organization(name=name, chamber=chamber, classification="committee")
         comm.add_source(url)

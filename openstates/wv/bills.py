@@ -71,11 +71,7 @@ class WVBillScraper(Scraper):
             url = (
                 "http://www.legis.state.wv.us/Bill_Status/Bills_all_bills.cfm?"
                 "year=%s&sessiontype=%s&btype=bill&orig=%s"
-                % (
-                    self.jurisdiction.legislative_sessions[-1]["_scraped_name"],
-                    self._special_names[session],
-                    orig,
-                )
+                % (self.jurisdiction.legislative_sessions[-1]["_scraped_name"], self._special_names[session], orig,)
             )
         else:
             url = (
@@ -101,25 +97,17 @@ class WVBillScraper(Scraper):
             if not title:
                 self.warning("Can't find bill title, using ID as title")
                 title = bill_id
-            yield from self.scrape_bill(
-                session, chamber, bill_id, title, link.attrib["href"]
-            )
+            yield from self.scrape_bill(session, chamber, bill_id, title, link.attrib["href"])
 
         # scrape resolutions
         if "special" in self.jurisdiction.legislative_sessions[-1]["name"].lower():
-            res_url = (
-                "http://www.legis.state.wv.us/Bill_Status/res_list.cfm?year=%s"
-                "&sessiontype=%s&btype=res"
-                % (
-                    self.jurisdiction.legislative_sessions[-1]["_scraped_name"],
-                    self._special_names[session],
-                )
+            res_url = "http://www.legis.state.wv.us/Bill_Status/res_list.cfm?year=%s" "&sessiontype=%s&btype=res" % (
+                self.jurisdiction.legislative_sessions[-1]["_scraped_name"],
+                self._special_names[session],
             )
         else:
-            res_url = (
-                "http://www.legis.state.wv.us/Bill_Status/res_list.cfm?year=%s"
-                "&sessiontype=rs&btype=res"
-                % (self.jurisdiction.legislative_sessions[-1]["_scraped_name"])
+            res_url = "http://www.legis.state.wv.us/Bill_Status/res_list.cfm?year=%s" "&sessiontype=rs&btype=res" % (
+                self.jurisdiction.legislative_sessions[-1]["_scraped_name"]
             )
 
         doc = lxml.html.fromstring(self.get(res_url).text)
@@ -132,18 +120,10 @@ class WVBillScraper(Scraper):
             if not title:
                 self.warning("Can't find bill title, using ID as title")
                 title = bill_id
-            yield from self.scrape_bill(
-                session, chamber, bill_id, title, link.attrib["href"]
-            )
+            yield from self.scrape_bill(session, chamber, bill_id, title, link.attrib["href"])
 
     def scrape_bill(
-        self,
-        session,
-        chamber,
-        bill_id,
-        title,
-        url,
-        strip_sponsors=re.compile(r"\s*\(.{,50}\)\s*").sub,
+        self, session, chamber, bill_id, title, url, strip_sponsors=re.compile(r"\s*\(.{,50}\)\s*").sub,
     ):
 
         html = self.get(url).text
@@ -153,13 +133,7 @@ class WVBillScraper(Scraper):
 
         bill_type = self.bill_types[bill_id.split()[0][1:]]
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=title,
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
         bill.add_source(url)
 
         xpath = '//strong[contains(., "SUBJECT")]/../' "following-sibling::td/a/text()"
@@ -189,10 +163,7 @@ class WVBillScraper(Scraper):
         primary = strip_sponsors("", values.get("LEAD SPONSOR:", ""))
         if primary:
             bill.add_sponsorship(
-                name=primary,
-                classification="primary",
-                entity_type="person",
-                primary=True,
+                name=primary, classification="primary", entity_type="person", primary=True,
             )
 
         # Add cosponsors.
@@ -207,25 +178,17 @@ class WVBillScraper(Scraper):
                     if match:
                         for name in match.groups():
                             bill.add_sponsorship(
-                                name=name,
-                                classification="cosponsor",
-                                entity_type="person",
-                                primary=False,
+                                name=name, classification="cosponsor", entity_type="person", primary=False,
                             )
                     else:
                         bill.add_sponsorship(
-                            name=name,
-                            classification="cosponsor",
-                            entity_type="person",
-                            primary=False,
+                            name=name, classification="cosponsor", entity_type="person", primary=False,
                         )
 
         for link in page.xpath("//a[contains(@href, 'votes/house')]"):
             yield from self.scrape_house_vote(bill, link.attrib["href"])
 
-        for tr in reversed(
-            page.xpath("//table[@class='tabborder']/descendant::tr")[1:]
-        ):
+        for tr in reversed(page.xpath("//table[@class='tabborder']/descendant::tr")[1:]):
             tds = tr.xpath("td")
             if len(tds) < 3:
                 continue
@@ -242,18 +205,14 @@ class WVBillScraper(Scraper):
                 for href in tds[1].xpath("a/@href"):
                     yield from self.scrape_senate_vote(bill, href, date)
 
-            attrs = dict(
-                chamber=chamber, description=action, date=date.strftime("%Y-%m-%d")
-            )
+            attrs = dict(chamber=chamber, description=action, date=date.strftime("%Y-%m-%d"))
             temp = self.categorizer.categorize(action)
             related_entities = []
             for key, values in temp.items():
                 if key != "classification":
                     for value in values:
                         related_entities.append({"type": key, "name": value})
-            attrs.update(
-                classification=temp["classification"], related_entities=related_entities
-            )
+            attrs.update(classification=temp["classification"], related_entities=related_entities)
             bill.add_action(**attrs)
 
         yield bill
@@ -299,9 +258,7 @@ class WVBillScraper(Scraper):
 
                 continue
 
-            match = re.match(
-                r"(YEAS|NAYS|NOT VOTING|PAIRED|EXCUSED):\s+(\d+)\s*$", line
-            )
+            match = re.match(r"(YEAS|NAYS|NOT VOTING|PAIRED|EXCUSED):\s+(\d+)\s*$", line)
             if match:
                 vote_type = {
                     "YEAS": "yes",
@@ -406,11 +363,7 @@ class WVBillScraper(Scraper):
         for key, value in vote_count.items():
             vote.set_count(key, value)
         # updating result with actual value
-        vote.result = (
-            "pass"
-            if vote_count["yes"] > (vote_count["no"] + vote_count["other"])
-            else "fail"
-        )
+        vote.result = "pass" if vote_count["yes"] > (vote_count["no"] + vote_count["other"]) else "fail"
 
         yield vote
 
@@ -466,14 +419,10 @@ class WVBillScraper(Scraper):
             yield {"note": name, "url": link.get("href"), "media_type": "text/html"}
 
     def scrape_amendments(self, page, bill):
-        for row in page.xpath(
-            '//a[contains(@class,"billbundle") and contains(text(),"adopted")]'
-        ):
+        for row in page.xpath('//a[contains(@class,"billbundle") and contains(text(),"adopted")]'):
             version_name = row.xpath("string(.)").strip()
             version_url = row.xpath("@href")[0]
-            bill.add_version_link(
-                version_name, version_url, media_type="text/html", on_duplicate="ignore"
-            )
+            bill.add_version_link(version_name, version_url, media_type="text/html", on_duplicate="ignore")
 
     def scrape_versions(self, session, chamber, page, bill_id):
         """

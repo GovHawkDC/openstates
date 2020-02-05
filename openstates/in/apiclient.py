@@ -103,9 +103,7 @@ class ApiClient(object):
         return url
 
     @check_response
-    def get(
-        self, resource_name, requests_args=None, requests_kwargs=None, **url_format_args
-    ):
+    def get(self, resource_name, requests_args=None, requests_kwargs=None, **url_format_args):
         """Resource is a self.resources dict key.
         """
         num_bad_packets_allowed = 10
@@ -156,7 +154,5 @@ class ApiClient(object):
         experience."
         """
         seconds = int(resp.headers["retry-after"])
-        self.scraper.info(
-            "Got a 429: Sleeping %s seconds per retry-after header." % seconds
-        )
+        self.scraper.info("Got a 429: Sleeping %s seconds per retry-after header." % seconds)
         time.sleep(seconds)

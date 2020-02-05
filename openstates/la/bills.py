@@ -37,9 +37,7 @@ class LABillScraper(Scraper, LXMLMixin):
         return lxml.html.fromstring(text)
 
     def _get_bill_abbreviations(self, session_id):
-        page = self.lxmlize(
-            "http://www.legis.la.gov/legis/BillSearch.aspx?" "sid={}".format(session_id)
-        )
+        page = self.lxmlize("http://www.legis.la.gov/legis/BillSearch.aspx?" "sid={}".format(session_id))
         select_options = page.xpath('//select[contains(@id, "InstTypes")]/option')
 
         bill_abbreviations = {"upper": [], "lower": []}
@@ -55,10 +53,7 @@ class LABillScraper(Scraper, LXMLMixin):
 
     def do_post_back(self, page, event_target, event_argument):
         form = page.xpath("//form[@id='aspnetForm']")[0]
-        block = {
-            name: value
-            for name, value in [(obj.name, obj.value) for obj in form.xpath(".//input")]
-        }
+        block = {name: value for name, value in [(obj.name, obj.value) for obj in form.xpath(".//input")]}
         block["__EVENTTARGET"] = event_target
         block["__EVENTARGUMENT"] = event_argument
         if form.method == "GET":
@@ -66,9 +61,7 @@ class LABillScraper(Scraper, LXMLMixin):
         elif form.method == "POST":
             ret = lxml.html.fromstring(self.post(form.action, data=block).text)
         else:
-            raise AssertionError(
-                "Unrecognized request type found: {}".format(form.method)
-            )
+            raise AssertionError("Unrecognized request type found: {}".format(form.method))
 
         ret.make_links_absolute(form.action)
         return ret
@@ -113,20 +106,14 @@ class LABillScraper(Scraper, LXMLMixin):
                 )
                 bills_found = False
                 for bill_page in self.bill_pages(bill_list_url):
-                    for bill in bill_page.xpath(
-                        "//a[contains(@href, 'BillInfo.aspx') and text()='more...']"
-                    ):
+                    for bill in bill_page.xpath("//a[contains(@href, 'BillInfo.aspx') and text()='more...']"):
                         bills_found = True
-                        yield from self.scrape_bill_page(
-                            chamber, session, bill.attrib["href"], bill_abbreviation
-                        )
+                        yield from self.scrape_bill_page(chamber, session, bill.attrib["href"], bill_abbreviation)
                 if not bills_found:
                     # If a session only has one legislative item of a given type
                     # (eg, some special sessions only have one `HB`), the bill list
                     # will redirect to its single bill's page
-                    yield from self.scrape_bill_page(
-                        chamber, session, bill_list_url, bill_abbreviation
-                    )
+                    yield from self.scrape_bill_page(chamber, session, bill_list_url, bill_abbreviation)
 
     def get_one_xpath(self, page, xpath):
         ret = page.xpath(xpath)
@@ -229,9 +216,7 @@ class LABillScraper(Scraper, LXMLMixin):
         author = self.get_one_xpath(page, "//a[@id='ctl00_PageBody_LinkAuthor']/text()")
 
         def sbp(x):
-            return self.scrape_bare_page(
-                page.xpath("//a[contains(text(), '%s')]" % (x))[0].attrib["href"]
-            )
+            return self.scrape_bare_page(page.xpath("//a[contains(text(), '%s')]" % (x))[0].attrib["href"])
 
         authors = [x.text for x in sbp("Authors")]
 
@@ -252,52 +237,33 @@ class LABillScraper(Scraper, LXMLMixin):
 
         title = page.xpath("//span[@id='ctl00_PageBody_LabelShortTitle']/text()")[0]
         title = title.replace("\u00a0\u00a0", " ")
-        actions = page.xpath(
-            "//div[@id='ctl00_PageBody_PanelBillInfo']/"
-            "/table[@style='font-size:small']/tr"
-        )
+        actions = page.xpath("//div[@id='ctl00_PageBody_PanelBillInfo']/" "/table[@style='font-size:small']/tr")
 
         bill_id = page.xpath("//span[@id='ctl00_PageBody_LabelBillID']/text()")[0]
 
         bill_type = self._bill_types[bill_abbreviation[1:]]
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=title,
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
         bill.add_source(bill_url)
 
         authors.remove(author)
-        bill.add_sponsorship(
-            author, classification="primary", entity_type="person", primary=True
-        )
+        bill.add_sponsorship(author, classification="primary", entity_type="person", primary=True)
         for author in authors:
-            bill.add_sponsorship(
-                author, classification="cosponsor", entity_type="person", primary=False
-            )
+            bill.add_sponsorship(author, classification="cosponsor", entity_type="person", primary=False)
 
         for digest in digests:
             bill.add_document_link(
-                note=digest.text,
-                url=digest.attrib["href"],
-                media_type="application/pdf",
+                note=digest.text, url=digest.attrib["href"], media_type="application/pdf",
             )
 
         for version in versions:
             bill.add_version_link(
-                note=version.text,
-                url=version.attrib["href"],
-                media_type="application/pdf",
+                note=version.text, url=version.attrib["href"], media_type="application/pdf",
             )
 
         for amendment in amendments:
             if "href" in amendment.attrib:
                 bill.add_version_link(
-                    note=amendment.text,
-                    url=amendment.attrib["href"],
-                    media_type="application/pdf",
+                    note=amendment.text, url=amendment.attrib["href"], media_type="application/pdf",
                 )
 
         flags = {
@@ -332,10 +298,7 @@ class LABillScraper(Scraper, LXMLMixin):
                     cat += flags[flag]
 
             bill.add_action(
-                description=text,
-                date=date.strftime("%Y-%m-%d"),
-                chamber=chamber,
-                classification=cat,
+                description=text, date=date.strftime("%Y-%m-%d"), chamber=chamber, classification=cat,
             )
 
         yield bill

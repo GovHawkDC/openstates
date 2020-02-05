@@ -169,14 +169,8 @@ _categorizer_rules = (
     Rule(r"(?i)^ADOPTED", "passage"),
     # Amended
     Rule(r"(?i)AMENDED (?P<bill_id>\d+)", "amendment-passage"),
-    Rule(
-        r"(?i)AMEND AND RECOMMIT TO (?P<committees>.+)",
-        ["amendment-passage", "referral-committee"],
-    ),
-    Rule(
-        r"(?i)amend .+? and recommit to (?P<committees>.+)",
-        ["amendment-passage", "referral-committee"],
-    ),
+    Rule(r"(?i)AMEND AND RECOMMIT TO (?P<committees>.+)", ["amendment-passage", "referral-committee"],),
+    Rule(r"(?i)amend .+? and recommit to (?P<committees>.+)", ["amendment-passage", "referral-committee"],),
     Rule(r"(?i)AMENDED ON THIRD READING (\(T\) )?(?P<bill_id>.+)", "amendment-passage"),
     Rule(r"(?i)print number (?P<bill_id>\d+)", "amendment-passage"),
     Rule(r"(?i)tabled", "amendment-deferral"),

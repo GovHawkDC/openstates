@@ -72,9 +72,7 @@ class Michigan(Jurisdiction):
         legislature_name = "Michigan Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -84,9 +82,6 @@ class Michigan(Jurisdiction):
     def get_session_list(self):
         return [
             s.strip()
-            for s in url_xpath(
-                "http://www.legislature.mi.gov/mileg.aspx?page=LegBasicSearch",
-                "//option/text()",
-            )
+            for s in url_xpath("http://www.legislature.mi.gov/mileg.aspx?page=LegBasicSearch", "//option/text()",)
             if s.strip()
         ]

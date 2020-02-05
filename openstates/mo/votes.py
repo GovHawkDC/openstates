@@ -11,10 +11,7 @@ from pupa.scrape import Scraper, VoteEvent
 
 motion_re = r"(?i)On motion of .*, .*"
 bill_re = r"(H|S)(C|J)?(R|M|B) (\d+)"
-date_re = (
-    r"(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)"
-    r", (\w+) (\d+), (\d+)"
-)
+date_re = r"(MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)" r", (\w+) (\d+), (\d+)"
 
 TIMEZONE = pytz.timezone("America/Chicago")
 
@@ -41,19 +38,12 @@ class MOVoteScraper(Scraper, LXMLMixin):
         if int(session[:4]) >= 2016:
             if len(session) == 4:
                 # regular session
-                url = "http://www.senate.mo.gov/%sinfo/jrnlist/default.aspx" % (
-                    session[-2:],
-                )
+                url = "http://www.senate.mo.gov/%sinfo/jrnlist/default.aspx" % (session[-2:],)
             else:
                 # special session
-                url = "http://www.senate.mo.gov/%sinfo/jrnlist/%sJournals.aspx" % (
-                    session[-4:-2],
-                    session[-2:],
-                )
+                url = "http://www.senate.mo.gov/%sinfo/jrnlist/%sJournals.aspx" % (session[-4:-2], session[-2:],)
         else:
-            url = "http://www.senate.mo.gov/%sinfo/jrnlist/journals.aspx" % (
-                session[-2:]
-            )
+            url = "http://www.senate.mo.gov/%sinfo/jrnlist/journals.aspx" % (session[-2:])
 
         vote_types = {
             "YEAS": "yes",
@@ -98,9 +88,7 @@ class MOVoteScraper(Scraper, LXMLMixin):
                             cur_motion = x
                             bill = re.findall(bill_re, x)
                             if bill != []:
-                                bc = {"H": "lower", "S": "upper", "J": "legislature"}[
-                                    bill[0][0]
-                                ]
+                                bc = {"H": "lower", "S": "upper", "J": "legislature"}[bill[0][0]]
 
                                 cur_bill = "%s%s%s %s" % bill[0]
                             in_vote = True
@@ -142,9 +130,7 @@ class MOVoteScraper(Scraper, LXMLMixin):
                     if "Journal of the Senate" in line:
                         continue
                     if re.match(
-                        r".*(Monday|Tuesday|Wednesday|Thursday|Friday|"
-                        r"Saturday|Sunday), .* \d+, \d+.*",
-                        line,
+                        r".*(Monday|Tuesday|Wednesday|Thursday|Friday|" r"Saturday|Sunday), .* \d+, \d+.*", line,
                     ):
                         continue
 
@@ -210,9 +196,6 @@ def is_vote_end(line):
     return (
         (line == line.upper() and line.strip() != "")
         or "The President" in line
-        or (
-            "senator" in line.lower()
-            and ("moved" in line.lower() or "requested" in line.lower())
-        )
+        or ("senator" in line.lower() and ("moved" in line.lower() or "requested" in line.lower()))
         or "assumed the chair" in line.lower()
     )

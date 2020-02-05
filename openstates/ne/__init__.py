@@ -72,14 +72,9 @@ class Nebraska(Jurisdiction):
         legislature_name = "Nebraska Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        executive = Organization(
-            name="Office of the Governor", classification="executive"
-        )
+        executive = Organization(name="Office of the Governor", classification="executive")
         yield legislature
         yield executive
 
     def get_session_list(self):
-        return url_xpath(
-            "https://nebraskalegislature.gov/bills/",
-            "//select[@name='Legislature']/option/text()",
-        )[:-1]
+        return url_xpath("https://nebraskalegislature.gov/bills/", "//select[@name='Legislature']/option/text()",)[:-1]

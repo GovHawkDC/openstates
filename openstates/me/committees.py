@@ -27,9 +27,7 @@ class MECommitteeScraper(Scraper):
         for n in range(1, 12, 2):
             path = "string(//body/center[%s]/h1/a)" % (n)
             comm_name = root.xpath(path)
-            committee = Organization(
-                chamber="lower", name=comm_name, classification="committee"
-            )
+            committee = Organization(chamber="lower", name=comm_name, classification="committee")
             count = count + 1
 
             path2 = "/html/body/ul[%s]/li/a" % (count)
@@ -52,20 +50,13 @@ class MECommitteeScraper(Scraper):
     senate_committee_pattern = re.compile(r"^Senator (.*?) of .*?(, Chair)?$")
 
     def scrape_senate_comm(self):
-        url = (
-            "http://legislature.maine.gov/committee-information/"
-            "standing-committees-of-the-senate"
-        )
+        url = "http://legislature.maine.gov/committee-information/" "standing-committees-of-the-senate"
         html = self.get(url).text
         doc = lxml.html.fromstring(html)
 
         headings = doc.xpath("//p/strong")
         for heading in headings:
-            committee = Organization(
-                chamber="upper",
-                name=heading.text.strip(":"),
-                classification="committee",
-            )
+            committee = Organization(chamber="upper", name=heading.text.strip(":"), classification="committee",)
             committee.add_source(url)
             par = heading.getparent().getnext()
             while True:
@@ -89,9 +80,7 @@ class MECommitteeScraper(Scraper):
         # Special default dict.
         class Committees(dict):
             def __missing__(self, key):
-                val = Organization(
-                    chamber="legislature", name=key, classification="committee"
-                )
+                val = Organization(chamber="legislature", name=key, classification="committee")
                 self[key] = val
                 return val
 

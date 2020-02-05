@@ -95,9 +95,7 @@ class Tennessee(Jurisdiction):
         legislature_name = "Tennessee General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -122,8 +120,6 @@ class Tennessee(Jurisdiction):
         if hasattr(self, "_sessions_by_id"):
             return self._sessions_by_id
 
-        self._sessions_by_id = {
-            session["identifier"]: session for session in self.legislative_sessions
-        }
+        self._sessions_by_id = {session["identifier"]: session for session in self.legislative_sessions}
 
         return self._sessions_by_id

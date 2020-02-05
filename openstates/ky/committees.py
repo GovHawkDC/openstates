@@ -54,9 +54,7 @@ class KYCommitteeScraper(Scraper):
             name = name.split("Subcommittee")[1]
             name = name.replace(" on ", "").replace(" On ", "")
             name = name.strip()
-            comm = Organization(
-                name, parent_id=self.parents[parent_comm], classification="committee"
-            )
+            comm = Organization(name, parent_id=self.parents[parent_comm], classification="committee")
         else:
             for c in ["Committee", "Comm", "Sub", "Subcommittee"]:
                 if name.endswith(c):

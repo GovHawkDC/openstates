@@ -60,13 +60,12 @@ class NYBillScraper(Scraper):
             warning = "Could not identify chamber for {}."
             self.logger.warn(warning).format(bill_id)
 
-        senate_url = (
-            "http://www.nysenate.gov/legislation/bills/{bill_session}/" "{bill_id}"
-        ).format(bill_session=bill["session"], bill_id=bill_id)
+        senate_url = ("http://www.nysenate.gov/legislation/bills/{bill_session}/" "{bill_id}").format(
+            bill_session=bill["session"], bill_id=bill_id
+        )
 
         assembly_url = (
-            "http://assembly.state.ny.us/leg/?default_fld=&bn={bill_id}"
-            "&Summary=Y&Actions=Y&Text=Y"
+            "http://assembly.state.ny.us/leg/?default_fld=&bn={bill_id}" "&Summary=Y&Actions=Y&Text=Y"
         ).format(bill_id=bill_id)
 
         return (
@@ -157,9 +156,7 @@ class NYBillScraper(Scraper):
             # the Open Legislation API.
             if window:
                 to_datetime = datetime.datetime.now()
-                from_datetime = datetime.datetime.now() - self.parse_relative_time(
-                    window
-                )
+                from_datetime = datetime.datetime.now() - self.parse_relative_time(window)
 
                 # note for debugging:
                 # set detail=True to see what changed on the bill
@@ -176,23 +173,13 @@ class NYBillScraper(Scraper):
 
                 self.info(
                     "{} bills updated since {}".format(
-                        response["total"],
-                        from_datetime.replace(microsecond=0).isoformat(),
+                        response["total"], from_datetime.replace(microsecond=0).isoformat(),
                     )
                 )
             else:
-                response = self.api_client.get(
-                    "bills",
-                    session_year=start_year,
-                    limit=limit,
-                    offset=offset,
-                    full=full,
-                )
+                response = self.api_client.get("bills", session_year=start_year, limit=limit, offset=offset, full=full,)
 
-            if (
-                response["responseType"] == "empty list"
-                or response["offsetStart"] > response["offsetEnd"]
-            ):
+            if response["responseType"] == "empty list" or response["offsetStart"] > response["offsetEnd"]:
                 break
             else:
                 bills = response["result"]["items"]
@@ -215,15 +202,7 @@ class NYBillScraper(Scraper):
     def _scrape_bill(self, session, bill_data):
         details = self._parse_bill_details(bill_data)
 
-        (
-            senate_url,
-            assembly_url,
-            bill_chamber,
-            bill_type,
-            bill_id,
-            title,
-            (prefix, number, active_version),
-        ) = details
+        (senate_url, assembly_url, bill_chamber, bill_type, bill_id, title, (prefix, number, active_version),) = details
 
         bill = Bill(
             bill_id,
@@ -242,28 +221,19 @@ class NYBillScraper(Scraper):
         if bill_data["sponsor"] is not None:
             if bill_data["sponsor"]["rules"] is True:
                 bill.add_sponsorship(
-                    "Rules Committee",
-                    entity_type="organization",
-                    classification="primary",
-                    primary=True,
+                    "Rules Committee", entity_type="organization", classification="primary", primary=True,
                 )
             elif not bill_data["sponsor"]["budget"]:
                 primary_sponsor = bill_data["sponsor"]["member"]
                 bill.add_sponsorship(
-                    primary_sponsor["shortName"],
-                    entity_type="person",
-                    classification="primary",
-                    primary=True,
+                    primary_sponsor["shortName"], entity_type="person", classification="primary", primary=True,
                 )
 
                 # There *shouldn't* be cosponsors if there is no sponsor.
                 cosponsors = bill_active_version["coSponsors"]["items"]
                 for cosponsor in cosponsors:
                     bill.add_sponsorship(
-                        cosponsor["shortName"],
-                        entity_type="person",
-                        classification="cosponsor",
-                        primary=False,
+                        cosponsor["shortName"], entity_type="person", classification="cosponsor", primary=False,
                     )
 
         # List companion bill.
@@ -296,10 +266,7 @@ class NYBillScraper(Scraper):
             types, _ = NYBillScraper.categorizer.categorize(action["text"])
 
             bill.add_action(
-                action["text"],
-                action_date.strftime("%Y-%m-%d"),
-                chamber=chamber,
-                classification=types,
+                action["text"], action_date.strftime("%Y-%m-%d"), chamber=chamber, classification=types,
             )
 
         # Handling of sources follows. Sources serving either chamber
@@ -336,31 +303,23 @@ class NYBillScraper(Scraper):
             version = amendment["printNo"]
 
             html_version = version + " HTML"
-            html_url = (
-                "http://assembly.state.ny.us/leg/?sh=printbill&bn="
-                "{}&term={}&Text=Y".format(bill_id, self.term_start_year)
+            html_url = "http://assembly.state.ny.us/leg/?sh=printbill&bn=" "{}&term={}&Text=Y".format(
+                bill_id, self.term_start_year
             )
             bill.add_version_link(
                 html_version, html_url, on_duplicate="ignore", media_type="text/html",
             )
 
             pdf_version = version + " PDF"
-            pdf_url = "http://legislation.nysenate.gov/pdf/bills/{}/{}".format(
-                self.term_start_year, bill_id
-            )
+            pdf_url = "http://legislation.nysenate.gov/pdf/bills/{}/{}".format(self.term_start_year, bill_id)
             bill.add_version_link(
-                pdf_version,
-                pdf_url,
-                on_duplicate="ignore",
-                media_type="application/pdf",
+                pdf_version, pdf_url, on_duplicate="ignore", media_type="application/pdf",
             )
 
         yield bill
 
     def parse_relative_time(self, time_str):
-        regex = re.compile(
-            r"((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?"
-        )
+        regex = re.compile(r"((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?")
         parts = regex.match(time_str)
         if not parts:
             return

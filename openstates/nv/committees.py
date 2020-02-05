@@ -28,16 +28,12 @@ class NVCommitteeScraper(Scraper):
 
             for com in coms:
                 name = com.text.strip()
-                com_id = re.match(
-                    r".*/Committee/(?P<id>[0-9]+)/Overview", com.attrib["href"]
-                ).group("id")
+                com_id = re.match(r".*/Committee/(?P<id>[0-9]+)/Overview", com.attrib["href"]).group("id")
                 com_url = (
                     "%s/%s/Committee/FillSelectedCommitteeTab?committeeOrSubCommitteeKey=%s"
                     "&selectedTab=Overview" % (nelis_root, insert, com_id)
                 )
-                org = Organization(
-                    name=name, chamber=chamber, classification="committee"
-                )
+                org = Organization(name=name, chamber=chamber, classification="committee")
                 org.add_source(com_url)
                 self.scrape_comm_members(chamber, org, com_url)
                 yield org

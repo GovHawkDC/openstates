@@ -26,31 +26,11 @@ class Oklahoma(Jurisdiction):
     #   - update the session slug in the Bill scraper
     #   - ignore the odd-year session
     legislative_sessions = [
-        {
-            "_scraped_name": "2012 Regular Session",
-            "identifier": "2011-2012",
-            "name": "2011-2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2012 Special Session",
-            "identifier": "2012SS1",
-            "name": "2012 Special Session",
-        },
-        {
-            "_scraped_name": "2014 Regular Session",
-            "identifier": "2013-2014",
-            "name": "2013-2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2013 Special Session",
-            "identifier": "2013SS1",
-            "name": "2013 Special Session",
-        },
-        {
-            "_scraped_name": "2016 Regular Session",
-            "identifier": "2015-2016",
-            "name": "2015-2016 Regular Session",
-        },
+        {"_scraped_name": "2012 Regular Session", "identifier": "2011-2012", "name": "2011-2012 Regular Session",},
+        {"_scraped_name": "2012 Special Session", "identifier": "2012SS1", "name": "2012 Special Session",},
+        {"_scraped_name": "2014 Regular Session", "identifier": "2013-2014", "name": "2013-2014 Regular Session",},
+        {"_scraped_name": "2013 Special Session", "identifier": "2013SS1", "name": "2013 Special Session",},
+        {"_scraped_name": "2016 Regular Session", "identifier": "2015-2016", "name": "2015-2016 Regular Session",},
         {
             "_scraped_name": "2017 First Special Session",
             "identifier": "2017SS1",
@@ -122,9 +102,7 @@ class Oklahoma(Jurisdiction):
         legislature_name = "Oklahoma Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

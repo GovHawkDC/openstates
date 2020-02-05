@@ -42,26 +42,19 @@ class NMCommitteeScraper(Scraper, LXMLMixin):
                 "url": "{}House_Standing".format(base_url),
                 "chamber_xpath": base_xpath.format("House", "House", "House"),
             },
-            "legislature": {
-                "url": "{}Interim".format(base_url),
-                "chamber_xpath": base_xpath.format("", "", ""),
-            },
+            "legislature": {"url": "{}Interim".format(base_url), "chamber_xpath": base_xpath.format("", "", ""),},
         }
 
         for chamber in chambers:
             page = self.lxmlize(chamber_paths[chamber]["url"])
 
-            committee_urls = self.get_nodes(
-                page, chamber_paths[chamber]["chamber_xpath"]
-            )
+            committee_urls = self.get_nodes(page, chamber_paths[chamber]["chamber_xpath"])
 
             for committee_url in committee_urls:
                 committee_page = self.lxmlize(committee_url)
 
                 c_name = (
-                    committee_page.xpath(
-                        '//li/a[contains(@id, "siteMapBreadcrumbs_lnkPage_")]'
-                    )[-1]
+                    committee_page.xpath('//li/a[contains(@id, "siteMapBreadcrumbs_lnkPage_")]')[-1]
                     .text_content()
                     .strip()
                 )
@@ -81,8 +74,7 @@ class NMCommitteeScraper(Scraper, LXMLMixin):
                     for member_node in member_nodes:
                         m_title = member_node[tds["title"]].text_content()
                         m_name = self.get_node(
-                            member_node[tds["name"]],
-                            ".//a[contains(@href, " '"/Members/Legislator?SponCode=")]',
+                            member_node[tds["name"]], ".//a[contains(@href, " '"/Members/Legislator?SponCode=")]',
                         ).text_content()
 
                         role = member_node[tds["role"]].text_content()
@@ -94,14 +86,7 @@ class NMCommitteeScraper(Scraper, LXMLMixin):
                         else:
                             m_chamber = None
 
-                        if role in (
-                            "Chair",
-                            "Co-Chair",
-                            "Vice Chair",
-                            "Member",
-                            "Advisory",
-                            "Ranking Member",
-                        ):
+                        if role in ("Chair", "Co-Chair", "Vice Chair", "Member", "Advisory", "Ranking Member",):
                             if chamber == "legislature":
                                 m_role = "interim {}".format(role.lower())
                             else:
@@ -110,9 +95,7 @@ class NMCommitteeScraper(Scraper, LXMLMixin):
                             m_role = None
 
                         if m_role:
-                            members.append(
-                                Member(name=m_name, role=m_role, chamber=m_chamber)
-                            )
+                            members.append(Member(name=m_name, role=m_role, chamber=m_chamber))
 
                     # Interim committees are collected during the scraping
                     # for joint committees, and most interim committees
@@ -126,22 +109,15 @@ class NMCommitteeScraper(Scraper, LXMLMixin):
                         if len(m_chambers) == 1:
                             chamber = m_chambers.pop()
                     committee = Organization(
-                        name=clean_committee_name(c_name),
-                        chamber=chamber,
-                        classification="committee",
+                        name=clean_committee_name(c_name), chamber=chamber, classification="committee",
                     )
                     for member in members:
                         committee.add_member(member.name, member.role)
                     committee.add_source(committee_url)
                     if not committee._related:
-                        self.warning(
-                            "skipping blank committee {0} "
-                            "at {1}".format(c_name, committee_url)
-                        )
+                        self.warning("skipping blank committee {0} " "at {1}".format(c_name, committee_url))
                     else:
                         yield committee
 
                 else:
-                    self.warning(
-                        "No legislative committee found at " "{}".format(committee_url)
-                    )
+                    self.warning("No legislative committee found at " "{}".format(committee_url))

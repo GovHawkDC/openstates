@@ -38,9 +38,7 @@ class INEventScraper(Scraper, LXMLMixin):
                 print(event_json)
                 yield from self.parse_row(session, event_json, meeting_id)
             except scrapelib.HTTPError:
-                self.logger.warning(
-                    "Event {} could not be accessed. Skipping.".format(meeting_id)
-                )
+                self.logger.warning("Event {} could not be accessed. Skipping.".format(meeting_id))
                 continue
 
     def parse_row(self, session, row, meeting_id):
@@ -66,9 +64,7 @@ class INEventScraper(Scraper, LXMLMixin):
         location = row["location"]
 
         if location.startswith("Room"):
-            location = "200 W. Washington St., Indianapolis, IN 46204, {}".format(
-                location
-            )
+            location = "200 W. Washington St., Indianapolis, IN 46204, {}".format(location)
 
         name = row["committee"]["name"]
 
@@ -78,28 +74,17 @@ class INEventScraper(Scraper, LXMLMixin):
 
         if end_date is not None:
             event = Event(
-                start_date=start_date,
-                end_date=end_date,
-                name=name,
-                location_name=location,
-                description=description,
+                start_date=start_date, end_date=end_date, name=name, location_name=location, description=description,
             )
         else:
-            event = Event(
-                start_date=start_date,
-                name=name,
-                location_name=location,
-                description=description,
-            )
+            event = Event(start_date=start_date, name=name, location_name=location, description=description,)
 
         event.extras["in_id"] = meeting_id
 
         # http://iga.in.gov/legislative/2019
         # /committees/family_and_children#3c35e29f-2c53-4d5f-a952-70833a2d38b1
         web_url = "http://iga.in.gov/legislative/{}/committees/{}#{}"
-        web_url = web_url.format(
-            session, self.committee_slug(row["committee"]["link"]), meeting_id
-        )
+        web_url = web_url.format(session, self.committee_slug(row["committee"]["link"]), meeting_id)
         event.add_source(web_url)
 
         event.add_participant(

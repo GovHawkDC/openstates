@@ -316,9 +316,7 @@ class Arizona(Jurisdiction):
         legislature_name = "Arizona State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization("Office of the Governor", classification="executive")

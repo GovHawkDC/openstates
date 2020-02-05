@@ -49,10 +49,7 @@ class OpenLegislationAPIClient(object):
 
     root = "https://legislation.nysenate.gov/api/3/"
     resources = dict(
-        bills=(
-            "bills/{session_year}?limit={limit}&offset={offset}&full={full}"
-            "&sort={sort_order}"
-        ),
+        bills=("bills/{session_year}?limit={limit}&offset={offset}&full={full}" "&sort={sort_order}"),
         bill=("bills/{session_year}/{bill_id}?summary={summary}&detail=" "{detail}"),
         bill_updates="bills/{session_year}/{bill_id}/updates?",
         updated_bills="bills/updates/{from_datetime}/{to_datetime}"
@@ -63,10 +60,7 @@ class OpenLegislationAPIClient(object):
             "committees/{session_year}/{chamber}/{committee_name}/history"
             "?limit={limit}&offset={offset}&full={full}&order={sort_order}"
         ),
-        members=(
-            "members/{session_year}?limit={limit}&offset={offset}&full={full}"
-            "&sort={sort_order}"
-        ),
+        members=("members/{session_year}?limit={limit}&offset={offset}&full={full}" "&sort={sort_order}"),
         member="members/{session_year}/{member_id}?",
     )
 
@@ -78,9 +72,7 @@ class OpenLegislationAPIClient(object):
         # Insert argument values into endpoint string. This technique
         # defaults values in the endpoint string to blank if they are
         # not specified in the given keyword arguments.
-        endpoint = string.Formatter().vformat(
-            endpoint, (), defaultdict(str, **endpoint_format_args)
-        )
+        endpoint = string.Formatter().vformat(endpoint, (), defaultdict(str, **endpoint_format_args))
 
         # Build complete URL.
         url = self.root + endpoint
@@ -92,9 +84,7 @@ class OpenLegislationAPIClient(object):
         self.api_key = os.environ["NEW_YORK_API_KEY"]
 
     @check_response
-    def get(
-        self, resource_name, requests_args=None, requests_kwargs=None, **url_format_args
-    ):
+    def get(self, resource_name, requests_args=None, requests_kwargs=None, **url_format_args):
         num_bad_packets_allowed = 10
         url = self._build_url(resource_name, **url_format_args)
 
@@ -149,7 +139,5 @@ class OpenLegislationAPIClient(object):
         experience.'
         """
         seconds = int(resp.headers["retry-after"])
-        self.scraper.info(
-            "Got a 429: Sleeping %s seconds per retry-after header." % seconds
-        )
+        self.scraper.info("Got a 429: Sleeping %s seconds per retry-after header." % seconds)
         time.sleep(seconds)

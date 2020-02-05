@@ -50,8 +50,7 @@ class NCBillScraper(Scraper):
             chamber = "lower"
 
         bill_detail_url = (
-            "http://www.ncleg.net/gascripts/"
-            "BillLookUp/BillLookUp.pl?Session=%s&BillID=%s&votesToView=all"
+            "http://www.ncleg.net/gascripts/" "BillLookUp/BillLookUp.pl?Session=%s&BillID=%s&votesToView=all"
         ) % (session, bill_id)
 
         # parse the bill data page, finding the latest html text
@@ -70,18 +69,10 @@ class NCBillScraper(Scraper):
             bill_type = "bill"
             bill_id = bill_id[0] + "B " + bill_id[1:]
 
-        bill_title = doc.xpath(
-            '/html/body/div/div/main/div[2]/div[contains(@class,"col-12")]/a'
-        )[0]
+        bill_title = doc.xpath('/html/body/div/div/main/div[2]/div[contains(@class,"col-12")]/a')[0]
         bill_title = bill_title.text_content().strip()
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            title=bill_title,
-            chamber=chamber,
-            classification=bill_type,
-        )
+        bill = Bill(bill_id, legislative_session=session, title=bill_title, chamber=chamber, classification=bill_type,)
         bill.add_source(bill_detail_url)
 
         # skip first PDF link (duplicate link to cur version)
@@ -98,28 +89,20 @@ class NCBillScraper(Scraper):
             if version_url.lower().endswith(".pdf"):
                 media_type = "application/pdf"
 
-            bill.add_version_link(
-                version_name, version_url, media_type=media_type, on_duplicate="ignore"
-            )
+            bill.add_version_link(version_name, version_url, media_type=media_type, on_duplicate="ignore")
 
         # rows with a 'adopted' in the text and an amendment link, skip failed amds
         for row in doc.xpath(
-            '//div[@class="card-body"]/div[contains(., "Adopted")'
-            ' and contains(@class,"row")]//a[@title="Amendment"]'
+            '//div[@class="card-body"]/div[contains(., "Adopted")' ' and contains(@class,"row")]//a[@title="Amendment"]'
         ):
             version_url = row.xpath("@href")[0]
             version_name = row.xpath("string(.)").strip()
             bill.add_version_link(
-                version_name,
-                version_url,
-                media_type="application/pdf",
-                on_duplicate="ignore",
+                version_name, version_url, media_type="application/pdf", on_duplicate="ignore",
             )
 
         # sponsors
-        spon_row = doc.xpath(
-            '//div[contains(text(), "Sponsors")]/following-sibling::div'
-        )[0]
+        spon_row = doc.xpath('//div[contains(text(), "Sponsors")]/following-sibling::div')[0]
         # first sponsors are primary, until we see (Primary)
         spon_type = "primary"
         spon_lines = spon_row.text_content().replace("\r\n", ";")
@@ -131,16 +114,11 @@ class NCBillScraper(Scraper):
             if not name:
                 continue
             bill.add_sponsorship(
-                name,
-                classification=spon_type,
-                entity_type="person",
-                primary=(spon_type == "primary"),
+                name, classification=spon_type, entity_type="person", primary=(spon_type == "primary"),
             )
 
         # keywords
-        kw_row = doc.xpath(
-            '//div[contains(text(), "Keywords:")]/following-sibling::div'
-        )[0]
+        kw_row = doc.xpath('//div[contains(text(), "Keywords:")]/following-sibling::div')[0]
         for subject in kw_row.text_content().split(", "):
             bill.add_subject(subject)
 
@@ -202,9 +180,7 @@ class NCBillScraper(Scraper):
             elif "S" in rcs:
                 chamber = "upper"
 
-            date = eastern.localize(
-                dt.datetime.strptime(date.replace(".", ""), "%m/%d/%Y %H:%M %p")
-            )
+            date = eastern.localize(dt.datetime.strptime(date.replace(".", ""), "%m/%d/%Y %H:%M %p"))
             date = date.isoformat()
 
             ve = VoteEvent(

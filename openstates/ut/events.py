@@ -23,9 +23,7 @@ class UTEventScraper(Scraper, LXMLMixin):
 
             event = Event(
                 name=title,
-                start_date=self._tz.localize(
-                    datetime.datetime.strptime(when, "%b %d, %Y")
-                ),
+                start_date=self._tz.localize(datetime.datetime.strptime(when, "%b %d, %Y")),
                 location_name="State Capitol",
             )
             event.add_source(URL)
@@ -41,9 +39,7 @@ class UTEventScraper(Scraper, LXMLMixin):
             committee = doc.xpath('//a[text()="View committee page"]/@href')
             if committee:
                 committee_doc = self.lxmlize(committee[0])
-                committee_name = committee_doc.xpath(
-                    '//h3[@class="heading committee"]/text()'
-                )[0].strip()
+                committee_name = committee_doc.xpath('//h3[@class="heading committee"]/text()')[0].strip()
                 event.add_participant(committee_name, type="committee", note="host")
 
             documents = doc.xpath(".//td")
@@ -53,9 +49,7 @@ class UTEventScraper(Scraper, LXMLMixin):
                     continue
                 url = url.group(1)
                 event.add_document(
-                    note=document.xpath("text()")[0],
-                    url=url,
-                    media_type="application/pdf",
+                    note=document.xpath("text()")[0], url=url, media_type="application/pdf",
                 )
                 bills = document.xpath("@onclick")
                 for bill in bills:

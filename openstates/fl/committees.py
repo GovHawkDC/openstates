@@ -19,9 +19,7 @@ class HouseComList(Page):
                 parent = None
                 chamber = "lower"
 
-            comm = Organization(
-                name=name, classification="committee", chamber=chamber, parent_id=parent
-            )
+            comm = Organization(name=name, classification="committee", chamber=chamber, parent_id=parent)
             yield self.scrape_page(HouseComDetail, item.attrib["href"], obj=comm)
 
             # parent for next time
@@ -44,9 +42,7 @@ class HouseComDetail(Page):
 
         for lm in self.doc.xpath('//div[@class="cd_LeaderMember"]'):
             role = lm.xpath('.//div[@class="cd_LeaderTitle"]')[0].text_content().strip()
-            name = (
-                lm.xpath('.//span[@class="cd_LeaderTitle"]/a')[0].text_content().strip()
-            )
+            name = lm.xpath('.//span[@class="cd_LeaderTitle"]/a')[0].text_content().strip()
             name = self.clean_name(name)
             self.obj.add_member(name, role=role)
 
@@ -89,9 +85,7 @@ class SenComDetail(Page):
                 name = name.replace("Committee on ", "")
             parent = None
             chamber = "upper"
-        comm = Organization(
-            name=name, classification="committee", chamber=chamber, parent_id=parent,
-        )
+        comm = Organization(name=name, classification="committee", chamber=chamber, parent_id=parent,)
 
         for dt in self.doc.xpath('//div[@id="members"]/dl/dt'):
             role = dt.text.replace(": ", "").strip().lower()

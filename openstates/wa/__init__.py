@@ -20,26 +20,10 @@ class Washington(Jurisdiction):
         "bills": WABillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2009-10",
-            "identifier": "2009-2010",
-            "name": "2009-2010 Regular Session",
-        },
-        {
-            "_scraped_name": "2011-12",
-            "identifier": "2011-2012",
-            "name": "2011-2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013-14",
-            "identifier": "2013-2014",
-            "name": "2013-2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015-16",
-            "identifier": "2015-2016",
-            "name": "2015-2016 Regular Session",
-        },
+        {"_scraped_name": "2009-10", "identifier": "2009-2010", "name": "2009-2010 Regular Session",},
+        {"_scraped_name": "2011-12", "identifier": "2011-2012", "name": "2011-2012 Regular Session",},
+        {"_scraped_name": "2013-14", "identifier": "2013-2014", "name": "2013-2014 Regular Session",},
+        {"_scraped_name": "2015-16", "identifier": "2015-2016", "name": "2015-2016 Regular Session",},
         {
             "_scraped_name": "2017-18",
             "identifier": "2017-2018",
@@ -73,9 +57,7 @@ class Washington(Jurisdiction):
         legislature_name = "Washington State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -85,6 +67,4 @@ class Washington(Jurisdiction):
     def get_session_list(self):
         from utils.lxmlize import url_xpath
 
-        return url_xpath(
-            "http://apps.leg.wa.gov/billinfo/", '//select[@id="biennia"]/option/@value'
-        )
+        return url_xpath("http://apps.leg.wa.gov/billinfo/", '//select[@id="biennia"]/option/@value')

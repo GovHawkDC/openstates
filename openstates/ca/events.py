@@ -28,11 +28,7 @@ class CAEventScraper(Scraper):
             conn_str = "mysql://%s:%s@" % (user, pw)
         else:
             conn_str = "mysql://"
-        conn_str = "%s%s/%s?charset=utf8" % (
-            conn_str,
-            host,
-            kwargs.pop("db", "capublic"),
-        )
+        conn_str = "%s%s/%s?charset=utf8" % (conn_str, host, kwargs.pop("db", "capublic"),)
         self.engine = create_engine(conn_str)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
@@ -46,11 +42,7 @@ class CAEventScraper(Scraper):
         grouped_hearings = defaultdict(list)
 
         for hearing in self.session.query(CACommitteeHearing):
-            location = (
-                self.session.query(CALocation)
-                .filter_by(location_code=hearing.location_code)[0]
-                .description
-            )
+            location = self.session.query(CALocation).filter_by(location_code=hearing.location_code)[0].description
 
             date = self._tz.localize(hearing.hearing_date)
 
@@ -66,10 +58,7 @@ class CAEventScraper(Scraper):
 
             # Get list of bill_ids from the database.
             bill_ids = [hearing.bill_id for hearing in hearings]
-            bills = [
-                "%s %s" % re.match(r"\d+([^\d]+)(\d+)", bill).groups()
-                for bill in bill_ids
-            ]
+            bills = ["%s %s" % re.match(r"\d+([^\d]+)(\d+)", bill).groups() for bill in bill_ids]
 
             # Dereference the committee_nr number and get display name.
             msg = "More than one committee meeting at (location, date) %r"

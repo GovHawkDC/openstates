@@ -16,12 +16,7 @@ class Us(Jurisdiction):
         "events": USEventScraper,
     }
     legislative_sessions = [
-        {
-            "classification": "primary",
-            "identifier": "116",
-            "name": "116th Congress",
-            "start_date": "2019-01-03",
-        },
+        {"classification": "primary", "identifier": "116", "name": "116th Congress", "start_date": "2019-01-03",},
     ]
     ignored_scraped_sessions = []
 
@@ -29,9 +24,7 @@ class Us(Jurisdiction):
         legislature_name = "United States Congress"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

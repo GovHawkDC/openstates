@@ -48,9 +48,7 @@ class ORVoteScraper(Scraper):
     def scrape_votes(self, session):
         self.session_key = SESSION_KEYS[session]
         self.legislators = index_legislators(self, self.session_key)
-        measures_response = self.api_client.get(
-            "votes", page=500, session=self.session_key
-        )
+        measures_response = self.api_client.get("votes", page=500, session=self.session_key)
 
         for measure in measures_response:
             bid = "{} {}".format(measure["MeasurePrefix"], measure["MeasureNumber"])
@@ -61,12 +59,8 @@ class ORVoteScraper(Scraper):
                     tally = self.tally_votes(event, "measure")
                     passed = self.passed_vote(tally)
 
-                    classification = self.determine_vote_classifiers(
-                        event["ActionText"]
-                    )
-                    when = datetime.datetime.strptime(
-                        event["ActionDate"], "%Y-%m-%dT%H:%M:%S"
-                    )
+                    classification = self.determine_vote_classifiers(event["ActionText"])
+                    when = datetime.datetime.strptime(event["ActionDate"], "%Y-%m-%dT%H:%M:%S")
                     when = self.tz.localize(when)
 
                     vote = VoteEvent(
@@ -89,9 +83,7 @@ class ORVoteScraper(Scraper):
 
                     vote.add_source(
                         "https://olis.leg.state.or.us/liz/{session}"
-                        "/Measures/Overview/{bid}".format(
-                            session=self.session_key, bid=bid.replace(" ", "")
-                        )
+                        "/Measures/Overview/{bid}".format(session=self.session_key, bid=bid.replace(" ", ""))
                     )
 
                     yield vote
@@ -106,9 +98,7 @@ class ORVoteScraper(Scraper):
                     action = event["Action"] or event["Comments"]
 
                     classification = self.determine_vote_classifiers(action)
-                    when = datetime.datetime.strptime(
-                        event["MeetingDate"], "%Y-%m-%dT%H:%M:%S"
-                    )
+                    when = datetime.datetime.strptime(event["MeetingDate"], "%Y-%m-%dT%H:%M:%S")
                     when = self.tz.localize(when)
 
                     vote = VoteEvent(
@@ -152,11 +142,7 @@ class ORVoteScraper(Scraper):
             try:
                 voter_name = self.legislators[voter["VoteName"]]
             except KeyError:
-                logger.warn(
-                    "Legislator {} not found in session {}".format(
-                        voter["VoteName"], self.session_key
-                    )
-                )
+                logger.warn("Legislator {} not found in session {}".format(voter["VoteName"], self.session_key))
                 voter_name = voter["VoteName"]
             if voter[vote_meaning] == "Aye":
                 vote.yes(voter_name)
@@ -171,13 +157,9 @@ class ORVoteScraper(Scraper):
 
     def tally_votes(self, event, vote_type):
         if vote_type == "measure":
-            tally = dict(
-                Counter([self.vote_code[v["Vote"]] for v in event["MeasureVotes"]])
-            )
+            tally = dict(Counter([self.vote_code[v["Vote"]] for v in event["MeasureVotes"]]))
         elif vote_type == "committee":
-            tally = dict(
-                Counter([self.vote_code[v["Meaning"]] for v in event["CommitteeVotes"]])
-            )
+            tally = dict(Counter([self.vote_code[v["Meaning"]] for v in event["CommitteeVotes"]]))
         for code in list(self.vote_code.values()):
             if code not in tally:
                 tally[code] = 0

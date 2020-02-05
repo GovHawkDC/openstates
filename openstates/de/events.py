@@ -33,9 +33,7 @@ class DEEventScraper(Scraper, LXMLMixin):
             location_name=location_name,
             start_date=self._tz.localize(start_time),
             name=event_name,
-            description="Committee Meeting Status: {}".format(
-                item["CommitteeMeetingStatusName"]
-            ),
+            description="Committee Meeting Status: {}".format(item["CommitteeMeetingStatusName"]),
         )
 
         event.add_source(url)
@@ -43,9 +41,7 @@ class DEEventScraper(Scraper, LXMLMixin):
 
         page_url = (
             "http://legis.delaware.gov/json/MeetingNotice/"
-            "GetCommitteeMeetingItems?committeeMeetingId={}".format(
-                item["CommitteeMeetingId"]
-            )
+            "GetCommitteeMeetingItems?committeeMeetingId={}".format(item["CommitteeMeetingId"])
         )
 
         event.add_source(page_url)
@@ -53,9 +49,7 @@ class DEEventScraper(Scraper, LXMLMixin):
         for item in page_data:
             event.add_agenda_item(description=str(item["ItemDescription"]))
             event.add_person(
-                name=str(item["PrimarySponsorShortName"]),
-                id=str(item["PrimarySponsorPersonId"]),
-                note="Sponsor",
+                name=str(item["PrimarySponsorShortName"]), id=str(item["PrimarySponsorPersonId"]), note="Sponsor",
             )
 
         yield event

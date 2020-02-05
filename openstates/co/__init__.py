@@ -134,9 +134,7 @@ class Colorado(Jurisdiction):
         legislature_name = "Colorado General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
         executive = Organization("Office of the Governor", classification="executive")
 
@@ -150,8 +148,7 @@ class Colorado(Jurisdiction):
         regex = r"2[0-9][0-9][0-9]\ .*\ Session"
 
         tags = url_xpath(
-            "http://www.leg.state.co.us/clics/cslFrontPages.nsf/PrevSessionInfo?OpenForm",
-            "//font/text()",
+            "http://www.leg.state.co.us/clics/cslFrontPages.nsf/PrevSessionInfo?OpenForm", "//font/text()",
         )
         for tag in tags:
             sess = re.findall(regex, tag)

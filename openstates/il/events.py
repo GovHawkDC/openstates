@@ -79,7 +79,5 @@ class IlEventScraper(Scraper):
                 for table in tables:
                     meetings = table.xpath(".//a")
                     for meeting in meetings:
-                        event = self.scrape_page(
-                            meeting.attrib["href"], session_id, chamber
-                        )
+                        event = self.scrape_page(meeting.attrib["href"], session_id, chamber)
                         yield event

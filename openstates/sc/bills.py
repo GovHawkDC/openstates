@@ -56,10 +56,7 @@ def action_type(action):
         ("Certain items vetoed", "executive-veto-line-item"),
         ("Committed to", "referral-committee"),
         ("Committee Amendment Adopted", "amendment-passage"),
-        (
-            "Committee Amendment Amended and Adopted",
-            ["amendment-passage", "amendment-amendment"],
-        ),
+        ("Committee Amendment Amended and Adopted", ["amendment-passage", "amendment-amendment"],),
         ("Committee Amendment Amended", "amendment-amendment"),
         ("Committee Amendment Tabled", "amendment-deferral"),
         ("Committee report: Favorable", "committee-passage-favorable"),
@@ -101,13 +98,11 @@ class SCBillScraper(Scraper):
     urls = {
         "lower": {
             "daily-bill-index": "https://www.scstatehouse.gov/hintro/hintros.php",
-            "prefile-index": "https://www.scstatehouse.gov/sessphp/prefil"
-            "{last_two_digits_of_session_year}.php",
+            "prefile-index": "https://www.scstatehouse.gov/sessphp/prefil" "{last_two_digits_of_session_year}.php",
         },
         "upper": {
             "daily-bill-index": "https://www.scstatehouse.gov/sintro/sintros.php",
-            "prefile-index": "https://www.scstatehouse.gov/sessphp/prefil"
-            "{last_two_digits_of_session_year}.php",
+            "prefile-index": "https://www.scstatehouse.gov/sessphp/prefil" "{last_two_digits_of_session_year}.php",
         },
     }
 
@@ -132,12 +127,7 @@ class SCBillScraper(Scraper):
         if self._subjects:
             return
 
-        session_code = {
-            "2013-2014": "120",
-            "2015-2016": "121",
-            "2017-2018": "122",
-            "2019-2020": "123",
-        }[session]
+        session_code = {"2013-2014": "120", "2015-2016": "121", "2017-2018": "122", "2019-2020": "123",}[session]
 
         subject_search_url = "https://www.scstatehouse.gov/subjectsearch.php"
         data = self.post(
@@ -158,11 +148,7 @@ class SCBillScraper(Scraper):
         for option in doc.xpath("//option")[2:]:
             subject = option.text
             code = option.get("value")
-            url = "%s?AORB=B&session=%s&indexcode=%s" % (
-                subject_search_url,
-                session_code,
-                code,
-            )
+            url = "%s?AORB=B&session=%s&indexcode=%s" % (subject_search_url, session_code, code,)
 
             # SC's server is sending some noncomplient server responses
             # that are confusing self.get
@@ -201,19 +187,7 @@ class SCBillScraper(Scraper):
             if len(tds) != 11:
                 self.warning("irregular vote row: %s" % vurl)
                 continue
-            (
-                timestamp,
-                motion,
-                vote,
-                yeas,
-                nays,
-                nv,
-                exc,
-                pres,
-                abst,
-                total,
-                result,
-            ) = tds
+            (timestamp, motion, vote, yeas, nays, nv, exc, pres, abst, total, result,) = tds
 
             timestamp = timestamp.text.replace(u"\xa0", " ")
             timestamp = datetime.datetime.strptime(timestamp, "%m/%d/%Y %H:%M %p")
@@ -367,18 +341,12 @@ class SCBillScraper(Scraper):
         # sponsors
         for sponsor in doc.xpath('//a[contains(@href, "member.php")]/text()'):
             bill.add_sponsorship(
-                name=sponsor,
-                classification="primary",
-                primary=True,
-                entity_type="person",
+                name=sponsor, classification="primary", primary=True, entity_type="person",
             )
         for sponsor in doc.xpath('//a[contains(@href, "committee.php")]/text()'):
             sponsor = sponsor.replace(u"\xa0", " ").strip()
             bill.add_sponsorship(
-                name=sponsor,
-                classification="primary",
-                primary=True,
-                entity_type="organization",
+                name=sponsor, classification="primary", primary=True, entity_type="organization",
             )
 
         # find versions
@@ -402,9 +370,7 @@ class SCBillScraper(Scraper):
             date_td, chamber_td, action_td = row.xpath("td")
 
             date = datetime.datetime.strptime(date_td.text, "%m/%d/%y")
-            action_chamber = {"Senate": "upper", "House": "lower", None: "legislature"}[
-                chamber_td.text
-            ]
+            action_chamber = {"Senate": "upper", "House": "lower", None: "legislature"}[chamber_td.text]
 
             action = action_td.text_content()
             action = action.split("(House Journal")[0]
@@ -469,13 +435,9 @@ class SCBillScraper(Scraper):
                 for bill_a in doc.xpath("//p/a[1]"):
                     bill_id = bill_a.text.replace(".", "")
                     if bill_id.startswith(chamber_letter):
-                        yield from self.scrape_details(
-                            bill_a.get("href"), session, chamber, bill_id
-                        )
+                        yield from self.scrape_details(bill_a.get("href"), session, chamber, bill_id)
 
-            prefile_url = self.urls[chamber]["prefile-index"].format(
-                last_two_digits_of_session_year=session[2:4]
-            )
+            prefile_url = self.urls[chamber]["prefile-index"].format(last_two_digits_of_session_year=session[2:4])
             page = self.get(prefile_url).text
             doc = lxml.html.fromstring(page)
             doc.make_links_absolute(prefile_url)
@@ -498,6 +460,4 @@ class SCBillScraper(Scraper):
                 for bill_a in doc.xpath("//p/a[1]"):
                     bill_id = bill_a.text.replace(".", "")
                     if bill_id.startswith(chamber_letter):
-                        yield from self.scrape_details(
-                            bill_a.get("href"), session, chamber, bill_id
-                        )
+                        yield from self.scrape_details(bill_a.get("href"), session, chamber, bill_id)

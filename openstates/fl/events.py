@@ -23,9 +23,7 @@ class FlEventScraper(Scraper):
             desc = entry["summary"].split(" - ")[0]
             location = entry["summary"].split(" - ")[1]
 
-            event = Event(
-                name=desc, start_date=when, description=desc, location_name=location
-            )
+            event = Event(name=desc, start_date=when, description=desc, location_name=location)
 
             event.add_source(entry["link"])
             yield event

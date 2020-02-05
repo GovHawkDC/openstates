@@ -41,18 +41,9 @@ class IAPersonScraper(Scraper):
             party = "Independent"
 
         pid = re.search(r"personID=(\d+)", link.attrib["href"]).group(1)
-        photo_url = (
-            "https://www.legis.iowa.gov/photo"
-            "?action=getPhoto&ga=%s&pid=%s" % (self.latest_session(), pid)
-        )
+        photo_url = "https://www.legis.iowa.gov/photo" "?action=getPhoto&ga=%s&pid=%s" % (self.latest_session(), pid)
 
-        leg = Person(
-            name=name,
-            primary_org=chamber,
-            district=district,
-            party=party,
-            image=photo_url,
-        )
+        leg = Person(name=name, primary_org=chamber, district=district, party=party, image=photo_url,)
 
         leg.add_link(leg_url)
         leg.add_source(leg_url)
@@ -83,21 +74,13 @@ class IAPersonScraper(Scraper):
                 continue
 
         if "home_phone" in metainf:
-            leg.add_contact_detail(
-                type="voice", value=metainf["home_phone"], note="District Office"
-            )
+            leg.add_contact_detail(type="voice", value=metainf["home_phone"], note="District Office")
 
         if "home_addr" in metainf:
-            leg.add_contact_detail(
-                type="address", value=metainf["home_addr"], note="District Office"
-            )
+            leg.add_contact_detail(type="address", value=metainf["home_addr"], note="District Office")
 
         if "email" in metainf:
-            leg.add_contact_detail(
-                type="email", value=metainf["email"], note="Capitol Office"
-            )
+            leg.add_contact_detail(type="email", value=metainf["email"], note="Capitol Office")
 
         if "office_phone" in metainf:
-            leg.add_contact_detail(
-                type="voice", value=metainf["office_phone"], note="Capitol Office"
-            )
+            leg.add_contact_detail(type="voice", value=metainf["office_phone"], note="Capitol Office")

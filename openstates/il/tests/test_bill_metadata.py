@@ -26,18 +26,12 @@ class TestBillMetadata(unittest.TestCase):
             for chamber in chambers:
                 session_chamber_count = 0
                 for doc_type in DOC_TYPES:
-                    count = len(
-                        list(self.scraper.get_bill_urls(chamber, session, doc_type))
-                    )
-                    log.info(
-                        "Session: %s Chamber: %s Doc Type: %s Count: %i"
-                        % (session, chamber, doc_type, count)
-                    )
+                    count = len(list(self.scraper.get_bill_urls(chamber, session, doc_type)))
+                    log.info("Session: %s Chamber: %s Doc Type: %s Count: %i" % (session, chamber, doc_type, count))
                     session_chamber_count += count
                 self.assertTrue(
                     session_chamber_count > 0,
-                    "Expected non-zero bill count for Session %s, Chamber %s"
-                    % (session, chamber),
+                    "Expected non-zero bill count for Session %s, Chamber %s" % (session, chamber),
                 )
 
 

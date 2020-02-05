@@ -48,17 +48,11 @@ class UTPersonScraper(Scraper, LXMLMixin):
             phone = info.get("cell") or info.get("homePhone") or info.get("workPhone")
 
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="District Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="District Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="District Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="District Office")
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="District Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="District Office")
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="District Office")
 

@@ -34,10 +34,7 @@ class NMPersonScraper(Scraper, LXMLMixin):
         page = self.lxmlize(url)
 
         # Xpath query string format for legislator links.
-        base_xpath = (
-            "//a[contains(@id, "
-            '"MainContent_listViewLegislators_linkLegislatorPicture")]/@href'
-        )
+        base_xpath = "//a[contains(@id, " '"MainContent_listViewLegislators_linkLegislatorPicture")]/@href'
 
         legislator_urls = self.get_nodes(page, base_xpath)
 
@@ -74,24 +71,15 @@ class NMPersonScraper(Scraper, LXMLMixin):
         if info_node is None:
             raise ValueError("Could not locate legislator data.")
 
-        district_node = self.get_node(
-            info_node, './/a[@id="MainContent_formViewLegislator_linkDistrict"]'
-        )
+        district_node = self.get_node(info_node, './/a[@id="MainContent_formViewLegislator_linkDistrict"]')
         if district_node is not None:
             district = district_node.text.strip()
 
-        name_node = self.get_node(
-            page,
-            './/span[@id="MainContent_formViewLegislatorName' '_lblLegislatorName"]',
-        )
+        name_node = self.get_node(page, './/span[@id="MainContent_formViewLegislatorName' '_lblLegislatorName"]',)
 
         if name_node is not None:
             if name_node.text.strip().endswith(" Vacant"):
-                self.warning(
-                    "Found vacant seat for {} district {}; skipping".format(
-                        chamber, district
-                    )
-                )
+                self.warning("Found vacant seat for {} district {}; skipping".format(chamber, district))
                 return
 
             n_head, _sep, n_party = name_node.text.rpartition(" - ")
@@ -108,54 +96,36 @@ class NMPersonScraper(Scraper, LXMLMixin):
             else:
                 raise AssertionError("Unknown party {} for {}".format(party, full_name))
 
-        photo_node = self.get_node(
-            info_node, './/img[@id="MainContent_formViewLegislator_imgLegislator"]'
-        )
+        photo_node = self.get_node(info_node, './/img[@id="MainContent_formViewLegislator_imgLegislator"]')
         if photo_node is not None:
             photo_url = photo_node.get("src")
 
-        email_node = self.get_node(
-            info_node, './/a[@id="MainContent_formViewLegislator_linkEmail"]'
-        )
+        email_node = self.get_node(info_node, './/a[@id="MainContent_formViewLegislator_linkEmail"]')
         if email_node is not None and email_node.text:
             email = email_node.text.strip()
 
-        capitol_address_node = self.get_node(
-            info_node, './/span[@id="MainContent_formViewLegislator_lblCapitolRoom"]'
-        )
+        capitol_address_node = self.get_node(info_node, './/span[@id="MainContent_formViewLegislator_lblCapitolRoom"]')
         if capitol_address_node is not None:
             capitol_address_text = capitol_address_node.text
             if capitol_address_text is not None:
-                capitol_address = "Room {} State Capitol\nSanta Fe, NM 87501".format(
-                    capitol_address_text.strip()
-                )
+                capitol_address = "Room {} State Capitol\nSanta Fe, NM 87501".format(capitol_address_text.strip())
 
-        capitol_phone_node = self.get_node(
-            info_node, './/span[@id="MainContent_formViewLegislator_lblCapitolPhone"]'
-        )
+        capitol_phone_node = self.get_node(info_node, './/span[@id="MainContent_formViewLegislator_lblCapitolPhone"]')
         if capitol_phone_node is not None:
             capitol_phone_text = capitol_phone_node.text
             if capitol_phone_text:
                 capitol_phone_text = capitol_phone_text.strip()
                 area_code, phone = extract_phone_number(capitol_phone_text)
                 if phone:
-                    capitol_phone = "{} {}".format(
-                        area_code.strip() if area_code else santa_fe_area_code, phone
-                    )
+                    capitol_phone = "{} {}".format(area_code.strip() if area_code else santa_fe_area_code, phone)
 
-        district_address_node = self.get_node(
-            info_node, './/span[@id="MainContent_formViewLegislator_lblAddress"]'
-        )
+        district_address_node = self.get_node(info_node, './/span[@id="MainContent_formViewLegislator_lblAddress"]')
         if district_address_node is not None:
             district_address = "\n".join(district_address_node.xpath("text()"))
 
-        office_phone_node = self.get_node(
-            info_node, './/span[@id="MainContent_formViewLegislator_lblOfficePhone"]'
-        )
+        office_phone_node = self.get_node(info_node, './/span[@id="MainContent_formViewLegislator_lblOfficePhone"]')
 
-        home_phone_node = self.get_node(
-            info_node, './/span[@id="MainContent_formViewLegislator_lblHomePhone"]'
-        )
+        home_phone_node = self.get_node(info_node, './/span[@id="MainContent_formViewLegislator_lblHomePhone"]')
 
         if office_phone_node is not None and office_phone_node.text:
             district_phone_text = office_phone_node.text
@@ -167,29 +137,15 @@ class NMPersonScraper(Scraper, LXMLMixin):
             d_area_code, d_phone = extract_phone_number(district_phone_text)
             district_phone = "{} {}".format(d_area_code.strip(), d_phone)
 
-        person = Person(
-            name=full_name,
-            district=district,
-            party=party,
-            primary_org=chamber,
-            image=photo_url,
-        )
+        person = Person(name=full_name, district=district, party=party, primary_org=chamber, image=photo_url,)
         if district_address:
-            person.add_contact_detail(
-                type="address", value=district_address, note="District Office"
-            )
+            person.add_contact_detail(type="address", value=district_address, note="District Office")
         if district_phone:
-            person.add_contact_detail(
-                type="voice", value=district_phone, note="District Office"
-            )
+            person.add_contact_detail(type="voice", value=district_phone, note="District Office")
         if capitol_address:
-            person.add_contact_detail(
-                type="address", value=capitol_address, note="Capitol Office"
-            )
+            person.add_contact_detail(type="address", value=capitol_address, note="Capitol Office")
         if capitol_phone:
-            person.add_contact_detail(
-                type="voice", value=capitol_phone, note="Capitol Office"
-            )
+            person.add_contact_detail(type="voice", value=capitol_phone, note="Capitol Office")
         if email:
             person.add_contact_detail(type="email", value=email, note="Capitol Office")
 

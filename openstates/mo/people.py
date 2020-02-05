@@ -43,9 +43,7 @@ class MOPersonScraper(Scraper):
             tds = tr.xpath("td")
             full_name = tds[0].xpath("div/a")[0].text_content().strip()
 
-            if full_name.startswith(("Vacant", "Vacancy")) or full_name.endswith(
-                ("Vacant")
-            ):
+            if full_name.startswith(("Vacant", "Vacancy")) or full_name.endswith(("Vacant")):
                 self.warning("Skipping vacancy, named '{}'".format(full_name))
                 continue
 
@@ -63,32 +61,24 @@ class MOPersonScraper(Scraper):
             if "currently vacant" in details_page:
                 continue
 
-            person = Person(
-                name=full_name, primary_org=chamber, district=district, party=party,
-            )
+            person = Person(name=full_name, primary_org=chamber, district=district, party=party,)
 
             person.add_source(source_url)
             person.add_source(url)
             person.add_link(url)
 
             page = lxml.html.fromstring(details_page)
-            photo_url = page.xpath(
-                '//*[@id="content-2"]//img[contains(@src, "uploads")]/@src'
-            )[0]
+            photo_url = page.xpath('//*[@id="content-2"]//img[contains(@src, "uploads")]/@src')[0]
 
             contact_info = [
                 line.strip()
-                for line in page.xpath('//div[@class="textwidget"]/p[1]')[0]
-                .text_content()
-                .split("\n")
+                for line in page.xpath('//div[@class="textwidget"]/p[1]')[0].text_content().split("\n")
                 if "Capitol Office:" not in line
             ]
             address = "\n".join(contact_info[:2])
             email = next((line for line in iter(contact_info) if "@" in line), None)
             phone_pattern = re.compile(r"\(\d{3}\) \d{3}-\d{4}")
-            phone_numbers = [
-                line for line in contact_info if phone_pattern.search(line) is not None
-            ]
+            phone_numbers = [line for line in contact_info if phone_pattern.search(line) is not None]
 
             phone = phone_pattern.search(phone_numbers[0]).group()
             fax = next(
@@ -100,16 +90,12 @@ class MOPersonScraper(Scraper):
                 None,
             )
 
-            person.add_contact_detail(
-                type="address", value=address, note="Capitol Office"
-            )
+            person.add_contact_detail(type="address", value=address, note="Capitol Office")
             person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="Capitol Office")
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="Capitol Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="Capitol Office")
 
             person.image = photo_url
 
@@ -153,21 +139,15 @@ class MOPersonScraper(Scraper):
             address = self._assumed_address_fmt.format(room if room else "")
 
             if last_name == "Vacant":
-                person = Person(
-                    name=full_name, primary_org=chamber, district=district, party=party,
-                )
+                person = Person(name=full_name, primary_org=chamber, district=district, party=party,)
                 person.extras = {
                     "first_name": first_name,
                     "last_name": last_name,
                 }
 
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
                 if phone.strip():
-                    person.add_contact_detail(
-                        type="voice", value=phone, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
 
                 person.add_source(roster_url)
 
@@ -181,9 +161,7 @@ class MOPersonScraper(Scraper):
                 details_url = self._rep_details_url.format(district)
                 details_page = lxml.html.fromstring(self.get(details_url).text)
 
-                person = Person(
-                    name=full_name, primary_org=chamber, district=district, party=party,
-                )
+                person = Person(name=full_name, primary_org=chamber, district=district, party=party,)
                 person.extras = {
                     "first_name": first_name,
                     "last_name": last_name,
@@ -193,29 +171,20 @@ class MOPersonScraper(Scraper):
                 person.add_link(details_url)
 
                 email = details_page.xpath(
-                    '//*[@id="ContentPlaceHolder1_lblAddresses"] '
-                    '//a[starts-with(@href,"mailto:")]/@href'
+                    '//*[@id="ContentPlaceHolder1_lblAddresses"] ' '//a[starts-with(@href,"mailto:")]/@href'
                 )
                 if len(email) > 0 and email[0].lower() != "mailto:":
                     email = email[0].split(":")[1]
                 else:
                     email = None
 
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
                 if phone:
-                    person.add_contact_detail(
-                        type="voice", value=phone, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
                 if email:
-                    person.add_contact_detail(
-                        type="email", value=email, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="email", value=email, note="Capitol Office")
 
-                picture = details_page.xpath(
-                    '//*[@id="ContentPlaceHolder1_imgPhoto"]/@src'
-                )
+                picture = details_page.xpath('//*[@id="ContentPlaceHolder1_imgPhoto"]/@src')
                 if len(picture) > 0:
                     person.image = picture[0]
 

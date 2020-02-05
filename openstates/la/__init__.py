@@ -228,9 +228,7 @@ class Louisiana(Jurisdiction):
         legislature_name = "Louisiana Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -240,6 +238,5 @@ class Louisiana(Jurisdiction):
     def get_session_list(self):
         return url_xpath(
             "http://www.legis.la.gov/Legis/SessionInfo/SessionInfo.aspx",
-            '//table[@id="ctl00_ctl00_PageBody_DataListSessions"]//a[contains'
-            '(text(), "Session")]/text()',
+            '//table[@id="ctl00_ctl00_PageBody_DataListSessions"]//a[contains' '(text(), "Session")]/text()',
         )

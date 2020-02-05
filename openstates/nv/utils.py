@@ -11,13 +11,9 @@ def convert_pdf(filename, type="xml"):
         "html": ["pdftohtml", "-stdout", filename],
     }
     try:
-        pipe = subprocess.Popen(
-            commands[type], stdout=subprocess.PIPE, close_fds=True
-        ).stdout
+        pipe = subprocess.Popen(commands[type], stdout=subprocess.PIPE, close_fds=True).stdout
     except OSError as e:
-        raise EnvironmentError(
-            "error running %s, missing executable? [%s]" % " ".join(commands[type]), e
-        )
+        raise EnvironmentError("error running %s, missing executable? [%s]" % " ".join(commands[type]), e)
     data = pipe.read()
     pipe.close()
     return data

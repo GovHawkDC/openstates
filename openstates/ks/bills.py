@@ -61,9 +61,7 @@ class KSBillScraper(Scraper):
             for primary_sponsor in bill_data["ORIGINAL_SPONSOR"]:
                 bill.add_sponsorship(
                     name=primary_sponsor,
-                    entity_type="organization"
-                    if "committee" in primary_sponsor.lower()
-                    else "person",
+                    entity_type="organization" if "committee" in primary_sponsor.lower() else "person",
                     primary=True,
                     classification="primary",
                 )
@@ -72,9 +70,7 @@ class KSBillScraper(Scraper):
                     continue
                 bill.add_sponsorship(
                     name=sponsor,
-                    entity_type="organization"
-                    if "committee" in sponsor.lower()
-                    else "person",
+                    entity_type="organization" if "committee" in sponsor.lower() else "person",
                     primary=False,
                     classification="cosponsor",
                 )
@@ -86,17 +82,12 @@ class KSBillScraper(Scraper):
                 date = event["session_date"]
                 # append committee names if present
                 if "committee_names" in event:
-                    action = (
-                        event["status"] + " " + " and ".join(event["committee_names"])
-                    )
+                    action = event["status"] + " " + " and ".join(event["committee_names"])
                 else:
                     action = event["status"]
 
                 if event["action_code"] not in ksapi.action_codes:
-                    self.warning(
-                        "unknown action code on %s: %s %s"
-                        % (bill_id, event["action_code"], event["status"])
-                    )
+                    self.warning("unknown action code on %s: %s %s" % (bill_id, event["action_code"], event["status"]))
                     atype = None
                 else:
                     atype = ksapi.action_codes[event["action_code"]]
@@ -110,11 +101,7 @@ class KSBillScraper(Scraper):
             yield bill
 
     def scrape_html(self, bill, session):
-        meta = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == session
-        )
+        meta = next(each for each in self.jurisdiction.legislative_sessions if each["identifier"] == session)
         slug = meta["_scraped_name"]
         # we have to go to the HTML for the versions & votes
         base_url = "http://www.kslegislature.org/li/%s/measures/" % slug
@@ -139,18 +126,12 @@ class KSBillScraper(Scraper):
             if len(tds) > 2:
                 sn_url = get_doc_link(tds[2])
                 if sn_url:
-                    bill.add_document_link(
-                        title + " - Supplementary Note", sn_url, on_duplicate="ignore"
-                    )
+                    bill.add_document_link(title + " - Supplementary Note", sn_url, on_duplicate="ignore")
             if len(tds) > 3:
                 if sn_url:
-                    bill.add_document_link(
-                        title + " - Fiscal Note", sn_url, on_duplicate="ignore"
-                    )
+                    bill.add_document_link(title + " - Fiscal Note", sn_url, on_duplicate="ignore")
 
-        all_links = doc.xpath(
-            "//table[@class='bottom']/tbody[@class='tab-content-sub']/tr/td/a/@href"
-        )
+        all_links = doc.xpath("//table[@class='bottom']/tbody[@class='tab-content-sub']/tr/td/a/@href")
         vote_members_urls = []
         for i in all_links:
             if "vote_view" in i:
@@ -172,9 +153,7 @@ class KSBillScraper(Scraper):
                     amendment_name = "Conference Committee Report"
                 else:
                     amendment_name = row_text.strip()
-                bill.add_document_link(
-                    _clean_spaces(amendment_name), amendment, on_duplicate="ignore"
-                )
+                bill.add_document_link(_clean_spaces(amendment_name), amendment, on_duplicate="ignore")
 
     def parse_vote(self, bill, link):
         # Server sometimes sends proper error headers,
@@ -187,10 +166,7 @@ class KSBillScraper(Scraper):
             return
 
         if "Varnish cache server" in text:
-            self.warning(
-                "Scrape rate is too high, try re-scraping with "
-                "The --rpm set to a lower number"
-            )
+            self.warning("Scrape rate is too high, try re-scraping with " "The --rpm set to a lower number")
             return
 
         if "Page Not Found" in text or "Page Unavailable" in text:
@@ -198,16 +174,12 @@ class KSBillScraper(Scraper):
             return
         member_doc = lxml.html.fromstring(text)
         motion = member_doc.xpath("//div[@id='main_content']/h4/text()")
-        chamber_date_line = "".join(
-            member_doc.xpath("//div[@id='main_content']/h3[1]//text()")
-        )
+        chamber_date_line = "".join(member_doc.xpath("//div[@id='main_content']/h3[1]//text()"))
         chamber_date_line_words = chamber_date_line.split()
         vote_chamber = chamber_date_line_words[0]
         vote_date = datetime.datetime.strptime(chamber_date_line_words[-1], "%m/%d/%Y")
         vote_status = " ".join(chamber_date_line_words[2:-2])
-        opinions = member_doc.xpath(
-            "//div[@id='main_content']/h3[position() > 1]/text()"
-        )
+        opinions = member_doc.xpath("//div[@id='main_content']/h3[position() > 1]/text()")
         if len(opinions) > 0:
             vote_status = vote_status if vote_status.strip() else motion[0]
             vote_chamber = "upper" if vote_chamber == "Senate" else "lower"

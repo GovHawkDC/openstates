@@ -30,13 +30,9 @@ class INPersonScraper(Scraper):
             party = leg["party"]
             link = leg["link"]
             api_link = api_base_url + link
-            html_link = base_url + link.replace(
-                "legislators/", "legislators/legislator_"
-            )
+            html_link = base_url + link.replace("legislators/", "legislators/legislator_")
             try:
-                html = get_with_increasing_timeout(
-                    self, html_link, fail=True, kwargs={"verify": False}
-                )
+                html = get_with_increasing_timeout(self, html_link, fail=True, kwargs={"verify": False})
             except scrapelib.HTTPError:
                 self.logger.warning("Legislator's page is not available.")
                 continue
@@ -48,17 +44,12 @@ class INPersonScraper(Scraper):
             phone = phone.text_content().strip()
             try:
                 district = (
-                    doc.xpath("//span[@class='district-heading']")[0]
-                    .text.lower()
-                    .replace("district", "")
-                    .strip()
+                    doc.xpath("//span[@class='district-heading']")[0].text.lower().replace("district", "").strip()
                 )
             except IndexError:
                 self.warning("skipping legislator w/o district")
                 continue
-            image_link = base_url + link.replace(
-                "legislators/", "portraits/legislator_"
-            )
+            image_link = base_url + link.replace("legislators/", "portraits/legislator_")
             legislator = Person(
                 primary_org=chamber,
                 district=district,
@@ -66,12 +57,8 @@ class INPersonScraper(Scraper):
                 party=party,
                 image=image_link,
             )
-            legislator.add_contact_detail(
-                type="address", note="Capitol Office", value=address
-            )
-            legislator.add_contact_detail(
-                type="voice", note="Capitol Office", value=phone
-            )
+            legislator.add_contact_detail(type="address", note="Capitol Office", value=address)
+            legislator.add_contact_detail(type="voice", note="Capitol Office", value=phone)
             legislator.add_link(html_link)
             legislator.add_source(html_link)
             legislator.add_source(api_link)

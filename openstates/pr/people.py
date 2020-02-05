@@ -19,15 +19,9 @@ class PRPersonScraper(Scraper, LXMLMixin):
 
         for link in links:
             senator_page = self.lxmlize(link)
-            profile_links = self.get_nodes(
-                senator_page, '//ul[@class="profiles-links"]/li'
-            )
+            profile_links = self.get_nodes(senator_page, '//ul[@class="profiles-links"]/li')
 
-            name_text = (
-                self.get_node(senator_page, '//span[@class="name"]')
-                .text_content()
-                .strip()
-            )
+            name_text = self.get_node(senator_page, '//span[@class="name"]').text_content().strip()
             # Convert to title case as some names are in all-caps
             name = re.sub(r"^Hon\.", "", name_text, flags=re.IGNORECASE).strip().title()
             party = profile_links[0].text_content().strip()
@@ -39,14 +33,9 @@ class PRPersonScraper(Scraper, LXMLMixin):
 
             if profile_links[1].text_content().strip() == "Senador por Distrito":
                 district_text = self.get_node(
-                    senator_page,
-                    '//div[@class="module-distrito"]//span[@class="headline"]',
+                    senator_page, '//div[@class="module-distrito"]//span[@class="headline"]',
                 ).text_content()
-                district = (
-                    district_text.replace("DISTRITO", "", 1)
-                    .replace("\u200b", "")
-                    .strip()
-                )
+                district = district_text.replace("DISTRITO", "", 1).replace("\u200b", "").strip()
             elif profile_links[1].text_content().strip() == "Senador por Acumulación":
                 district = "At-Large"
 
@@ -55,13 +44,7 @@ class PRPersonScraper(Scraper, LXMLMixin):
             email_node = self.get_node(senator_page, '//a[@class="contact-data email"]')
             email = email_node.text_content().replace("\u200b", "").strip()
 
-            person = Person(
-                primary_org="upper",
-                district=district,
-                name=name,
-                party=party,
-                image=photo_url,
-            )
+            person = Person(primary_org="upper", district=district, name=name, party=party, image=photo_url,)
             person.add_contact_detail(type="email", value=email, note="Capitol Office")
             person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
             person.add_link(link)
@@ -90,9 +73,7 @@ class PRPersonScraper(Scraper, LXMLMixin):
             if district_text == "Representante por Acumulación":
                 district = "At-Large"
             else:
-                district = district_text.replace(
-                    "Representante del Distrito ", ""
-                ).strip()
+                district = district_text.replace("Representante del Distrito ", "").strip()
             photo_url = self.get_node(member_node, ".//img/@src")
 
             rep_link = self.get_node(member_node, ".//a/@href")
@@ -107,15 +88,11 @@ class PRPersonScraper(Scraper, LXMLMixin):
                 party_text = party_node.text_content().strip()
                 party = party_map[party_text]
 
-            address = (
-                self.get_node(rep_page, "//h6").text.strip().split("\n")[0].strip()
-            )
+            address = self.get_node(rep_page, "//h6").text.strip().split("\n")[0].strip()
 
             # Only grabs the first validated phone number found.
             # Typically, representatives have multiple phone numbers.
-            phone_node = self.get_node(
-                rep_page, '//span[@class="data-type" and contains(text(), "Tel.")]'
-            )
+            phone_node = self.get_node(rep_page, '//span[@class="data-type" and contains(text(), "Tel.")]')
             phone = None
             possible_phones = phone_node.text.strip().split("\n")
             for phone_attempt in possible_phones:
@@ -127,9 +104,7 @@ class PRPersonScraper(Scraper, LXMLMixin):
                 if validate_phone_number(phone_text):
                     phone = phone_text
 
-            fax_node = self.get_node(
-                rep_page, '//span[@class="data-type" and contains(text(), "Fax.")]'
-            )
+            fax_node = self.get_node(rep_page, '//span[@class="data-type" and contains(text(), "Fax.")]')
             fax = None
             if fax_node:
                 fax_text = fax_node.text.strip()
@@ -137,26 +112,16 @@ class PRPersonScraper(Scraper, LXMLMixin):
                 if validate_phone_number(fax_text):
                     fax = fax_text
 
-            person = Person(
-                primary_org="lower",
-                district=district,
-                name=name,
-                party=party,
-                image=photo_url,
-            )
+            person = Person(primary_org="lower", district=district, name=name, party=party, image=photo_url,)
 
             person.add_link(rep_link)
             person.add_source(rep_link)
             person.add_source(url)
 
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="Capitol Office")
 

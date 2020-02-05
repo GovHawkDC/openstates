@@ -16,36 +16,12 @@ class NewHampshire(Jurisdiction):
         "bills": NHBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2011 Session",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-        },
-        {
-            "_scraped_name": "2012 Session",
-            "identifier": "2012",
-            "name": "2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013",
-            "identifier": "2013",
-            "name": "2013 Regular Session",
-        },
-        {
-            "_scraped_name": "2014 Session",
-            "identifier": "2014",
-            "name": "2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015 Session",
-            "identifier": "2015",
-            "name": "2015 Regular Session",
-        },
-        {
-            "_scraped_name": "2016 Session",
-            "identifier": "2016",
-            "name": "2016 Regular Session",
-        },
+        {"_scraped_name": "2011 Session", "identifier": "2011", "name": "2011 Regular Session",},
+        {"_scraped_name": "2012 Session", "identifier": "2012", "name": "2012 Regular Session",},
+        {"_scraped_name": "2013", "identifier": "2013", "name": "2013 Regular Session",},
+        {"_scraped_name": "2014 Session", "identifier": "2014", "name": "2014 Regular Session",},
+        {"_scraped_name": "2015 Session", "identifier": "2015", "name": "2015 Regular Session",},
+        {"_scraped_name": "2016 Session", "identifier": "2016", "name": "2016 Regular Session",},
         {
             "_scraped_name": "2017 Session",
             "identifier": "2017",
@@ -82,9 +58,7 @@ class NewHampshire(Jurisdiction):
     def get_organizations(self):
         legislature_name = "New Hampshire General Court"
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
         yield legislature
         yield upper
@@ -94,7 +68,6 @@ class NewHampshire(Jurisdiction):
         from openstates.utils import url_xpath
 
         zips = url_xpath(
-            "http://gencourt.state.nh.us/downloads/",
-            '//a[contains(@href, "Bill%20Status%20Tables")]/text()',
+            "http://gencourt.state.nh.us/downloads/", '//a[contains(@href, "Bill%20Status%20Tables")]/text()',
         )
         return [zip.replace(" Bill Status Tables.zip", "") for zip in zips]

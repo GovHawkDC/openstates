@@ -18,9 +18,7 @@ class ORPersonScraper(Scraper):
         for legislator in legislators_reponse:
             url_name = legislator["WebSiteUrl"].split("/")[-1]
             chamber_name = "house" if legislator["Chamber"] == "H" else "senate"
-            img = "https://www.oregonlegislature.gov/{}/MemberPhotos/{}.jpg".format(
-                chamber_name, url_name
-            )
+            img = "https://www.oregonlegislature.gov/{}/MemberPhotos/{}.jpg".format(chamber_name, url_name)
 
             party = legislator["Party"]
             if party == "Democrat":
@@ -38,20 +36,14 @@ class ORPersonScraper(Scraper):
 
             if legislator["CapitolAddress"]:
                 person.add_contact_detail(
-                    type="address",
-                    value=legislator["CapitolAddress"],
-                    note="Capitol Office",
+                    type="address", value=legislator["CapitolAddress"], note="Capitol Office",
                 )
 
             if legislator["CapitolPhone"]:
                 person.add_contact_detail(
-                    type="voice",
-                    value=legislator["CapitolPhone"],
-                    note="Capitol Office",
+                    type="voice", value=legislator["CapitolPhone"], note="Capitol Office",
                 )
 
-            person.add_contact_detail(
-                type="email", value=legislator["EmailAddress"], note="Capitol Office"
-            )
+            person.add_contact_detail(type="email", value=legislator["EmailAddress"], note="Capitol Office")
 
             yield person

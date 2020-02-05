@@ -33,17 +33,13 @@ class IAVoteScraper(Scraper):
         # Therefore, we need to iterate over both years in the session
         session_id = SITE_IDS[session]
         for sub_session in [1, 2]:
-            url = "https://www.legis.iowa.gov/chambers/journals/{}".format(
-                "house" if chamber == "lower" else "senate"
-            )
+            url = "https://www.legis.iowa.gov/chambers/journals/{}".format("house" if chamber == "lower" else "senate")
             params = {"ga": session_id, "session": sub_session}
             html = self.get(url, params=params).content
 
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(url)
-            urls = [x for x in doc.xpath("//a[@href]/@href") if x.endswith(".pdf")][
-                ::-1
-            ]
+            urls = [x for x in doc.xpath("//a[@href]/@href") if x.endswith(".pdf")][::-1]
 
             for url in urls:
                 _, filename = url.rsplit("/", 1)
@@ -57,9 +53,7 @@ class IAVoteScraper(Scraper):
                         raise ValueError("Unknown chamber: {}".format(chamber))
 
                     date = datetime.strptime(filename, journal_format)
-                    date = datetime.combine(
-                        date, time(tzinfo=timezone(timedelta(hours=-5)))
-                    )
+                    date = datetime.combine(date, time(tzinfo=timezone(timedelta(hours=-5))))
                     yield self.scrape_journal(url, chamber, session, date)
                 except ValueError:
                     journal_format = "%m-%d-%Y.pdf"
@@ -78,12 +72,7 @@ class IAVoteScraper(Scraper):
         lines = all_text.split(b"\n")
         lines = [line.decode("utf-8") for line in lines]
         lines = [
-            line.strip()
-            .replace("–", "-")
-            .replace("―", '"')
-            .replace("‖", '"')
-            .replace("“", '"')
-            .replace("”", '"')
+            line.strip().replace("–", "-").replace("―", '"').replace("‖", '"').replace("“", '"').replace("”", '"')
             for line in lines
         ]
 
@@ -94,11 +83,7 @@ class IAVoteScraper(Scraper):
             [
                 line
                 for line in lines
-                if not (
-                    line == ""
-                    or re.match(header_date_re, line)
-                    or re.match(header_journal_re, line)
-                )
+                if not (line == "" or re.match(header_date_re, line) or re.match(header_journal_re, line))
             ]
         )
 
@@ -125,9 +110,7 @@ class IAVoteScraper(Scraper):
             try:
                 bill_id = re.search(bill_re, line).group(1)
             except AttributeError:
-                self.warning(
-                    "This motion did not pertain to legislation: {}".format(line)
-                )
+                self.warning("This motion did not pertain to legislation: {}".format(line))
                 continue
 
             # Get the motion text
@@ -161,19 +144,14 @@ class IAVoteScraper(Scraper):
             # for the bill to have passed, so check that,
             # but if the bill didn't pass, it could still be OK if it got a majority
             # eg constitutional amendments
-            if not (
-                (passed == (votes["yes_count"] > votes["no_count"])) or (not passed)
-            ):
+            if not ((passed == (votes["yes_count"] > votes["no_count"])) or (not passed)):
                 self.error("The bill passed without a majority?")
                 raise ValueError("invalid vote")
 
             # also throw a warning if the bill failed but got a majority
             # it could be OK, but is probably something we'd want to check
             if not passed and votes["yes_count"] > votes["no_count"]:
-                self.logger.warning(
-                    "The bill got a majority but did not pass. "
-                    "Could be worth confirming."
-                )
+                self.logger.warning("The bill got a majority but did not pass. " "Could be worth confirming.")
 
             result = ""
             if passed:

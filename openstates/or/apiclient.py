@@ -15,8 +15,7 @@ class OregonLegislatorODataClient(object):
         committees="LegislativeSessions('{session}')/Committees",
         committee_meetings="CommitteeMeetings?$filter=(MeetingDate gt datetime'{start_date}')"
         " and (SessionKey eq '{session}')&$expand=CommitteeAgendaItems,CommitteeMeetingDocuments",
-        committee_members="Committees(CommitteeCode='{committee}',"
-        "SessionKey='{session}')/CommitteeMembers",
+        committee_members="Committees(CommitteeCode='{committee}'," "SessionKey='{session}')/CommitteeMembers",
         measures="LegislativeSessions('{session}')/Measures"
         "?$expand=MeasureSponsors,MeasureDocuments,MeasureHistoryActions,"
         "CommitteeAgendaItems/CommitteeProposedAmendments",
@@ -42,15 +41,7 @@ class OregonLegislatorODataClient(object):
     def latest_session(self):
         return self.get("sessions")[-1]["SessionKey"]
 
-    def get(
-        self,
-        resource_name,
-        page=None,
-        skip=0,
-        requests_args=None,
-        requests_kwargs=None,
-        **url_format_args
-    ):
+    def get(self, resource_name, page=None, skip=0, requests_args=None, requests_kwargs=None, **url_format_args):
         num_bad_packets_allowed = 10
         url = self._build_url(resource_name, **url_format_args)
 
@@ -81,14 +72,5 @@ class OregonLegislatorODataClient(object):
         response = response.json()["value"]
         if page and len(response) > 0:
             skip += page
-            response.extend(
-                self.get(
-                    resource_name,
-                    page,
-                    skip,
-                    requests_args,
-                    requests_kwargs,
-                    **url_format_args
-                )
-            )
+            response.extend(self.get(resource_name, page, skip, requests_args, requests_kwargs, **url_format_args))
         return response

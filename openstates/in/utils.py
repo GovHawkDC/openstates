@@ -15,17 +15,11 @@ def get_with_increasing_timeout(scraper, link, fail=False, kwargs={}):
             timeout_length *= 2
             scraper.logger.debug(
                 "Timed out after {now} seconds, "
-                "increasing to {next} and trying again".format(
-                    now=old_length, next=timeout_length
-                )
+                "increasing to {next} and trying again".format(now=old_length, next=timeout_length)
             )
         else:
             return html
     if fail:
-        raise AssertionError(
-            "Link failed after waiting over a minute, giving up and failing."
-        )
+        raise AssertionError("Link failed after waiting over a minute, giving up and failing.")
     else:
-        scraper.logger.warning(
-            "Link failed after waiting over a minute, giving up and moving on."
-        )
+        scraper.logger.warning("Link failed after waiting over a minute, giving up and moving on.")

@@ -147,12 +147,8 @@ class NorthCarolina(Jurisdiction):
         legislature_name = "North Carolina General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        executive = Organization(
-            name="Executive Office of the Governor", classification="executive"
-        )
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        executive = Organization(name="Executive Office of the Governor", classification="executive")
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -165,13 +161,9 @@ class NorthCarolina(Jurisdiction):
 
         # This is the URL that populates the session `<select>` in the
         # state homepage header navigation
-        return url_xpath(
-            "https://webservices.ncleg.net/sessionselectlist/false", "//option/text()"
-        )
+        return url_xpath("https://webservices.ncleg.net/sessionselectlist/false", "//option/text()")
 
     def extract_text(self, doc, data):
         doc = lxml.html.fromstring(data)
-        text = " ".join(
-            [x.text_content() for x in doc.xpath('//p[starts-with(@class, "a")]')]
-        )
+        text = " ".join([x.text_content() for x in doc.xpath('//p[starts-with(@class, "a")]')])
         return text

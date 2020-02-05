@@ -67,9 +67,7 @@ class MICommitteeScraper(Scraper):
         doc.make_links_absolute(url)
 
         for link in doc.xpath('//li/a[contains(@href, "/committee/")]/@href'):
-            if not link.endswith(
-                ("statutory.htm", "pdf", "taskforce.html", "appropssubcommittee.html")
-            ):
+            if not link.endswith(("statutory.htm", "pdf", "taskforce.html", "appropssubcommittee.html")):
                 yield from self.scrape_senate_committee(link)
         yield from self.scrape_approp_subcommittees()
 
@@ -112,9 +110,7 @@ class MICommitteeScraper(Scraper):
 
         for strong in doc.xpath("//strong"):
             com = Organization(
-                name=strong.text.strip(),
-                parent_id=self._senate_appropriations,
-                classification="committee",
+                name=strong.text.strip(), parent_id=self._senate_appropriations, classification="committee",
             )
             com.add_source(URL)
 

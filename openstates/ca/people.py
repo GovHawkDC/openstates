@@ -77,20 +77,10 @@ class CAPersonScraper(Scraper):
             return None
         name = name.split(" (")[0]
 
-        district = (
-            div.xpath('.//div[contains(@class, "senator-district")]/div/text()')[0]
-            .strip()
-            .lstrip("0")
-        )
+        district = div.xpath('.//div[contains(@class, "senator-district")]/div/text()')[0].strip().lstrip("0")
         photo_url = div.xpath(".//img/@src")[0]
 
-        person = Person(
-            name=name,
-            party=party,
-            district=district,
-            primary_org=chamber,
-            image=photo_url,
-        )
+        person = Person(name=name, party=party, district=district, primary_org=chamber, image=photo_url,)
 
         url = div.xpath(".//a/@href")[0]
         person.add_link(url)
@@ -103,33 +93,23 @@ class CAPersonScraper(Scraper):
 
         office_path = './/div[contains(@class, "{}")]//p'
 
-        for addr in div.xpath(
-            office_path.format("views-field-field-senator-capitol-office")
-        ):
+        for addr in div.xpath(office_path.format("views-field-field-senator-capitol-office")):
             note = "Senate Office"
             addr, phone = addr.text_content().split("; ")
             person.add_contact_detail(type="address", value=addr.strip(), note=note)
             person.add_contact_detail(type="voice", value=phone.strip(), note=note)
 
         n = 1
-        for addr in div.xpath(
-            office_path.format("views-field-field-senator-district-office")
-        ):
+        for addr in div.xpath(office_path.format("views-field-field-senator-district-office")):
             note = "District Office #{}".format(n)
             for addr in addr.text_content().strip().splitlines():
                 try:
                     addr, phone = addr.strip().replace(u"\xa0", " ").split("; ")
-                    person.add_contact_detail(
-                        type="address", value=addr.strip(), note=note
-                    )
-                    person.add_contact_detail(
-                        type="voice", value=phone.strip(), note=note
-                    )
+                    person.add_contact_detail(type="address", value=addr.strip(), note=note)
+                    person.add_contact_detail(type="voice", value=phone.strip(), note=note)
                 except ValueError:
                     addr = addr.strip().replace(u"\xa0", " ")
-                    person.add_contact_detail(
-                        type="address", value=addr.strip(), note=note
-                    )
+                    person.add_contact_detail(type="address", value=addr.strip(), note=note)
             n += 1
 
         return person
@@ -147,21 +127,14 @@ class CAPersonScraper(Scraper):
             "url": [("lname-sort", '/a[not(contains(text(), "edit"))]/@href')],
             "district": [("district", "/text()")],
             "party": [("party", "/text()")],
-            "name": [
-                ("office-information", '/a[not(contains(text(), "edit"))]/text()')
-            ],
-            "address": [
-                ("office-information", "/h3/following-sibling::text()"),
-                ("office-information", "/p/text()"),
-            ],
+            "name": [("office-information", '/a[not(contains(text(), "edit"))]/text()')],
+            "address": [("office-information", "/h3/following-sibling::text()"), ("office-information", "/p/text()"),],
         }
 
         titles = {"upper": "senator", "lower": "member"}
 
         funcs = {
-            "name": lambda s: re.sub(  # "Assembly" is misspelled once
-                r"Contact Assembl?y Member", "", s
-            ).strip(),
+            "name": lambda s: re.sub(r"Contact Assembl?y Member", "", s).strip(),  # "Assembly" is misspelled once
             "address": parse_address,
         }
 
@@ -257,17 +230,11 @@ class CAPersonScraper(Scraper):
                     office["email"] = None
 
                 note = office["name"]
-                person.add_contact_detail(
-                    type="address", value=office["address"], note=note
-                )
+                person.add_contact_detail(type="address", value=office["address"], note=note)
                 if office["phone"]:
-                    person.add_contact_detail(
-                        type="voice", value=office["phone"], note=note
-                    )
+                    person.add_contact_detail(type="voice", value=office["phone"], note=note)
                 if office["email"]:
-                    person.add_contact_detail(
-                        type="email", value=office["email"], note=note
-                    )
+                    person.add_contact_detail(type="email", value=office["email"], note=note)
 
         return person
 
@@ -326,11 +293,7 @@ class CAPersonScraper(Scraper):
             last_name = re.split(r"\s+", name)[-1].lower()
         # translate accents to non-accented versions for use in an
         # email and drop apostrophes
-        last_name = "".join(
-            c
-            for c in unicodedata.normalize("NFD", last_name)
-            if unicodedata.category(c) != "Mn"
-        )
+        last_name = "".join(c for c in unicodedata.normalize("NFD", last_name) if unicodedata.category(c) != "Mn")
         last_name = last_name.replace("'", "").replace(",", "")
 
         if chamber == "lower":

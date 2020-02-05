@@ -149,14 +149,8 @@ class Minnesota(Jurisdiction):
     def get_organizations(self):
         legis = Organization("Minnesota Legislature", classification="legislature")
 
-        upper = Organization(
-            "Minnesota Senate", classification="upper", parent_id=legis._id
-        )
-        lower = Organization(
-            "Minnesota House of Representatives",
-            classification="lower",
-            parent_id=legis._id,
-        )
+        upper = Organization("Minnesota Senate", classification="upper", parent_id=legis._id)
+        lower = Organization("Minnesota House of Representatives", classification="lower", parent_id=legis._id,)
 
         yield Organization("Governor of Minnesota", classification="executive")
         yield legis

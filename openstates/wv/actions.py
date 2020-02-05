@@ -65,13 +65,8 @@ committees_rgx = "(%s)" % "|".join(sorted(committees, key=len, reverse=True))
 
 
 rules = (
-    Rule(
-        ["Communicated to Senate", "Senate received", "Ordered to Senate"],
-        actor="upper",
-    ),
-    Rule(
-        ["Communicated to House", "House received", "Ordered to House"], actor="lower"
-    ),
+    Rule(["Communicated to Senate", "Senate received", "Ordered to Senate"], actor="upper",),
+    Rule(["Communicated to House", "House received", "Ordered to House"], actor="lower"),
     Rule("Read 1st time", "reading-1"),
     Rule("Read 2nd time", "reading-2"),
     Rule("Read 3rd time", "reading-3"),
@@ -79,12 +74,7 @@ rules = (
     Rule("^Introduced in", "introduction"),
     Rule(["Passed Senate", "Passed House"], "passage"),
     Rule(["Reported do pass", "With amendment, do pass"], "committee-passage"),
-    Rule(
-        [
-            ", but first to .+?; then (?P<committees>[^;]+)",
-            "To (?P<committees>.+?) then",
-        ]
-    ),
+    Rule([", but first to .+?; then (?P<committees>[^;]+)", "To (?P<committees>.+?) then",]),
     Rule("(?i)voice vote", voice_vote=True),
     Rule(["Amendment rejected"], [u"amendment-failure"]),
     Rule(["To Governor"], [u"executive-receipt"]),
@@ -108,12 +98,7 @@ rules = (
     Rule(["House appointed conferees:  (?P<legislators>.+)"], []),
     Rule(["Read 3rd time"], [u"reading-3"]),
     Rule(["Be adopted$"], [u"passage"]),
-    Rule(
-        [
-            "(?i)originating in (House|Senate) (?P<committees>.+)",
-            "(?i)to house (?P<committees>.+)",
-        ]
-    ),
+    Rule(["(?i)originating in (House|Senate) (?P<committees>.+)", "(?i)to house (?P<committees>.+)",]),
     Rule(["Read 1st time"], [u"reading-1"]),
     Rule(["To .+? then .+? then (?P<committees>.+)"]),
     Rule(r"To %s" % committees_rgx, "referral-committee"),

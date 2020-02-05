@@ -87,9 +87,7 @@ class Missouri(Jurisdiction):
         legislature_name = "Missouri General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield Organization(name="Office of the Governor", classification="executive")

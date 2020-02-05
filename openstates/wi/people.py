@@ -27,9 +27,7 @@ class WIPersonScraper(Scraper):
         page = lxml.html.fromstring(body)
         page.make_links_absolute(url)
 
-        for row in page.xpath(
-            ".//div[@class='box-content']/div[starts-with(@id,'district')]"
-        ):
+        for row in page.xpath(".//div[@class='box-content']/div[starts-with(@id,'district')]"):
             if row.xpath(".//a/@href") and not row.xpath(".//a[text()='Vacant']"):
                 rep_url = row.xpath(".//a[text()='Details']/@href")[0].strip("https://")
                 rep_url = "https://" + rep_url
@@ -60,9 +58,7 @@ class WIPersonScraper(Scraper):
 
                 assert party is not None, "{} is missing party".format(full_name)
 
-                person = Person(
-                    name=full_name, district=district, primary_org=chamber, party=party
-                )
+                person = Person(name=full_name, district=district, primary_org=chamber, party=party)
 
                 img = rep_doc.xpath('.//div[@id="district"]/img/@src')
                 if img:
@@ -70,31 +66,21 @@ class WIPersonScraper(Scraper):
 
                 # office ####
                 address_lines = rep_doc.xpath('.//span[@class="info office"]/text()')
-                address = "\n".join(
-                    [line.strip() for line in address_lines if line.strip() != ""]
-                )
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                address = "\n".join([line.strip() for line in address_lines if line.strip() != ""])
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
 
                 phone = rep_doc.xpath('.//span[@class="info telephone"]/text()')
                 if phone:
                     phone = re.sub(r"\s+", " ", phone[1]).strip()
-                    person.add_contact_detail(
-                        type="voice", value=phone, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
 
                 fax = rep_doc.xpath('.//span[@class="info fax"]/text()')
                 if fax:
                     fax = re.sub(r"\s+", " ", fax[1]).strip()
-                    person.add_contact_detail(
-                        type="fax", value=fax, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="fax", value=fax, note="Capitol Office")
 
                 if email:
-                    person.add_contact_detail(
-                        type="email", value=email, note="Capitol Office"
-                    )
+                    person.add_contact_detail(type="email", value=email, note="Capitol Office")
 
                 person.add_link(rep_url)
                 person.add_source(rep_url)

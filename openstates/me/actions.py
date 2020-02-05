@@ -30,10 +30,7 @@ rules = (
             r"Representative [A-Z ]+? of \S+",
         ]
     ),
-    Rule(
-        "REFERRED to the (?P<committees>Committee on [A-Z ]+(?![a-z]))",
-        "referral-committee",
-    ),
+    Rule("REFERRED to the (?P<committees>Committee on [A-Z ]+(?![a-z]))", "referral-committee",),
     Rule(["READ A SECOND TIME"], ["reading-2"]),
     Rule(["(?i)read once"], ["reading-1"]),
     Rule("(?i)finally passed", "passage"),
@@ -43,9 +40,7 @@ rules = (
     Rule(r"VETO was NOT SUSTAINED", "veto-override-passage"),
     Rule(r"VETO was OVERRIDDEN", "veto-override-passage"),
     Rule(r"VETO was SUSTAINED", "veto-override-failure"),
-    Rule(
-        r"(?<![Aa]mendment)READ and (PASSED|ADOPTED)(, in concurrence)?\.$", "passage"
-    ),
+    Rule(r"(?<![Aa]mendment)READ and (PASSED|ADOPTED)(, in concurrence)?\.$", "passage"),
 )
 
 

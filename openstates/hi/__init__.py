@@ -23,31 +23,11 @@ class Hawaii(Jurisdiction):
         "events": HIEventScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2012",
-            "identifier": "2011 Regular Session",
-            "name": "2011-2012 Regular Session",
-        },
-        {
-            "_scraped_name": "2013",
-            "identifier": "2013 Regular Session",
-            "name": "2013 Regular Session",
-        },
-        {
-            "_scraped_name": "2014",
-            "identifier": "2014 Regular Session",
-            "name": "2014 Regular Session",
-        },
-        {
-            "_scraped_name": "2015",
-            "identifier": "2015 Regular Session",
-            "name": "2015 Regular Session",
-        },
-        {
-            "_scraped_name": "2016",
-            "identifier": "2016 Regular Session",
-            "name": "2016 Regular Session",
-        },
+        {"_scraped_name": "2012", "identifier": "2011 Regular Session", "name": "2011-2012 Regular Session",},
+        {"_scraped_name": "2013", "identifier": "2013 Regular Session", "name": "2013 Regular Session",},
+        {"_scraped_name": "2014", "identifier": "2014 Regular Session", "name": "2014 Regular Session",},
+        {"_scraped_name": "2015", "identifier": "2015 Regular Session", "name": "2015 Regular Session",},
+        {"_scraped_name": "2016", "identifier": "2016 Regular Session", "name": "2016 Regular Session",},
         {
             "_scraped_name": "2017",
             "identifier": "2017 Regular Session",
@@ -96,9 +76,7 @@ class Hawaii(Jurisdiction):
         legislature_name = "Hawaii State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

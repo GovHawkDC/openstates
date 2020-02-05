@@ -121,13 +121,7 @@ class MAPersonScraper(Scraper):
         else:
             raise ValueError("unknown party {}: {}".format(party, member_url))
 
-        leg = Person(
-            primary_org=chamber,
-            district=district,
-            name=full_name,
-            party=party,
-            image=photo_url,
-        )
+        leg = Person(primary_org=chamber, district=district, name=full_name, party=party, image=photo_url,)
         leg.add_link(member_url)
         leg.add_source(member_url)
 

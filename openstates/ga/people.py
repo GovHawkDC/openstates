@@ -6,14 +6,8 @@ from .util import get_client, get_url, backoff, SESSION_SITE_IDS
 
 
 HOMEPAGE_URLS = {
-    "lower": (
-        "http://www.house.ga.gov/Representatives/en-US/"
-        "member.aspx?Member={code}&Session={sid}"
-    ),
-    "upper": (
-        "http://www.senate.ga.gov/SENATORS/en-US/"
-        "member.aspx?Member={code}&Session={sid}"
-    ),
+    "lower": ("http://www.house.ga.gov/Representatives/en-US/" "member.aspx?Member={code}&Session={sid}"),
+    "upper": ("http://www.senate.ga.gov/SENATORS/en-US/" "member.aspx?Member={code}&Session={sid}"),
 }
 
 
@@ -52,11 +46,7 @@ class GAPersonScraper(Scraper, LXMLMixin):
             # If a member switches chambers during the session, they may
             # appear twice. Skip the duplicate record accordingly.
             if guid in seen_guids:
-                self.warning(
-                    "Skipping duplicate record of {}".format(
-                        member_info["Name"]["Last"]
-                    )
-                )
+                self.warning("Skipping duplicate record of {}".format(member_info["Name"]["Last"]))
                 continue
             else:
                 seen_guids.append(guid)
@@ -68,16 +58,11 @@ class GAPersonScraper(Scraper, LXMLMixin):
             try:
                 (legislative_service,) = [
                     service
-                    for service in member_info["SessionsInService"][
-                        "LegislativeService"
-                    ]
-                    if service["Session"]["Id"] == sid
-                    and service["DateVacated"] is None
+                    for service in member_info["SessionsInService"]["LegislativeService"]
+                    if service["Session"]["Id"] == sid and service["DateVacated"] is None
                 ]
             except ValueError:
-                self.info(
-                    "Skipping retired member {}".format(member_info["Name"]["Last"])
-                )
+                self.info("Skipping retired member {}".format(member_info["Name"]["Last"]))
                 continue
 
             nick_name, first_name, middle_name, last_name = (
@@ -99,52 +84,31 @@ class GAPersonScraper(Scraper, LXMLMixin):
             elif party.strip() == "":
                 party = "other"
 
-            chamber, district = (
-                legislative_service["District"][x] for x in ["Type", "Number"]
-            )
+            chamber, district = (legislative_service["District"][x] for x in ["Type", "Number"])
 
             chamber = {"House": "lower", "Senate": "upper"}[chamber]
 
-            url, photo = self.scrape_homepage(
-                HOMEPAGE_URLS[chamber], {"code": guid, "sid": sid}
-            )
+            url, photo = self.scrape_homepage(HOMEPAGE_URLS[chamber], {"code": guid, "sid": sid})
 
-            legislator = Person(
-                name=full_name,
-                district=str(district),
-                party=party,
-                primary_org=chamber,
-                image=photo,
-            )
+            legislator = Person(name=full_name, district=str(district), party=party, primary_org=chamber, image=photo,)
             legislator.extras = {
                 "family_name": last_name,
                 "given_name": first_name,
                 "guid": guid,
             }
 
-            if (
-                member_info["Address"]["Street"] is not None
-                and member_info["Address"]["Street"].strip()
-            ):
+            if member_info["Address"]["Street"] is not None and member_info["Address"]["Street"].strip():
                 capitol_address_info = {
                     k: v.strip()
                     for k, v in dict(member_info["Address"]).items()
                     if k in ["Street", "City", "State", "Zip"]
                 }
-                capitol_address = "{Street}\n{City}, {State} {Zip}".format(
-                    **capitol_address_info
-                )
-                legislator.add_contact_detail(
-                    type="address", value=capitol_address, note="Capitol Address"
-                )
+                capitol_address = "{Street}\n{City}, {State} {Zip}".format(**capitol_address_info)
+                legislator.add_contact_detail(type="address", value=capitol_address, note="Capitol Address")
             else:
-                self.warning(
-                    "Could not find full capitol address for {}".format(full_name)
-                )
+                self.warning("Could not find full capitol address for {}".format(full_name))
 
-            capitol_contact_info = self.clean_list(
-                [member_info["Address"][x] for x in ["Email", "Phone", "Fax"]]
-            )
+            capitol_contact_info = self.clean_list([member_info["Address"][x] for x in ["Email", "Phone", "Fax"]])
 
             # Sometimes email is set to a long cryptic string.
             # If it doesn't have a @ character, simply set it to None
@@ -159,17 +123,11 @@ class GAPersonScraper(Scraper, LXMLMixin):
                 assert "quickrxdrugs@yahoo.com" not in capitol_contact_info[0]
 
             if capitol_contact_info[1]:
-                legislator.add_contact_detail(
-                    type="voice", value=capitol_contact_info[1], note="Capitol Address"
-                )
+                legislator.add_contact_detail(type="voice", value=capitol_contact_info[1], note="Capitol Address")
             if capitol_contact_info[2]:
-                legislator.add_contact_detail(
-                    type="fax", value=capitol_contact_info[2], note="Capitol Address"
-                )
+                legislator.add_contact_detail(type="fax", value=capitol_contact_info[2], note="Capitol Address")
             if capitol_contact_info[0]:
-                legislator.add_contact_detail(
-                    type="email", value=capitol_contact_info[0], note="Capitol Address"
-                )
+                legislator.add_contact_detail(type="email", value=capitol_contact_info[0], note="Capitol Address")
 
             if (
                 member_info["DistrictAddress"]["Street"] is not None
@@ -180,16 +138,10 @@ class GAPersonScraper(Scraper, LXMLMixin):
                     for k, v in dict(member_info["DistrictAddress"]).items()
                     if k in ["Street", "City", "State", "Zip"]
                 }
-                district_address = "{Street}\n{City}, {State} {Zip}".format(
-                    **district_address_info
-                )
-                legislator.add_contact_detail(
-                    type="address", value=district_address, note="District Address"
-                )
+                district_address = "{Street}\n{City}, {State} {Zip}".format(**district_address_info)
+                legislator.add_contact_detail(type="address", value=district_address, note="District Address")
             else:
-                self.warning(
-                    "Could not find full district address for {}".format(full_name)
-                )
+                self.warning("Could not find full district address for {}".format(full_name))
 
             district_contact_info = self.clean_list(
                 [member_info["DistrictAddress"][x] for x in ["Email", "Phone", "Fax"]]
@@ -205,26 +157,18 @@ class GAPersonScraper(Scraper, LXMLMixin):
 
             if district_contact_info[1]:
                 legislator.add_contact_detail(
-                    type="voice",
-                    value=district_contact_info[1],
-                    note="District Address",
+                    type="voice", value=district_contact_info[1], note="District Address",
                 )
             if district_contact_info[2]:
-                legislator.add_contact_detail(
-                    type="fax", value=district_contact_info[2], note="District Address"
-                )
+                legislator.add_contact_detail(type="fax", value=district_contact_info[2], note="District Address")
             if district_contact_info[0]:
                 legislator.add_contact_detail(
-                    type="email",
-                    value=district_contact_info[0],
-                    note="District Address",
+                    type="email", value=district_contact_info[0], note="District Address",
                 )
 
             legislator.add_link(url)
             legislator.add_source(self.ssource)
-            legislator.add_source(
-                HOMEPAGE_URLS[chamber].format(**{"code": guid, "sid": sid})
-            )
+            legislator.add_source(HOMEPAGE_URLS[chamber].format(**{"code": guid, "sid": sid}))
 
             yield legislator
 

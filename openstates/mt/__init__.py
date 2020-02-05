@@ -18,21 +18,9 @@ class Montana(Jurisdiction):
         "bills": MTBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "20111",
-            "identifier": "2011",
-            "name": "2011 Regular Session",
-        },
-        {
-            "_scraped_name": "20131",
-            "identifier": "2013",
-            "name": "2013 Regular Session",
-        },
-        {
-            "_scraped_name": "20151",
-            "identifier": "2015",
-            "name": "2015 Regular Session",
-        },
+        {"_scraped_name": "20111", "identifier": "2011", "name": "2011 Regular Session",},
+        {"_scraped_name": "20131", "identifier": "2013", "name": "2013 Regular Session",},
+        {"_scraped_name": "20151", "identifier": "2015", "name": "2015 Regular Session",},
         {
             "_scraped_name": "20171",
             "identifier": "2017",
@@ -64,9 +52,7 @@ class Montana(Jurisdiction):
         legislature_name = "Montana Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -74,7 +60,4 @@ class Montana(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        return url_xpath(
-            "http://laws.leg.mt.gov/legprd/LAW0200W$.Startup",
-            '//select[@name="P_SESS"]/option/@value',
-        )
+        return url_xpath("http://laws.leg.mt.gov/legprd/LAW0200W$.Startup", '//select[@name="P_SESS"]/option/@value',)

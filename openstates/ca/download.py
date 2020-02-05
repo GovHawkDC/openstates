@@ -57,9 +57,7 @@ def db_drop():
     logger.info("dropping capublic...")
 
     try:
-        connection = MySQLdb.connect(
-            host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD, db="capublic"
-        )
+        connection = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD, db="capublic")
     except MySQLdb._exceptions.OperationalError:
         # The database doesn't exist.
         logger.info("...no such database. Bailing.")
@@ -187,11 +185,7 @@ def load(folder, sql_name=partial(re.compile(r"\.dat$").sub, ".sql")):
     os.chdir(folder)
 
     connection = MySQLdb.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        passwd=MYSQL_PASSWORD,
-        db="capublic",
-        local_infile=1,
+        host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD, db="capublic", local_infile=1,
     )
     connection.autocommit(True)
 
@@ -246,18 +240,13 @@ def delete_session(session_year):
 
     logger.info("Deleting all data for session year %s..." % session_year)
 
-    connection = MySQLdb.connect(
-        host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD, db="capublic"
-    )
+    connection = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD, db="capublic")
     connection.autocommit(True)
     cursor = connection.cursor()
 
     for token, names in tables.items():
         for table_name in names:
-            sql = (
-                "DELETE FROM capublic.{table_name} "
-                "where {token} like '{session_year}%';"
-            )
+            sql = "DELETE FROM capublic.{table_name} " "where {token} like '{session_year}%';"
             sql = sql.format(**locals())
             logger.debug('executing sql: "%s"' % sql)
             cursor.execute(sql)
@@ -280,12 +269,8 @@ def db_create():
         # so we have to split them up.
         sql_statements = f.read().split(";")
 
-    connection = MySQLdb.connect(
-        host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD
-    )
-    print(
-        f"mysql connection host={MYSQL_HOST}, user={MYSQL_USER}, password={MYSQL_PASSWORD}"
-    )
+    connection = MySQLdb.connect(host=MYSQL_HOST, user=MYSQL_USER, passwd=MYSQL_PASSWORD)
+    print(f"mysql connection host={MYSQL_HOST}, user={MYSQL_USER}, password={MYSQL_PASSWORD}")
     connection.autocommit(True)
     cursor = connection.cursor()
 

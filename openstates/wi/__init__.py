@@ -174,20 +174,13 @@ class Wisconsin(Jurisdiction):
         legislature_name = "Wisconsin State Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
-        lower = Organization(
-            "Assembly", classification="lower", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
+        lower = Organization("Assembly", classification="lower", parent_id=legislature._id)
 
         yield legislature
         yield upper
         yield lower
 
     def get_session_list(self):
-        sessions = url_xpath(
-            "http://docs.legis.wisconsin.gov/search",
-            "//select[@name='sessionNumber']/option/text()",
-        )
+        sessions = url_xpath("http://docs.legis.wisconsin.gov/search", "//select[@name='sessionNumber']/option/text()",)
         return [session.strip(" -") for session in sessions]

@@ -161,9 +161,7 @@ class Alabama(Jurisdiction):
         legislature_name = "Alabama Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature
@@ -177,6 +175,4 @@ class Alabama(Jurisdiction):
         s = requests.Session()
         r = s.get("http://alisondb.legislature.state.al.us/alison/SelectSession.aspx")
         doc = lxml.html.fromstring(r.text)
-        return doc.xpath(
-            '//*[@id="ContentPlaceHolder1_gvSessions"]/tr/td/font/a/font/text()'
-        )
+        return doc.xpath('//*[@id="ContentPlaceHolder1_gvSessions"]/tr/td/font/a/font/text()')

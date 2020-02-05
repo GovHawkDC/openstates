@@ -24,52 +24,22 @@ class NJBillScraper(Scraper, MDBMixin):
     }
 
     _actions = {
-        "INT 1RA AWR 2RA": (
-            "Introduced, 1st Reading without Reference, 2nd Reading",
-            "introduction",
-        ),
-        "INT 1RS SWR 2RS": (
-            "Introduced, 1st Reading without Reference, 2nd Reading",
-            "introduction",
-        ),
-        "REP 2RA": (
-            "Reported out of Assembly Committee, 2nd Reading",
-            "committee-passage",
-        ),
-        "REP 2RS": (
-            "Reported out of Senate Committee, 2nd Reading",
-            "committee-passage",
-        ),
-        "REP/ACA 2RA": (
-            "Reported out of Assembly Committee with Amendments, 2nd Reading",
-            "committee-passage",
-        ),
-        "REP/SCA 2RS": (
-            "Reported out of Senate Committee with Amendments, 2nd Reading",
-            "committee-passage",
-        ),
+        "INT 1RA AWR 2RA": ("Introduced, 1st Reading without Reference, 2nd Reading", "introduction",),
+        "INT 1RS SWR 2RS": ("Introduced, 1st Reading without Reference, 2nd Reading", "introduction",),
+        "REP 2RA": ("Reported out of Assembly Committee, 2nd Reading", "committee-passage",),
+        "REP 2RS": ("Reported out of Senate Committee, 2nd Reading", "committee-passage",),
+        "REP/ACA 2RA": ("Reported out of Assembly Committee with Amendments, 2nd Reading", "committee-passage",),
+        "REP/SCA 2RS": ("Reported out of Senate Committee with Amendments, 2nd Reading", "committee-passage",),
         "R/S SWR 2RS": ("Received in the Senate without Reference, 2nd Reading", None),
-        "R/A AWR 2RA": (
-            "Received in the Assembly without Reference, 2nd Reading",
-            None,
-        ),
+        "R/A AWR 2RA": ("Received in the Assembly without Reference, 2nd Reading", None,),
         "R/A 2RAC": ("Received in the Assembly, 2nd Reading on Concurrence", None),
         "R/S 2RSC": ("Received in the Senate, 2nd Reading on Concurrence", None),
-        "REP/ACS 2RA": (
-            "Reported from Assembly Committee as a Substitute, 2nd Reading",
-            None,
-        ),
-        "REP/SCS 2RS": (
-            "Reported from Senate Committee as a Substitute, 2nd Reading",
-            None,
-        ),
+        "REP/ACS 2RA": ("Reported from Assembly Committee as a Substitute, 2nd Reading", None,),
+        "REP/SCS 2RS": ("Reported from Senate Committee as a Substitute, 2nd Reading", None,),
         "AA 2RA": ("Assembly Floor Amendment Passed", "amendment-passage"),
         "SA 2RS": ("Senate Amendment", "amendment-passage"),
         "SUTC REVIEWED": ("Reviewed by the Sales Tax Review Commission", None),
-        "PHBC REVIEWED": (
-            "Reviewed by the Pension and Health Benefits Commission",
-            None,
-        ),
+        "PHBC REVIEWED": ("Reviewed by the Pension and Health Benefits Commission", None,),
         "SUB FOR": ("Substituted for", None),
         "SUB BY": ("Substituted by", None),
         "PA": ("Passed Assembly", "passage"),
@@ -77,10 +47,7 @@ class NJBillScraper(Scraper, MDBMixin):
         "PA PBH": ("Passed Assembly (Passed Both Houses)", "passage"),
         "PS PBH": ("Passed Senate (Passed Both Houses)", "passage"),
         "APP": ("Approved", "executive-signature"),
-        "APP W/LIV": (
-            "Approved with Line Item Veto",
-            ["executive-signature", "executive-veto-line-item"],
-        ),
+        "APP W/LIV": ("Approved with Line Item Veto", ["executive-signature", "executive-veto-line-item"],),
         "AV R/A": ("Absolute Veto, Received in the Assembly", "executive-veto"),
         "AV R/S": ("Absolute Veto, Received in the Senate", "executive-veto"),
         "CV R/A": ("Conditional Veto, Received in the Assembly", "executive-veto"),
@@ -89,37 +56,16 @@ class NJBillScraper(Scraper, MDBMixin):
             "executive-veto",
         ),
         "CV R/S": ("Conditional Veto, Received in the Senate", "executive-veto"),
-        "PV": (
-            "Pocket Veto - Bill not acted on by Governor-end of Session",
-            "executive-veto",
-        ),
+        "PV": ("Pocket Veto - Bill not acted on by Governor-end of Session", "executive-veto",),
         "2RSG": ("2nd Reading on Concur with Governor's Recommendations", None),
-        "CV R/S 2RSG": (
-            "Conditional Veto, Received, 2nd Reading on Concur with Governor's Recommendations",
-            None,
-        ),
-        "CV R/S 1RSG": (
-            "Conditional Veto, Received, 1st Reading on Concur with Governor's Recommendations",
-            None,
-        ),
+        "CV R/S 2RSG": ("Conditional Veto, Received, 2nd Reading on Concur with Governor's Recommendations", None,),
+        "CV R/S 1RSG": ("Conditional Veto, Received, 1st Reading on Concur with Governor's Recommendations", None,),
         "1RAG": ("First Reading/Governor Recommendations Only", None),
-        "2RAG": (
-            "2nd Reading in the Assembly on Concur. w/Gov's Recommendations",
-            None,
-        ),
-        "R/S 2RSG": (
-            "Received in the Senate, 2nd Reading - Concur. w/Gov's Recommendations",
-            None,
-        ),
-        "R/A 2RAG": (
-            "Received in the Assembly, 2nd Reading - Concur. w/Gov's Recommendations",
-            None,
-        ),
+        "2RAG": ("2nd Reading in the Assembly on Concur. w/Gov's Recommendations", None,),
+        "R/S 2RSG": ("Received in the Senate, 2nd Reading - Concur. w/Gov's Recommendations", None,),
+        "R/A 2RAG": ("Received in the Assembly, 2nd Reading - Concur. w/Gov's Recommendations", None,),
         "R/A": ("Received in the Assembly", None),
-        "REF SBA": (
-            "Referred to Senate Budget and Appropriations Committee",
-            "referral-committee",
-        ),
+        "REF SBA": ("Referred to Senate Budget and Appropriations Committee", "referral-committee",),
         "RSND/V": ("Rescind Vote", None),
         "RSND/ACT OF": ("Rescind Action", None),
         "RCON/V": ("Reconsidered Vote", None),
@@ -136,55 +82,29 @@ class NJBillScraper(Scraper, MDBMixin):
         "COMB/W": ("Combined with", None),
         "MOTION": ("Motion", None),
         "PUBLIC HEARING": ("Public Hearing Held", None),
-        "PH ON DESK SEN": (
-            "Public Hearing Placed on Desk Senate Transcript Placed on Desk",
-            None,
-        ),
-        "PH ON DESK ASM": (
-            "Public Hearing Placed on Desk Assembly Transcript Placed on Desk",
-            None,
-        ),
+        "PH ON DESK SEN": ("Public Hearing Placed on Desk Senate Transcript Placed on Desk", None,),
+        "PH ON DESK ASM": ("Public Hearing Placed on Desk Assembly Transcript Placed on Desk", None,),
         "W": ("Withdrawn from Consideration", "withdrawal"),
     }
 
     _com_actions = {
-        "INT 1RA REF": (
-            "Introduced in the Assembly, Referred to",
-            ["introduction", "referral-committee"],
-        ),
-        "INT 1RS REF": (
-            "Introduced in the Senate, Referred to",
-            ["introduction", "referral-committee"],
-        ),
+        "INT 1RA REF": ("Introduced in the Assembly, Referred to", ["introduction", "referral-committee"],),
+        "INT 1RS REF": ("Introduced in the Senate, Referred to", ["introduction", "referral-committee"],),
         "R/S REF": ("Received in the Senate, Referred to", "referral-committee"),
         "R/A REF": ("Received in the Assembly, Referred to", "referral-committee"),
         "TRANS": ("Transferred to", "referral-committee"),
         "RCM": ("Recommitted to", "referral-committee"),
-        "REP/ACA REF": (
-            "Reported out of Assembly Committee with Amendments and Referred to",
-            "referral-committee",
-        ),
-        "REP/ACS REF": (
-            "Reported out of Senate Committee with Amendments and Referred to",
-            "referral-committee",
-        ),
+        "REP/ACA REF": ("Reported out of Assembly Committee with Amendments and Referred to", "referral-committee",),
+        "REP/ACS REF": ("Reported out of Senate Committee with Amendments and Referred to", "referral-committee",),
         "REP REF": ("Reported and Referred to", "referral-committee"),
     }
 
     _com_vote_motions = {
         "r w/o rec.": "Reported without recommendation",
-        "r w/o rec. ACS": (
-            "Reported without recommendation out of Assembly committee as a substitute"
-        ),
-        "r w/o rec. SCS": (
-            "Reported without recommendation out of Senate committee as a substitute"
-        ),
-        "r w/o rec. Sca": (
-            "Reported without recommendation out of Senate committee with amendments"
-        ),
-        "r w/o rec. Aca": (
-            "Reported without recommendation out of Assembly committee with amendments"
-        ),
+        "r w/o rec. ACS": ("Reported without recommendation out of Assembly committee as a substitute"),
+        "r w/o rec. SCS": ("Reported without recommendation out of Senate committee as a substitute"),
+        "r w/o rec. Sca": ("Reported without recommendation out of Senate committee with amendments"),
+        "r w/o rec. Aca": ("Reported without recommendation out of Assembly committee with amendments"),
         "r/ACS": "Reported out of Assembly committee as a substitute",
         "r/Aca": "Reported out of Assembly committee with amendments",
         "r/SCS": "Reported out of Senate committee as a substitute",
@@ -223,9 +143,7 @@ class NJBillScraper(Scraper, MDBMixin):
 
         for com in com_csv:
             # map XYZ -> "Assembly/Senate _________ Committee"
-            self._committees[com["Code"]] = " ".join(
-                (chamber[com["House"]], com["Description"], "Committee")
-            )
+            self._committees[com["Code"]] = " ".join((chamber[com["House"]], com["Description"], "Committee"))
 
     def categorize_action(self, act_str, bill_id):
         if act_str in self._actions:
@@ -283,9 +201,7 @@ class NJBillScraper(Scraper, MDBMixin):
             )
             if rec["IdenticalBillNumber"].strip():
                 bill.add_related_bill(
-                    rec["IdenticalBillNumber"].split()[0],
-                    legislative_session=session,
-                    relation_type="companion",
+                    rec["IdenticalBillNumber"].split()[0], legislative_session=session, relation_type="companion",
                 )
 
             # TODO: last session info is in there too
@@ -309,10 +225,7 @@ class NJBillScraper(Scraper, MDBMixin):
             else:
                 sponsor_type = "cosponsor"
             bill.add_sponsorship(
-                name,
-                classification=sponsor_type,
-                entity_type="person",
-                primary=sponsor_type == "primary",
+                name, classification=sponsor_type, entity_type="person", primary=sponsor_type == "primary",
             )
 
         # Documents
@@ -331,9 +244,7 @@ class NJBillScraper(Scraper, MDBMixin):
             document = document[-2] + "/" + document[-1]
 
             # doc_url = "ftp://www.njleg.state.nj.us/%s/%s" % (year, document)
-            htm_url = "http://www.njleg.state.nj.us/{}/Bills/{}".format(
-                year_abr, document.replace(".DOC", ".HTM")
-            )
+            htm_url = "http://www.njleg.state.nj.us/{}/Bills/{}".format(year_abr, document.replace(".DOC", ".HTM"))
 
             # name document based _doctype
             try:
@@ -383,9 +294,7 @@ class NJBillScraper(Scraper, MDBMixin):
             zippedfile = zipfile.ZipFile(s_vote_zip)
             for vfile in ["%s.txt" % (filename), "%sEnd.txt" % (filename)]:
                 try:
-                    vote_file = io.TextIOWrapper(
-                        zippedfile.open(vfile, "r"), encoding="latin-1"
-                    )
+                    vote_file = io.TextIOWrapper(zippedfile.open(vfile, "r"), encoding="latin-1")
                 except KeyError:
                     #
                     # Right, so, 2011 we have an "End" file with more
@@ -495,10 +404,7 @@ class NJBillScraper(Scraper, MDBMixin):
             if comment:
                 action += " " + comment
             bill.add_action(
-                action,
-                date=TIMEZONE.localize(date),
-                classification=atype,
-                chamber=actor,
+                action, date=TIMEZONE.localize(date), classification=atype, chamber=actor,
             )
 
         # Subjects

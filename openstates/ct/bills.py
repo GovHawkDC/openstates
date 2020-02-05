@@ -72,10 +72,7 @@ class CTBillScraper(Scraper):
 
             for introducer in self._introducers[bill_id]:
                 bill.add_sponsorship(
-                    name=introducer.decode("utf-8"),
-                    classification="primary",
-                    primary=True,
-                    entity_type="person",
+                    name=introducer.decode("utf-8"), classification="primary", primary=True, entity_type="person",
                 )
 
             try:
@@ -111,10 +108,7 @@ class CTBillScraper(Scraper):
                 sponsor = str(sponsor.strip())
                 if sponsor:
                     bill.add_sponsorship(
-                        name=sponsor,
-                        classification=spon_type,
-                        entity_type="person",
-                        primary=spon_type == "primary",
+                        name=sponsor, classification=spon_type, entity_type="person", primary=spon_type == "primary",
                     )
                     # spon_type = 'cosponsor'
 
@@ -124,20 +118,14 @@ class CTBillScraper(Scraper):
         for link in page.xpath("//a[contains(@href, '/BA/')]"):
             bill.add_document_link(link.text.strip(), link.attrib["href"])
 
-        for link in page.xpath(
-            "//a[contains(@href, '/pdf/') and contains(@href, '/TOB/')]"
-        ):
-            bill.add_version_link(
-                link.text.strip(), link.attrib["href"], media_type="application/pdf"
-            )
+        for link in page.xpath("//a[contains(@href, '/pdf/') and contains(@href, '/TOB/')]"):
+            bill.add_version_link(link.text.strip(), link.attrib["href"], media_type="application/pdf")
 
         for link in page.xpath("//a[contains(@href, 'VOTE')]"):
             # 2011 HJ 31 has a blank vote, others might too
             if link.attrib["href"].endswith(".htm") and link.text:
                 pdf_link = link.getprevious()
-                yield from self.scrape_vote(
-                    bill, pdf_link.text.strip(), link.attrib["href"]
-                )
+                yield from self.scrape_vote(bill, pdf_link.text.strip(), link.attrib["href"])
 
     def scrape_vote(self, bill, name, url):
         if "VOTE/h" in url:
@@ -175,9 +163,7 @@ class CTBillScraper(Scraper):
         date = page.xpath("string(//span[contains(., 'Taken on')])")
         date = re.match(r".*Taken\s+on\s+(\d+/\s?\d+)", date).group(1)
         date = date.replace(" ", "")
-        date = datetime.datetime.strptime(
-            date + " " + bill.legislative_session, "%m/%d %Y"
-        ).date()
+        date = datetime.datetime.strptime(date + " " + bill.legislative_session, "%m/%d %Y").date()
 
         # not sure about classification.
         vote = Vote(
@@ -251,14 +237,11 @@ class CTBillScraper(Scraper):
 
                 match = re.search(r"REFERRED TO OLR, OFA (.*)", action)
                 if match:
-                    action = (
-                        "REFERRED TO Office of Legislative Research"
-                        " AND Office of Fiscal Analysis %s" % (match.group(1))
+                    action = "REFERRED TO Office of Legislative Research" " AND Office of Fiscal Analysis %s" % (
+                        match.group(1)
                     )
 
-                if re.match(r"^ADOPTED, (HOUSE|SENATE)", action) or re.match(
-                    r"^(HOUSE|SENATE) PASSED", action
-                ):
+                if re.match(r"^ADOPTED, (HOUSE|SENATE)", action) or re.match(r"^(HOUSE|SENATE) PASSED", action):
                     act_type.append("passage")
 
                 match = re.match(r"^Joint ((Un)?[Ff]avorable)", action)
@@ -284,10 +267,7 @@ class CTBillScraper(Scraper):
                     act_chamber = "upper"
 
                 bill.add_action(
-                    description=action,
-                    date=date,
-                    chamber=act_chamber,
-                    classification=act_type,
+                    description=action, date=date, chamber=act_chamber, classification=act_type,
                 )
 
     def scrape_versions(self, chamber, session):
@@ -310,9 +290,7 @@ class CTBillScraper(Scraper):
                 continue
 
             url = versions_url + f.filename
-            bill.add_version_link(
-                media_type="application/pdf", url=url, note=match.group(2)
-            )
+            bill.add_version_link(media_type="application/pdf", url=url, note=match.group(2))
 
     def scrape_subjects(self):
         info_url = "ftp://ftp.cga.ct.gov/pub/data/subject.csv"

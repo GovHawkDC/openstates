@@ -35,20 +35,14 @@ class OREventScraper(Scraper):
             committees_by_code[committee["CommitteeCode"]] = committee["CommitteeName"]
 
         meetings_response = self.api_client.get(
-            "committee_meetings",
-            start_date=start_date.strftime(self._DATE_FORMAT),
-            session=session_key,
+            "committee_meetings", start_date=start_date.strftime(self._DATE_FORMAT), session=session_key,
         )
 
         for meeting in meetings_response:
-            event_date = self._TZ.localize(
-                datetime.datetime.strptime(meeting["MeetingDate"], self._DATE_FORMAT)
-            )
+            event_date = self._TZ.localize(datetime.datetime.strptime(meeting["MeetingDate"], self._DATE_FORMAT))
             com_name = committees_by_code[meeting["CommitteeCode"]]
 
-            event = Event(
-                start_date=event_date, name=com_name, location_name=meeting["Location"]
-            )
+            event = Event(start_date=event_date, name=com_name, location_name=meeting["Location"])
 
             event.add_source(meeting["AgendaUrl"])
 
@@ -66,8 +60,6 @@ class OREventScraper(Scraper):
 
             for row in meeting["CommitteeMeetingDocuments"]:
                 event.add_document(
-                    note=row["ExhibitTitle"],
-                    url=row["DocumentUrl"],
-                    on_duplicate="ignore",
+                    note=row["ExhibitTitle"], url=row["DocumentUrl"], on_duplicate="ignore",
                 )
             yield event

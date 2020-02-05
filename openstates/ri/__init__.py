@@ -109,12 +109,8 @@ class RhodeIsland(Jurisdiction):
         legislature_name = "Rhode Island General Assembly"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        executive = Organization(
-            name="Office of the Governor", classification="executive"
-        )
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
+        executive = Organization(name="Office of the Governor", classification="executive")
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
         lower = Organization("House", classification="lower", parent_id=legislature._id)
 
         yield legislature

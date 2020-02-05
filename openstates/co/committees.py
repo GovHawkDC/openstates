@@ -16,9 +16,7 @@ class COCommitteeScraper(Scraper, LXMLMixin):
         committee = Organization(comName, chamber=chamber, classification="committee")
         committee.add_source(link.attrib["href"])
 
-        for member in page.xpath(
-            '//div[@class="members"]/' + 'div[@class="roster-item"]'
-        ):
+        for member in page.xpath('//div[@class="members"]/' + 'div[@class="roster-item"]'):
             details = member.xpath('.//div[@class="member-details"]')[0]
             person = details.xpath("./h4")[0].text_content()
             # This page does random weird things with whitepace to names
@@ -52,9 +50,7 @@ class COCommitteeScraper(Scraper, LXMLMixin):
                 chamber = "upper"
             else:
                 chamber = "legislature"
-            for comm in comType.xpath(
-                './div[@class="view-content"]' + "/table/tbody/tr/td"
-            ):
+            for comm in comType.xpath('./div[@class="view-content"]' + "/table/tbody/tr/td"):
                 link = comm.xpath(".//a")
                 # ignore empty cells
                 if link:

@@ -82,15 +82,9 @@ class NewJersey(Jurisdiction):
         legislature_name = "New Jersey Legislature"
 
         legislature = Organization(name=legislature_name, classification="legislature")
-        executive = Organization(
-            name="Governor of New Jersey", classification="executive"
-        )
-        upper = Organization(
-            "Senate", classification="upper", parent_id=legislature._id
-        )
-        lower = Organization(
-            "Assembly", classification="lower", parent_id=legislature._id
-        )
+        executive = Organization(name="Governor of New Jersey", classification="executive")
+        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
+        lower = Organization("Assembly", classification="lower", parent_id=legislature._id)
 
         yield legislature
         yield executive
@@ -98,6 +92,4 @@ class NewJersey(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        return url_xpath(
-            "http://www.njleg.state.nj.us/", '//select[@name="DBNAME"]/option/text()'
-        )
+        return url_xpath("http://www.njleg.state.nj.us/", '//select[@name="DBNAME"]/option/text()')

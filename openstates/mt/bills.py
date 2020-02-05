@@ -75,29 +75,17 @@ class MTBillScraper(Scraper, LXMLMixin):
         chambers = [chamber] if chamber else ["upper", "lower"]
 
         # self.versions_dict = self._versions_dict(session)
-        details = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == session
-        )
+        details = next(each for each in self.jurisdiction.legislative_sessions if each["identifier"] == session)
         session_name = details["_scraped_name"]
 
-        bills_url = (
-            "http://laws.leg.mt.gov/legprd/LAW0217W$BAIV.return_all_bills?P_SESS={}"
-        ).format(session_name)
+        bills_url = ("http://laws.leg.mt.gov/legprd/LAW0217W$BAIV.return_all_bills?P_SESS={}").format(session_name)
         bills_page = self.lxmlize(bills_url)
 
         bill_urls = []
-        for bill_url in bills_page.xpath(
-            '//tr//a[contains(@href, "ActionQuery")]/@href'
-        ):
-            if "lower" in chambers and (
-                "HB" in bill_url or "HJ" in bill_url or "HR" in bill_url
-            ):
+        for bill_url in bills_page.xpath('//tr//a[contains(@href, "ActionQuery")]/@href'):
+            if "lower" in chambers and ("HB" in bill_url or "HJ" in bill_url or "HR" in bill_url):
                 bill_urls.append(bill_url)
-            if "upper" in chambers and (
-                "SB" in bill_url or "SJ" in bill_url or "SR" in bill_url
-            ):
+            if "upper" in chambers and ("SB" in bill_url or "SJ" in bill_url or "SR" in bill_url):
                 bill_urls.append(bill_url)
 
         for bill_url in bill_urls:
@@ -117,11 +105,7 @@ class MTBillScraper(Scraper, LXMLMixin):
         bill, votes = self.parse_bill_status_page(bill_url, doc, session, chamber)
 
         # Get versions on the detail page.
-        versions = [
-            a["description"]
-            for a in bill.actions
-            if "Version Available" in a["description"]
-        ]
+        versions = [a["description"] for a in bill.actions if "Version Available" in a["description"]]
         if not versions:
             version_name = "Introduced"
         else:
@@ -151,9 +135,7 @@ class MTBillScraper(Scraper, LXMLMixin):
         for link in page.xpath('//div[contains(@class,"container white")]/a'):
             link_text = link.xpath("text()")[0].strip()
             link_url = link.xpath("@href")[0]
-            bill.add_version_link(
-                link_text, link_url, media_type="application/pdf", on_duplicate="ignore"
-            )
+            bill.add_version_link(link_text, link_url, media_type="application/pdf", on_duplicate="ignore")
 
     def _get_tabledata(self, status_page):
         """Montana doesn't currently list co/multisponsors on any of the
@@ -182,9 +164,7 @@ class MTBillScraper(Scraper, LXMLMixin):
         # see 2007 HB 2... weird.
         parsed_url = urllib.parse.urlparse(url)
         parsed_query = dict(urllib.parse.parse_qsl(parsed_url.query))
-        bill_id = "{0} {1}".format(
-            parsed_query["P_BLTP_BILL_TYP_CD"], parsed_query["P_BILL_NO1"]
-        )
+        bill_id = "{0} {1}".format(parsed_query["P_BLTP_BILL_TYP_CD"], parsed_query["P_BILL_NO1"])
 
         try:
             xp = '//b[text()="Short Title:"]/../following-sibling::td/text()'
@@ -203,13 +183,7 @@ class MTBillScraper(Scraper, LXMLMixin):
         elif "r" in _bill_id:
             classification = "resolution"
 
-        bill = Bill(
-            bill_id,
-            legislative_session=session,
-            chamber=chamber,
-            title=title,
-            classification=classification,
-        )
+        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=classification,)
 
         self.add_actions(bill, page)
         votes = self.add_votes(bill, page, url)
@@ -218,10 +192,7 @@ class MTBillScraper(Scraper, LXMLMixin):
 
         # Add sponsor info.
         bill.add_sponsorship(
-            tabledata["primary sponsor:"][0],
-            classification="primary",
-            entity_type="person",
-            primary=True,
+            tabledata["primary sponsor:"][0], classification="primary", entity_type="person", primary=True,
         )
 
         # A various plus fields MT provides.
@@ -273,38 +244,23 @@ class MTBillScraper(Scraper, LXMLMixin):
 
     def add_actions(self, bill, status_page):
         for idx, action in enumerate(
-            reversed(
-                status_page.xpath(
-                    '//form[contains(@action, "BLAC.QueryList")]//table/tr'
-                )[1:]
-            )
+            reversed(status_page.xpath('//form[contains(@action, "BLAC.QueryList")]//table/tr')[1:])
         ):
             try:
                 actor = actor_map[action.xpath("td[1]")[0].text_content().split(" ")[0]]
-                action_name = (
-                    action.xpath("td[1]")[0]
-                    .text_content()
-                    .replace(actor, "")[4:]
-                    .strip()
-                )
+                action_name = action.xpath("td[1]")[0].text_content().replace(actor, "")[4:].strip()
             except KeyError:
                 action_name = action.xpath("td[1]")[0].text_content().strip()
-                actor = (
-                    "legislature" if action_name == "Chapter Number Assigned" else ""
-                )
+                actor = "legislature" if action_name == "Chapter Number Assigned" else ""
 
             action_name = action_name.replace("&nbsp", "")
-            action_date = datetime.strptime(
-                action.xpath("td[2]")[0].text, "%m/%d/%Y"
-            ).date()
+            action_date = datetime.strptime(action.xpath("td[2]")[0].text, "%m/%d/%Y").date()
             action_type = actions.categorize(action_name)
 
             if "by senate" in action_name.lower():
                 actor = "upper"
 
-            bill.add_action(
-                action_name, action_date, classification=action_type, chamber=actor
-            )
+            bill.add_action(action_name, action_date, classification=action_type, chamber=actor)
 
     def _versions_dict(self, session):
         """Get a mapping of ('HB', '2') tuples to version urls."""
@@ -399,9 +355,7 @@ class MTBillScraper(Scraper, LXMLMixin):
                     vote_url = vote_url[0]
 
                     chamber = actor_map[chamber]
-                    vote = dict(
-                        chamber=chamber, date=date, action=action, vote_url=vote_url
-                    )
+                    vote = dict(chamber=chamber, date=date, action=action, vote_url=vote_url)
 
                     # Update the vote object with voters..
                     vote = self._parse_votes(vote_url, vote, bill)
@@ -519,9 +473,7 @@ class MTBillScraper(Scraper, LXMLMixin):
                     passed = False
                     break
                 else:
-                    raise Exception(
-                        "passage and failure indicator" "both present at: %s" % url
-                    )
+                    raise Exception("passage and failure indicator" "both present at: %s" % url)
             if i in action and passed is None:
                 passed = False
                 break
@@ -540,9 +492,7 @@ class MTBillScraper(Scraper, LXMLMixin):
 
         for link in doc.xpath('//a[contains(text(), "Fiscal Note")]'):
             bill.add_document_link(
-                link.text_content().strip(),
-                link.attrib["href"],
-                media_type="application/pdf",
+                link.text_content().strip(), link.attrib["href"], media_type="application/pdf",
             )
 
 

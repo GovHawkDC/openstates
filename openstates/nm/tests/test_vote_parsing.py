@@ -93,9 +93,7 @@ class TestVoteParsing(object):
             ok_(vote, "Vote returned empty or did not complete")
             if pdf in voteKey:
                 eq_(
-                    vote,
-                    voteKey[pdf],
-                    "%s Vote results did not match up with redefined key" % pdf,
+                    vote, voteKey[pdf], "%s Vote results did not match up with redefined key" % pdf,
                 )
 
     def test_house_parsing(self):
@@ -172,9 +170,7 @@ class TestVoteParsing(object):
             ok_(vote, "Vote returned empty or did not complete")
             if pdf in voteKey:
                 eq_(
-                    vote,
-                    voteKey[pdf],
-                    "%s Vote results did not match up with redefined key" % pdf,
+                    vote, voteKey[pdf], "%s Vote results did not match up with redefined key" % pdf,
                 )
 
 

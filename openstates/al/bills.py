@@ -68,18 +68,14 @@ class ALBillScraper(Scraper):
         # Standard GET responses must have an ASP.NET VIEWSTATE
         # If they don't, it means the page is a trivial error message
         return bool(
-            lxml.html.fromstring(response.text).xpath(
-                '//input[@id="__VIEWSTATE"]/@value'
-            )
+            lxml.html.fromstring(response.text).xpath('//input[@id="__VIEWSTATE"]/@value')
             or response.request.method != "GET"
         )
 
     def _set_session(self, session):
         """ Activate an ASP.NET session, and set the legislative session """
 
-        SESSION_SET_URL = (
-            "http://alisondb.legislature.state.al.us/" "Alison/SelectSession.aspx"
-        )
+        SESSION_SET_URL = "http://alisondb.legislature.state.al.us/" "Alison/SelectSession.aspx"
 
         doc = lxml.html.fromstring(self.get(url=SESSION_SET_URL).text)
         (viewstate,) = doc.xpath('//input[@id="__VIEWSTATE"]/@value')
@@ -93,9 +89,7 @@ class ALBillScraper(Scraper):
             '//table[@id="ContentPlaceHolder1_gvSessions"]//tr//a/font'
             '[text()="{}"]/parent::a/@href'.format(self.session_name)
         )
-        target_session = target_session.replace(
-            "javascript:__doPostBack('ctl00$ContentPlaceHolder1$gvSessions','", "",
-        )
+        target_session = target_session.replace("javascript:__doPostBack('ctl00$ContentPlaceHolder1$gvSessions','", "",)
         target_session = target_session.replace("')", "")
 
         form = {
@@ -118,9 +112,7 @@ class ALBillScraper(Scraper):
             doc = lxml.html.fromstring(html)
 
             listing = doc.xpath('//table[@id="ContentPlaceHolder1_gvBills"]/tr')[1:]
-            instruments = doc.xpath(
-                '//span[@id="ContentPlaceHolder1_lblCount"]/font/text()'
-            )
+            instruments = doc.xpath('//span[@id="ContentPlaceHolder1_lblCount"]/font/text()')
 
             if listing:
                 return listing
@@ -137,9 +129,7 @@ class ALBillScraper(Scraper):
 
         try:
             html = self.get(url=url, allow_redirects=False).text
-            if lxml.html.fromstring(html).xpath(
-                '//span[@id="ContentPlaceHolder1_lblShotTitle"]'
-            ):
+            if lxml.html.fromstring(html).xpath('//span[@id="ContentPlaceHolder1_lblShotTitle"]'):
                 return html
         # If a bill page doesn't exist yet, ignore redirects and timeouts
         except scrapelib.HTTPError:
@@ -151,21 +141,14 @@ class ALBillScraper(Scraper):
             self.info("no session specified, using %s", session)
 
         self.session = session
-        details = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == session
-        )
+        details = next(each for each in self.jurisdiction.legislative_sessions if each["identifier"] == session)
         self.session_name = details["_scraped_name"]
         self.session_id = SESSION_SITE_IDS[session]
 
         self._set_session(session)
 
         # Acquire and process a list of all bills
-        BILL_TYPE_URL = (
-            "http://alisondb.legislature.state.al.us/Alison/"
-            "SESSBillsBySelectedStatus.aspx"
-        )
+        BILL_TYPE_URL = "http://alisondb.legislature.state.al.us/Alison/" "SESSBillsBySelectedStatus.aspx"
         BILL_LIST_URL = (
             "http://alisondb.legislature.state.al.us/Alison/"
             "SESSBillsList.aspx?STATUSCODES=Had%20First%20Reading"
@@ -180,8 +163,7 @@ class ALBillScraper(Scraper):
             "__EVENTARGUMENT": "Select$0",
             "__VIEWSTATE": viewstate,
             "__VIEWSTATEGENERATOR": viewstategenerator,
-            "ctl00$ScriptManager1": "ctl00$UpdatePanel1|ctl00$"
-            "MainDefaultContent$gvStatus$ctl02$ctl00",
+            "ctl00$ScriptManager1": "ctl00$UpdatePanel1|ctl00$" "MainDefaultContent$gvStatus$ctl02$ctl00",
         }
         self.post(url=BILL_TYPE_URL, data=form, allow_redirects=True)
 
@@ -191,8 +173,7 @@ class ALBillScraper(Scraper):
 
         # Acquire and process a list of all resolutions
         RESOLUTION_TYPE_URL = (
-            "http://alisondb.legislature.state.al.us/Alison/"
-            "SESSResosBySelectedStatus.aspx?BODYID=1755"
+            "http://alisondb.legislature.state.al.us/Alison/" "SESSResosBySelectedStatus.aspx?BODYID=1755"
         )
         RESOLUTION_LIST_URL = (
             "http://alisondb.legislature.state.al.us/Alison/"
@@ -212,8 +193,7 @@ class ALBillScraper(Scraper):
             "__EVENTARGUMENT": "Select$0",
             "__VIEWSTATE": viewstate,
             "__VIEWSTATEGENERATOR": viewstategenerator,
-            "ctl00$ScriptManager1": "tctl00$UpdatePanel1|ctl00$"
-            "MainDefaultContent$gvStatus$ctl02$ctl00",
+            "ctl00$ScriptManager1": "tctl00$UpdatePanel1|ctl00$" "MainDefaultContent$gvStatus$ctl02$ctl00",
         }
 
         self.post(url=RESOLUTION_TYPE_URL, data=form, allow_redirects=True)
@@ -240,57 +220,37 @@ class ALBillScraper(Scraper):
             else:
                 raise AssertionError("Unknown bill type for bill '{}'".format(bill_id))
 
-            bill = Bill(
-                bill_id,
-                legislative_session=self.session,
-                chamber=chamber,
-                title="",
-                classification=bill_type,
-            )
+            bill = Bill(bill_id, legislative_session=self.session, chamber=chamber, title="", classification=bill_type,)
             if subject:
                 bill.subject = [subject]
             if sponsor:
                 bill.add_sponsorship(
-                    name=sponsor,
-                    entity_type="person",
-                    classification="primary",
-                    primary=True,
+                    name=sponsor, entity_type="person", classification="primary", primary=True,
                 )
             bill.add_source(url)
 
-            bill_url = (
-                "http://alisondb.legislature.state.al.us/Alison/"
-                "SESSBillStatusResult.aspx?BILL={}".format(bill_id)
+            bill_url = "http://alisondb.legislature.state.al.us/Alison/" "SESSBillStatusResult.aspx?BILL={}".format(
+                bill_id
             )
             bill.add_source(bill_url)
 
             bill_html = self._get_bill_response(bill_url)
             if bill_html is None:
-                self.warning(
-                    "Bill {} has no webpage, and will be skipped".format(bill_id)
-                )
+                self.warning("Bill {} has no webpage, and will be skipped".format(bill_id))
                 continue
             bill_doc = lxml.html.fromstring(bill_html)
 
             if bill_doc.xpath('//span[@id="ContentPlaceHolder1_lblShotTitle"]'):
-                title = (
-                    bill_doc.xpath('//span[@id="ContentPlaceHolder1_lblShotTitle"]')[0]
-                    .text_content()
-                    .strip()
-                )
+                title = bill_doc.xpath('//span[@id="ContentPlaceHolder1_lblShotTitle"]')[0].text_content().strip()
             if not title:
                 title = "[No title given by state]"
             bill.title = title
 
             version_url_base = (
                 "http://alisondb.legislature.state.al.us/ALISON/"
-                "SearchableInstruments/{0}/PrintFiles/{1}-".format(
-                    self.session, bill_id
-                )
+                "SearchableInstruments/{0}/PrintFiles/{1}-".format(self.session, bill_id)
             )
-            versions = bill_doc.xpath(
-                '//table[@class="box_versions"]/tr/td[2]/font/text()'
-            )
+            versions = bill_doc.xpath('//table[@class="box_versions"]/tr/td[2]/font/text()')
             for version in versions:
                 name = version
                 if version == "Introduced":
@@ -300,15 +260,10 @@ class ALBillScraper(Scraper):
                 elif version == "Enrolled":
                     version_url = version_url_base + "enr.pdf"
                 else:
-                    raise NotImplementedError(
-                        "Unknown version type found: '{}'".format(name)
-                    )
+                    raise NotImplementedError("Unknown version type found: '{}'".format(name))
 
                 bill.add_version_link(
-                    name,
-                    version_url,
-                    media_type="application/pdf",
-                    on_duplicate="ignore",
+                    name, version_url, media_type="application/pdf", on_duplicate="ignore",
                 )
 
             # Fiscal notes exist, but I can't figure out how to build their URL
@@ -329,20 +284,13 @@ class ALBillScraper(Scraper):
                     )
                     continue
 
-                bir_date = datetime.datetime.strptime(
-                    bir.xpath("td[2]/font/text()")[0], self.DATE_FORMAT
-                )
+                bir_date = datetime.datetime.strptime(bir.xpath("td[2]/font/text()")[0], self.DATE_FORMAT)
                 bir_type = bir.xpath("td[1]/font/text()")[0].split(" ")[0]
                 bir_chamber = self.CHAMBERS[bir_type[0]]
-                bir_text = "{0}: {1}".format(
-                    bir_type, bir.xpath("td[3]/font/text()")[0].strip()
-                )
+                bir_text = "{0}: {1}".format(bir_type, bir.xpath("td[3]/font/text()")[0].strip())
 
                 bill.add_action(
-                    bir_text,
-                    TIMEZONE.localize(bir_date),
-                    chamber=bir_chamber,
-                    classification="other",
+                    bir_text, TIMEZONE.localize(bir_date), chamber=bir_chamber, classification="other",
                 )
 
                 try:
@@ -363,28 +311,17 @@ class ALBillScraper(Scraper):
                         action_text=bir_text,
                     )
 
-            actions = bill_doc.xpath('//table[@id="ContentPlaceHolder1_gvHistory"]/tr')[
-                1:
-            ]
+            actions = bill_doc.xpath('//table[@id="ContentPlaceHolder1_gvHistory"]/tr')[1:]
             action_date = None
             for action in actions:
                 # If actions occur on the same day, only one date will exist
-                if (
-                    action.xpath("td[1]/font/text()")[0]
-                    .encode("ascii", "ignore")
-                    .strip()
-                ):
-                    action_date = datetime.datetime.strptime(
-                        action.xpath("td[1]/font/text()")[0], self.DATE_FORMAT
-                    )
+                if action.xpath("td[1]/font/text()")[0].encode("ascii", "ignore").strip():
+                    action_date = datetime.datetime.strptime(action.xpath("td[1]/font/text()")[0], self.DATE_FORMAT)
 
                 (action_chamber,) = action.xpath("td[2]/font/text()")
 
                 possible_amendment = action.xpath("td[3]/font/u/text()")
-                if (
-                    len(possible_amendment) > 0
-                    and not possible_amendment[0].strip() == ""
-                ):
+                if len(possible_amendment) > 0 and not possible_amendment[0].strip() == "":
                     (amendment,) = possible_amendment
                 else:
                     amendment = None
@@ -401,26 +338,17 @@ class ALBillScraper(Scraper):
                 actor = self.CHAMBERS[action_chamber]
                 try:
                     action_committee = (
-                        re.search(
-                            r".*? referred to the .*? committee on (.*?)$", action_text
-                        )
-                        .group(1)
-                        .strip()
+                        re.search(r".*? referred to the .*? committee on (.*?)$", action_text).group(1).strip()
                     )
                 except AttributeError:
                     action_committee = ""
 
                 if action_date is not None:
                     act = bill.add_action(
-                        action_text,
-                        TIMEZONE.localize(action_date),
-                        chamber=actor,
-                        classification=action_type,
+                        action_text, TIMEZONE.localize(action_date), chamber=actor, classification=action_type,
                     )
                     if action_committee:
-                        act.add_related_entity(
-                            action_committee, entity_type="organization"
-                        )
+                        act.add_related_entity(action_committee, entity_type="organization")
 
                     try:
                         vote_button = action.xpath("td[9]//text()")[0].strip()
@@ -442,18 +370,13 @@ class ALBillScraper(Scraper):
                 if amendment:
                     amend_url = (
                         "http://alisondb.legislature.state.al.us/ALISON/"
-                        "SearchableInstruments/{0}/PrintFiles/{1}.pdf".format(
-                            self.session, amendment
-                        )
+                        "SearchableInstruments/{0}/PrintFiles/{1}.pdf".format(self.session, amendment)
                     )
 
                     amend_name = "Amd/Sub {}".format(amendment)
 
                     bill.add_version_link(
-                        amend_name,
-                        amend_url,
-                        media_type="application/pdf",
-                        on_duplicate="ignore",
+                        amend_name, amend_url, media_type="application/pdf", on_duplicate="ignore",
                     )
 
             yield bill
@@ -462,9 +385,7 @@ class ALBillScraper(Scraper):
         url = (
             "http://alisondb.legislature.state.al.us/Alison/"
             "GetRollCallVoteResults.aspx?"
-            "VOTE={0}&BODY={1}&INST={2}&SESS={3}".format(
-                vote_id, vote_chamber, bill_id, self.session_id
-            )
+            "VOTE={0}&BODY={1}&INST={2}&SESS={3}".format(vote_id, vote_chamber, bill_id, self.session_id)
         )
         doc = lxml.html.fromstring(self.get(url=url).text)
 
@@ -481,11 +402,7 @@ class ALBillScraper(Scraper):
             else:
                 capture_vote = True
                 name = item
-                if (
-                    name.endswith(", Vacant")
-                    or name.startswith("Total ")
-                    or not name.strip()
-                ):
+                if name.endswith(", Vacant") or name.startswith("Total ") or not name.strip():
                     name = ""
 
         # Check name counts against totals listed on the site

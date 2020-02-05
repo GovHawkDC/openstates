@@ -13,28 +13,18 @@ class LAPersonScraper(Scraper, LXMLMixin):
     def scrape_upper_leg_page(self, url, who):
         page = self.lxmlize(url)
 
-        (who,) = [
-            x
-            for x in page.xpath("//tr/td/font/text()")
-            if x.strip().startswith("Senator ")
-        ]
+        (who,) = [x for x in page.xpath("//tr/td/font/text()") if x.strip().startswith("Senator ")]
         who = re.search(r"(?u)^\s*Senator\s*(.*?)\s*$", who).group(1)
 
         if "Vacant" in who:
             return
 
-        (district,) = [
-            x
-            for x in page.xpath("//tr/td/font/text()")
-            if x.strip().startswith("District - ")
-        ]
+        (district,) = [x for x in page.xpath("//tr/td/font/text()") if x.strip().startswith("District - ")]
         district = re.search(r"(?u)^\s*District\s*-\s*(.*?)\s*$", district).group(1)
 
         info = [
             x.strip()
-            for x in page.xpath(
-                '//font[contains(text(), "Information:")]/' "ancestor::table[1]//text()"
-            )
+            for x in page.xpath('//font[contains(text(), "Information:")]/' "ancestor::table[1]//text()")
             if x.strip()
         ]
 
@@ -44,9 +34,7 @@ class LAPersonScraper(Scraper, LXMLMixin):
 
         phone_index = info.index("District Phone") + 1
         phone = info[phone_index]
-        assert (
-            sum(c.isdigit() for c in phone) == 10
-        ), "Phone number is invalid: {}".format(phone)
+        assert sum(c.isdigit() for c in phone) == 10, "Phone number is invalid: {}".format(phone)
 
         # Address exists for all lines between party and phone
         address = "\n".join(info[party_index + 2 : phone_index - 1])
@@ -57,9 +45,7 @@ class LAPersonScraper(Scraper, LXMLMixin):
 
         fax_index = info.index("Fax") + 1
         fax = info[fax_index]
-        assert sum(c.isdigit() for c in fax) == 10, "Fax number is invalid: {}".format(
-            fax
-        )
+        assert sum(c.isdigit() for c in fax) == 10, "Fax number is invalid: {}".format(fax)
 
         email_index = info.index("E-mail Address") + 1
         email = info[email_index]
@@ -97,9 +83,7 @@ class LAPersonScraper(Scraper, LXMLMixin):
     def scrape_lower_legislator(self, url, leg_info):
         page = self.lxmlize(url)
 
-        name = page.xpath('//span[@id="body_FormView5_FULLNAMELabel"]/text()')[
-            0
-        ].strip()
+        name = page.xpath('//span[@id="body_FormView5_FULLNAMELabel"]/text()')[0].strip()
         if name.startswith("District ") or name.startswith("Vacant "):
             self.warning("Seat is vacant: {}".format(name))
             return
@@ -110,21 +94,15 @@ class LAPersonScraper(Scraper, LXMLMixin):
             "Republican": "Republican",
             "Independent": "Independent",
         }
-        party_info = page.xpath(
-            '//span[@id="body_FormView5_PARTYAFFILIATIONLabel"]/text()'
-        )[0].strip()
+        party_info = page.xpath('//span[@id="body_FormView5_PARTYAFFILIATIONLabel"]/text()')[0].strip()
         party = party_flags[party_info]
         try:
-            email = page.xpath(
-                '//span[@id="body_FormView6_EMAILADDRESSPUBLICLabel"]/text()'
-            )[0].strip()
+            email = page.xpath('//span[@id="body_FormView6_EMAILADDRESSPUBLICLabel"]/text()')[0].strip()
         except IndexError:
             email = None
         district = leg_info["dist"].replace("Dist", "").strip()
 
-        person = Person(
-            name=name, party=party, district=district, primary_org="lower", image=photo
-        )
+        person = Person(name=name, party=party, district=district, primary_org="lower", image=photo)
 
         contacts = [
             (leg_info["office"], "address"),
@@ -145,9 +123,7 @@ class LAPersonScraper(Scraper, LXMLMixin):
         url = "http://house.louisiana.gov/H_Reps/H_Reps_FullInfo.aspx"
         page = self.lxmlize(url)
         meta = ["name", "dist", "office", "phone"]
-        for tr in page.xpath(
-            "//table[@id='body_ListView1_itemPlaceholderContainer']//tr"
-        )[1:]:
+        for tr in page.xpath("//table[@id='body_ListView1_itemPlaceholderContainer']//tr")[1:]:
             ths = tr.xpath("./th")
             if ths == []:
                 continue

@@ -35,17 +35,11 @@ class NEPersonScraper(Scraper, LXMLMixin):
                 if full_name == "Seat Vacant":
                     continue
 
-                address_node = self.get_node(
-                    info_node, './address[@class="feature-content"]'
-                )
+                address_node = self.get_node(info_node, './address[@class="feature-content"]')
 
-                email = self.get_node(
-                    address_node, './a[starts-with(@href, "mailto:")]/text()'
-                )
+                email = self.get_node(address_node, './a[starts-with(@href, "mailto:")]/text()')
 
-                contact_text_nodes = self.get_nodes(
-                    address_node, "./text()[following-sibling::br]"
-                )
+                contact_text_nodes = self.get_nodes(address_node, "./text()[following-sibling::br]")
 
                 address_sections = []
                 for text in contact_text_nodes:
@@ -65,20 +59,13 @@ class NEPersonScraper(Scraper, LXMLMixin):
 
                 address = "\n".join(address_sections)
 
-                photo_url = (
-                    "http://www.nebraskalegislature.gov/media/images/blogs"
-                    "/dist{:2d}.jpg"
-                ).format(district)
+                photo_url = ("http://www.nebraskalegislature.gov/media/images/blogs" "/dist{:2d}.jpg").format(district)
 
                 # Nebraska is offically nonpartisan.
                 party = "Nonpartisan"
 
                 person = Person(
-                    name=full_name,
-                    district=str(district),
-                    party=party,
-                    image=photo_url,
-                    primary_org="legislature",
+                    name=full_name, district=str(district), party=party, image=photo_url, primary_org="legislature",
                 )
 
                 person.add_link(rep_url)

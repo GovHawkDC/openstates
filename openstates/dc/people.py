@@ -29,13 +29,10 @@ class DCPersonScraper(Scraper):
             doc = lxml.html.fromstring(data)
             doc.make_links_absolute(url)
 
-            descriptor = doc.xpath(
-                '//div[contains(@class,"media-object-section")]/'
-                'p[contains(@class,"h4")]/text()'
-            )[0]
-            title_name = doc.xpath(
-                '//div[contains(@class,"media-object-section")]/h1/text()'
-            )[0]
+            descriptor = doc.xpath('//div[contains(@class,"media-object-section")]/' 'p[contains(@class,"h4")]/text()')[
+                0
+            ]
+            title_name = doc.xpath('//div[contains(@class,"media-object-section")]/h1/text()')[0]
 
             # removes the title that is prepended to the name
             name = re.sub(r"^Councilmember ", "", title_name)
@@ -67,26 +64,12 @@ class DCPersonScraper(Scraper):
             faxes = doc.xpath('//p[@class="byline"]/text()')
             fax = faxes[-1].strip()
 
-            email = (
-                doc.xpath('//p[@class="byline"]/a[@class="contact-link"]')[0]
-                .text_content()
-                .strip()
-            )
-            phone = (
-                doc.xpath('//p[@class="byline"]/a[@class="contact-link"]')[1]
-                .text_content()
-                .strip()
-            )
+            email = doc.xpath('//p[@class="byline"]/a[@class="contact-link"]')[0].text_content().strip()
+            phone = doc.xpath('//p[@class="byline"]/a[@class="contact-link"]')[1].text_content().strip()
 
-            bio = "\n".join(
-                doc.xpath('//div[contains(@class,"js-hide")]/p/text()')
-            ).strip()
+            bio = "\n".join(doc.xpath('//div[contains(@class,"js-hide")]/p/text()')).strip()
             if doc.xpath('//p[contains(@class,"page-summary")]'):
-                short_bio = (
-                    doc.xpath('//p[contains(@class,"page-summary")]')[0]
-                    .text_content()
-                    .strip()
-                )
+                short_bio = doc.xpath('//p[contains(@class,"page-summary")]')[0].text_content().strip()
 
             person = Person(
                 name=name,
@@ -102,18 +85,12 @@ class DCPersonScraper(Scraper):
             person.add_link(url)
 
             if office_address:
-                person.add_contact_detail(
-                    type="address", value=office_address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=office_address, note="Capitol Office")
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=phone, note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="Capitol Office")
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="Capitol Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="Capitol Office")
 
             yield person

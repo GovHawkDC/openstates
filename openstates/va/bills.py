@@ -82,16 +82,8 @@ class BillListPage(Page, Spatula):
             # create a bill
             desc = bill.xpath("text()")[0].strip()
             chamber = {"H": "lower", "S": "upper"}[bill_id[0]]
-            bill_type = {"B": "bill", "J": "joint resolution", "R": "resolution"}[
-                bill_id[1]
-            ]
-            bill = Bill(
-                bill_id,
-                self.kwargs["session"],
-                desc,
-                chamber=chamber,
-                classification=bill_type,
-            )
+            bill_type = {"B": "bill", "J": "joint resolution", "R": "resolution"}[bill_id[1]]
+            bill = Bill(bill_id, self.kwargs["session"], desc, chamber=chamber, classification=bill_type,)
 
             bill_url = link.get("href")
             sponsor_url = BASE_URL + URL_PATTERNS["sponsors"].format(
@@ -106,9 +98,7 @@ class BillListPage(Page, Spatula):
 
         next_url = self.doc.xpath('//a/b[text()="More..."]/../@href')
         if next_url:
-            yield from self.scrape_page_items(
-                BillListPage, url=next_url[0], **self.kwargs
-            )
+            yield from self.scrape_page_items(BillListPage, url=next_url[0], **self.kwargs)
 
 
 class BillSponsorPage(Page, Spatula):
@@ -143,22 +133,12 @@ class BillDetailPage(Page, Spatula):
     }
 
     def handle_page(self):
-        summary = self.doc.xpath(
-            "/".join(
-                [
-                    '//h4[starts-with(text(), "SUMMARY")]',
-                    "/following-sibling::p",
-                    "text()",
-                ]
-            )
-        )
+        summary = self.doc.xpath("/".join(['//h4[starts-with(text(), "SUMMARY")]', "/following-sibling::p", "text()",]))
         if summary and summary[0].strip():
             self.obj.add_abstract(abstract=summary[0].strip(), note="summary")
 
         # versions
-        for va in self.doc.xpath(
-            '//h4[text()="FULL TEXT"]/following-sibling::ul[1]/li/a[1]'
-        ):
+        for va in self.doc.xpath('//h4[text()="FULL TEXT"]/following-sibling::ul[1]/li/a[1]'):
 
             # 11/16/09 \xa0House: Prefiled and ordered printed; offered 01/13/10 10100110D
             date, desc = va.text.split(u" \xa0")
@@ -170,34 +150,22 @@ class BillDetailPage(Page, Spatula):
 
             # budget bills in VA are searchable but no full text available
             if "+men+" in link:
-                logging.getLogger("va").warning(
-                    "not adding budget version, bill text not available"
-                )
+                logging.getLogger("va").warning("not adding budget version, bill text not available")
             else:
                 # VA duplicates reprinted bills, lets keep the original name
-                self.obj.add_version_link(
-                    desc, link, date=date, media_type="text/html", on_duplicate="ignore"
-                )
+                self.obj.add_version_link(desc, link, date=date, media_type="text/html", on_duplicate="ignore")
 
         # amendments
-        for va in self.doc.xpath(
-            '//h4[text()="AMENDMENTS"]/following-sibling::ul[1]/li/a[1]'
-        ):
+        for va in self.doc.xpath('//h4[text()="AMENDMENTS"]/following-sibling::ul[1]/li/a[1]'):
             version_name = va.xpath("string(.)")
             if (
-                (
-                    "adopted" in version_name.lower()
-                    or "engrossed" in version_name.lower()
-                )
+                ("adopted" in version_name.lower() or "engrossed" in version_name.lower())
                 and "not adopted" not in version_name.lower()
                 and "not engrossed" not in version_name.lower()
             ):
                 version_url = va.xpath("@href")[0]
                 self.obj.add_version_link(
-                    version_name,
-                    version_url,
-                    media_type="text/html",
-                    on_duplicate="ignore",
+                    version_name, version_url, media_type="text/html", on_duplicate="ignore",
                 )
 
         # actions
@@ -213,9 +181,7 @@ class BillDetailPage(Page, Spatula):
                 assert any(
                     [action.startswith("{}:".format(x)) for x in self.actor_map.keys()]
                 ), "Unparseable action text found: '{}'".format(action)
-                logging.getLogger("va").warning(
-                    "Skipping apparently-null action: '{}'".format(action)
-                )
+                logging.getLogger("va").warning("Skipping apparently-null action: '{}'".format(action))
                 continue
 
             # Bill history entries purely in parentheses tend to be
@@ -271,40 +237,21 @@ class BillDetailPage(Page, Spatula):
                     cached_vote.set_count("no", n)
                     cached_vote.set_count("other", o)
                     if vote_url:
-                        list(
-                            self.scrape_page_items(
-                                VotePage, url=vote_url[0], obj=cached_vote
-                            )
-                        )
+                        list(self.scrape_page_items(VotePage, url=vote_url[0], obj=cached_vote))
                         cached_vote.add_source(vote_url[0])
                     else:
                         cached_vote.add_source(self.url)
                     # continue
                 elif cached_vote is not None:
                     if vote_action.startswith(u"VOTE:"):
-                        counts = {
-                            count["option"]: count["value"]
-                            for count in cached_vote.counts
-                        }
-                        if (
-                            vote_url
-                            and counts["yes"] == y
-                            and counts["no"] == n
-                            and counts["other"] == o
-                        ):
+                        counts = {count["option"]: count["value"] for count in cached_vote.counts}
+                        if vote_url and counts["yes"] == y and counts["no"] == n and counts["other"] == o:
                             vote = cached_vote
                             vote.add_source(vote_url[0])
                             action = cached_action
                     elif cached_vote.motion_text.startswith("VOTE:"):
-                        counts = {
-                            count["option"]: count["value"]
-                            for count in cached_vote.counts
-                        }
-                        if (
-                            counts["yes"] == y
-                            and counts["no"] == n
-                            and counts["other"] == o
-                        ):
+                        counts = {count["option"]: count["value"] for count in cached_vote.counts}
+                        if counts["yes"] == y and counts["no"] == n and counts["other"] == o:
                             vote = cached_vote
                             vote.motion_text = vote_action
                     else:
@@ -325,11 +272,7 @@ class BillDetailPage(Page, Spatula):
                         cached_vote.set_count("other", o)
                         if vote_url:
                             cached_vote.add_source(vote_url[0])
-                            list(
-                                self.scrape_page_items(
-                                    VotePage, url=vote_url[0], obj=cached_vote
-                                )
-                            )
+                            list(self.scrape_page_items(VotePage, url=vote_url[0], obj=cached_vote))
                         else:
                             cached_vote.add_source(self.url)
                         cached_action = action
@@ -375,12 +318,7 @@ class VotePage(Page):
         # Flattening all types of other votes into a single list.
         other_votes = []
         map(
-            other_votes.extend,
-            (
-                self._split_vote(rule36),
-                self._split_vote(abstaining),
-                self._split_vote(notvoting),
-            ),
+            other_votes.extend, (self._split_vote(rule36), self._split_vote(abstaining), self._split_vote(notvoting),),
         )
         for name in other_votes:
             self.obj.vote("other", name)
@@ -398,11 +336,7 @@ class VotePage(Page):
                 # lookahead and don't split if comma precedes initials
                 # Also, Bell appears as Bell, Richard B. and Bell, Robert P.
                 # and so needs the lookbehind assertion.
-                return [
-                    x.strip()
-                    for x in re.split(r"(?<!Bell), (?!\w\.\w?\.?)", pieces[1])
-                    if x.strip()
-                ]
+                return [x.strip() for x in re.split(r"(?<!Bell), (?!\w\.\w?\.?)", pieces[1]) if x.strip()]
         else:
             return []
 
@@ -437,11 +371,7 @@ class VaBillScraper(Scraper, Spatula):
         subject_url = BASE_URL + URL_PATTERNS["subjects"].format(session_id)
         subjects = self.scrape_page(SubjectPage, url=subject_url)
         yield from self.scrape_page_items(
-            BillListPage,
-            url=url,
-            session=session,
-            session_id=session_id,
-            subjects=subjects,
+            BillListPage, url=url, session=session, session_id=session_id, subjects=subjects,
         )
 
     def accept_response(self, response):

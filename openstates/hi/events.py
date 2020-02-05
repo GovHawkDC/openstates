@@ -33,11 +33,7 @@ class HIEventScraper(Scraper, LXMLMixin):
             for i in ["\r\n", "\xa0"]:
                 descr = descr.replace(i, "")
             ret.append(
-                {
-                    "bill_id": bill.text_content(),
-                    "type": "consideration",
-                    "descr": descr,
-                }
+                {"bill_id": bill.text_content(), "type": "consideration", "descr": descr,}
             )
 
         return ret
@@ -54,8 +50,7 @@ class HIEventScraper(Scraper, LXMLMixin):
 
             if self.short_ids.get(committee):
                 descr = "{} {}".format(
-                    self.chambers[self.short_ids[committee]["chamber"]],
-                    self.short_ids[committee]["name"],
+                    self.chambers[self.short_ids[committee]["chamber"]], self.short_ids[committee]["name"],
                 )
             else:
                 descr = [x.text_content() for x in tds[1].xpath(".//span")]
@@ -80,11 +75,7 @@ class HIEventScraper(Scraper, LXMLMixin):
             when = dt.datetime.strptime(when, "%m/%d/%Y %I:%M %p")
             when = TIMEZONE.localize(when)
             event = Event(
-                name=descr,
-                start_date=when,
-                classification="committee-meeting",
-                description=descr,
-                location_name=where,
+                name=descr, start_date=when, classification="committee-meeting", description=descr, location_name=where,
             )
 
             if "/" in committee:
@@ -95,8 +86,7 @@ class HIEventScraper(Scraper, LXMLMixin):
             for committee in committees:
                 if "INFO" not in committee and committee in self.short_ids:
                     committee = "{} {}".format(
-                        self.chambers[self.short_ids[committee]["chamber"]],
-                        self.short_ids[committee]["name"],
+                        self.chambers[self.short_ids[committee]["chamber"]], self.short_ids[committee]["name"],
                     )
                 event.add_committee(committee, note="host")
 

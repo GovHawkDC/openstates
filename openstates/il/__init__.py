@@ -26,11 +26,7 @@ class Illinois(Jurisdiction):
             "classification": "primary",
             "_scraped_name": "93   (2003-2004)",
         },
-        {
-            "name": "93rd Special Session",
-            "identifier": "93rd-special",
-            "classification": "special",
-        },
+        {"name": "93rd Special Session", "identifier": "93rd-special", "classification": "special",},
         {
             "name": "94th Regular Session",
             "identifier": "94th",
@@ -43,22 +39,14 @@ class Illinois(Jurisdiction):
             "classification": "primary",
             "_scraped_name": "95   (2007-2008)",
         },
-        {
-            "name": "95th Special Session",
-            "identifier": "95th-special",
-            "classification": "special",
-        },
+        {"name": "95th Special Session", "identifier": "95th-special", "classification": "special",},
         {
             "name": "96th Regular Session",
             "identifier": "96th",
             "classification": "primary",
             "_scraped_name": "96   (2009-2010)",
         },
-        {
-            "name": "96th Special Session",
-            "identifier": "96th-special",
-            "classification": "special",
-        },
+        {"name": "96th Special Session", "identifier": "96th-special", "classification": "special",},
         {
             "name": "97th Regular Session",
             "identifier": "97th",
@@ -83,11 +71,7 @@ class Illinois(Jurisdiction):
             "classification": "special",
             "_scraped_name": "100   (2017-2018)",
         },
-        {
-            "name": "100th Regular Session",
-            "identifier": "100th",
-            "classification": "primary",
-        },
+        {"name": "100th Regular Session", "identifier": "100th", "classification": "primary",},
         {
             "name": "101st Regular Session",
             "identifier": "101st",
@@ -117,18 +101,10 @@ class Illinois(Jurisdiction):
     ]
 
     def get_organizations(self):
-        legis = Organization(
-            name="Illinois General Assembly", classification="legislature"
-        )
+        legis = Organization(name="Illinois General Assembly", classification="legislature")
 
-        upper = Organization(
-            "Illinois Senate", classification="upper", parent_id=legis._id
-        )
-        lower = Organization(
-            "Illinois House of Representatives",
-            classification="lower",
-            parent_id=legis._id,
-        )
+        upper = Organization("Illinois Senate", classification="upper", parent_id=legis._id)
+        lower = Organization("Illinois House of Representatives", classification="lower", parent_id=legis._id,)
 
         yield legis
         yield upper

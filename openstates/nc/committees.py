@@ -61,9 +61,7 @@ class NCCommitteeScraper(Scraper):
                     if "Whole Senate" in name:
                         continue
                     url = comm.get("href")
-                    committee = Organization(
-                        name=name, chamber=chamber, classification="committee"
-                    )
+                    committee = Organization(name=name, chamber=chamber, classification="committee")
                     self.scrape_committee(committee, url)
                     committee.add_source(url)
                     if not committee._related:

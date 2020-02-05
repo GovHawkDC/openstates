@@ -38,9 +38,7 @@ class UTCommitteeScraper(Scraper):
                 try:
                     member_name = ids_to_names[member["id"]]
                 except KeyError:
-                    self.warning(
-                        "Found unknown legislator ID in committee JSON: " + member["id"]
-                    )
+                    self.warning("Found unknown legislator ID in committee JSON: " + member["id"])
                 c.add_member(member_name, role=member["position"])
 
             yield c

@@ -3,9 +3,7 @@ from pupa.scrape import Scraper, Organization
 import lxml.html
 
 
-_COMMITTEE_URL = (
-    "https://legislature.idaho.gov/committees/%scommittees/"  # house/senate
-)
+_COMMITTEE_URL = "https://legislature.idaho.gov/committees/%scommittees/"  # house/senate
 _JOINT_URL = "https://legislature.idaho.gov/sessioninfo/2017/joint/"
 
 _CHAMBERS = {"upper": "senate", "lower": "house"}
@@ -67,55 +65,35 @@ class IDCommitteeScraper(Scraper):
             text = list(row[0].xpath("div")[0].itertext())
             attributes = [
                 list(
-                    value.replace(u"\xa0", " ")
-                    .replace("Secretary:", "")
-                    .encode("ascii", "ignore")
+                    value.replace(u"\xa0", " ").replace("Secretary:", "").encode("ascii", "ignore")
                     for value in text
                     if "Email:" not in value and value != "\n" and "Phone:" not in value
                 )
             ]
             for i in range(len(attributes[0])):
                 if "Room" in str(attributes[0][i]):
-                    attributes[0][i] = (
-                        str(attributes[0][i]).split("Room")[0].replace(", ", " ")
-                    )
-            org = Organization(
-                chamber=chamber,
-                classification="committee",
-                name=str(attributes[0][0].decode()),
-            )
+                    attributes[0][i] = str(attributes[0][i]).split("Room")[0].replace(", ", " ")
+            org = Organization(chamber=chamber, classification="committee", name=str(attributes[0][0].decode()),)
             if len(attributes[0]) > 5:
                 org.add_contact_detail(
-                    type="email",
-                    value=str(attributes[0][4].decode()),
-                    note="District Office",
+                    type="email", value=str(attributes[0][4].decode()), note="District Office",
                 )
                 org.add_contact_detail(
-                    type="voice",
-                    value=str(attributes[0][5].decode()),
-                    note="District Office",
+                    type="voice", value=str(attributes[0][5].decode()), note="District Office",
                 )
             else:
                 org.add_contact_detail(
-                    type="email",
-                    value=str(attributes[0][3].decode()),
-                    note="District Office",
+                    type="email", value=str(attributes[0][3].decode()), note="District Office",
                 )
                 org.add_contact_detail(
-                    type="voice",
-                    value=str(attributes[0][4].decode()),
-                    note="District Office",
+                    type="voice", value=str(attributes[0][4].decode()), note="District Office",
                 )
             org.add_source(url)
             # membership
             td_text = list()
             for td in row[1].xpath("div") + row[2].xpath("div"):
                 td_text += td.itertext()
-            members = list(
-                value
-                for value in td_text
-                if value != " " and value != "\n" and value != ","
-            )
+            members = list(value for value in td_text if value != " " and value != "\n" and value != ",")
             role = "member"
             for member in members:
                 if member in ["Chair", "Vice Chair"]:

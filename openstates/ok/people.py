@@ -19,11 +19,7 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
         # address lines.
         while office_info:
             last = office_info[-1]
-            if (
-                "@" not in last
-                and ", OK" not in last
-                and not re.search(r"[\d\-\(\) ]{7,}", last)
-            ):
+            if "@" not in last and ", OK" not in last and not re.search(r"[\d\-\(\) ]{7,}", last):
                 office_info.pop()
             else:
                 break
@@ -69,9 +65,7 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
         url = "https://www.okhouse.gov/Members/Default.aspx"
         page = self.curl_lxmlize(url)
 
-        legislator_nodes = self.get_nodes(
-            page, '//table[@id="ctl00_ContentPlaceHolder1_RadGrid1_ctl00"]/tbody/tr'
-        )
+        legislator_nodes = self.get_nodes(page, '//table[@id="ctl00_ContentPlaceHolder1_RadGrid1_ctl00"]/tbody/tr')
 
         for legislator_node in legislator_nodes:
             name_node = self.get_node(legislator_node, ".//td[1]/a")
@@ -107,22 +101,12 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
 
             party = self._parties[party_text]
 
-            legislator_url = (
-                "https://www.okhouse.gov/Members/District.aspx?District=" + district
-            )
+            legislator_url = "https://www.okhouse.gov/Members/District.aspx?District=" + district
             legislator_page = self.curl_lxmlize(legislator_url)
 
-            photo_url = self.get_node(
-                legislator_page, '//a[@id="ctl00_ContentPlaceHolder1_imgHiRes"]/@href'
-            )
+            photo_url = self.get_node(legislator_page, '//a[@id="ctl00_ContentPlaceHolder1_imgHiRes"]/@href')
 
-            person = Person(
-                primary_org="lower",
-                district=district,
-                name=name,
-                party=party,
-                image=photo_url,
-            )
+            person = Person(primary_org="lower", district=district, name=name, party=party, image=photo_url,)
             person.extras["_scraped_name"] = name_text
             person.add_link(legislator_url)
             person.add_source(url)
@@ -163,27 +147,17 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
                 phone = None
 
             if phone:
-                person.add_contact_detail(
-                    type="voice", value=str(phone), note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=str(phone), note="Capitol Office")
             if address:
-                person.add_contact_detail(
-                    type="address", value=address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=address, note="Capitol Office")
 
         # District offices only have address, no other information
-        district_address = doc.xpath(
-            '//span[@id="ctl00_Content' 'PlaceHolder1_lblDistrictAddress"]/text()'
-        )
+        district_address = doc.xpath('//span[@id="ctl00_Content' 'PlaceHolder1_lblDistrictAddress"]/text()')
         if district_address:
-            (district_city_state,) = doc.xpath(
-                '//span[@id="ctl00_Content' 'PlaceHolder1_lblDistrictCity"]/text()'
-            )
+            (district_city_state,) = doc.xpath('//span[@id="ctl00_Content' 'PlaceHolder1_lblDistrictCity"]/text()')
             district_address = "{}\n{}".format(district_address[0], district_city_state)
             if district_address:
-                person.add_contact_detail(
-                    type="address", value=district_address, note="District Office"
-                )
+                person.add_contact_detail(type="address", value=district_address, note="District Office")
 
     def scrape_upper_chamber(self, term):
         url = "http://oksenate.gov/Senators/Default.aspx"
@@ -191,9 +165,7 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute(url)
 
-        for a in doc.xpath("//table[@summary]")[0].xpath(
-            './/td//a[contains(@href, "biographies")]'
-        ):
+        for a in doc.xpath("//table[@summary]")[0].xpath('.//td//a[contains(@href, "biographies")]'):
             tail = a.xpath("..")[0].tail
             if tail:
                 district = tail.split()[1]
@@ -208,18 +180,12 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
                 if match:
                     name, party = match.group(1), self._parties[match.group(2)]
                 else:
-                    self.warning(
-                        "District {} appears to have empty Representative name,party".format(
-                            district
-                        )
-                    )
+                    self.warning("District {} appears to have empty Representative name,party".format(district))
                     continue
 
             url = a.get("href")
 
-            person = Person(
-                primary_org="upper", district=district, name=name.strip(), party=party,
-            )
+            person = Person(primary_org="upper", district=district, name=name.strip(), party=party,)
             person.add_link(url)
             person.add_source(url)
             self.scrape_upper_offices(person, url)
@@ -262,33 +228,20 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
 
             capitol_address_lines = map(
                 lambda line: line.strip(),
-                filter(
-                    lambda string: re.search(r", OK|Lincoln Blvd|Room \d", string),
-                    capitol_office_info,
-                ),
+                filter(lambda string: re.search(r", OK|Lincoln Blvd|Room \d", string), capitol_office_info,),
             )
 
             if email:
-                person.add_contact_detail(
-                    type="email", value=email, note="Capitol Office"
-                )
+                person.add_contact_detail(type="email", value=email, note="Capitol Office")
             if capitol_phone:
-                person.add_contact_detail(
-                    type="voice", value=str(capitol_phone), note="Capitol Office"
-                )
+                person.add_contact_detail(type="voice", value=str(capitol_phone), note="Capitol Office")
 
             capitol_address = "\n".join(capitol_address_lines)
             if capitol_address:
-                person.add_contact_detail(
-                    type="address", value=capitol_address, note="Capitol Office"
-                )
+                person.add_contact_detail(type="address", value=capitol_address, note="Capitol Office")
 
         if not col2:
-            self.warning(
-                "{} appears to have no district office address; skipping it".format(
-                    person.name
-                )
-            )
+            self.warning("{} appears to have no district office address; skipping it".format(person.name))
             return
         if "use capitol address" in col2.text_content().lower():
             return
@@ -296,11 +249,7 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
         district_office_info = self._clean_office_info(col2)
         # This probably isn't a valid district office at less than two lines.
         if len(district_office_info) < 2:
-            self.warning(
-                "{} appears to have no district office address; skipping it".format(
-                    person.name
-                )
-            )
+            self.warning("{} appears to have no district office address; skipping it".format(person.name))
             return
 
         district_address_lines = []
@@ -310,9 +259,7 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
                 break
 
         if "OK" in district_address_lines[-1]:
-            district_address = "\n".join(
-                filter(lambda line: line, district_address_lines)
-            )
+            district_address = "\n".join(filter(lambda line: line, district_address_lines))
         else:
             district_address = None
         # self.logger.debug(district_address)
@@ -320,10 +267,6 @@ class OKPersonScraper(Scraper, LXMLMixin, LXMLMixinOK):
         district_phone = self._extract_phone(district_office_info)
 
         if capitol_phone:
-            person.add_contact_detail(
-                type="voice", value=str(district_phone), note="District Office"
-            )
+            person.add_contact_detail(type="voice", value=str(district_phone), note="District Office")
         if capitol_address_lines:
-            person.add_contact_detail(
-                type="address", value=district_address, note="District Office"
-            )
+            person.add_contact_detail(type="address", value=district_address, note="District Office")

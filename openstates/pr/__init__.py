@@ -18,16 +18,8 @@ class PuertoRico(Jurisdiction):
         "bills": PRBillScraper,
     }
     legislative_sessions = [
-        {
-            "_scraped_name": "2009-2012",
-            "identifier": "2009-2012",
-            "name": "2009-2012 Session",
-        },
-        {
-            "_scraped_name": "2013-2016",
-            "identifier": "2013-2016",
-            "name": "2013-2016 Session",
-        },
+        {"_scraped_name": "2009-2012", "identifier": "2009-2012", "name": "2009-2012 Session",},
+        {"_scraped_name": "2013-2016", "identifier": "2013-2016", "name": "2013-2016 Session",},
         {
             "_scraped_name": "2017-2020",
             "identifier": "2017-2020",
@@ -51,6 +43,5 @@ class PuertoRico(Jurisdiction):
 
         # this URL should work even for future sessions
         return url_xpath(
-            "http://www.oslpr.org/legislatura/tl2013/buscar_2013.asp",
-            '//select[@name="URL"]/option/text()',
+            "http://www.oslpr.org/legislatura/tl2013/buscar_2013.asp", '//select[@name="URL"]/option/text()',
         )
