@@ -5,6 +5,7 @@ pytz>=2018
 feedparser>=5.2,<6
 spatula
 python-dateutil
+openstates-metadata
 
 # development
 ipdb>=0.11
