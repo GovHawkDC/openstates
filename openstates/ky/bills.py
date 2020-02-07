@@ -1,5 +1,6 @@
 import re
 import scrapelib
+import os
 from collections import defaultdict
 from pytz import timezone
 from datetime import datetime
@@ -44,7 +45,10 @@ class KYBillScraper(Scraper, LXMLMixin):
         ("delivered to secretary of state", "became-law"),
         ("veto overridden", "veto-override-passage"),
         ("adopted by voice vote", "passage"),
-        (r"floor amendments?( \([a-z\d\-]+\))*" r"( and \([a-z\d\-]+\))? filed", "amendment-introduction",),
+        (
+            r"floor amendments?( \([a-z\d\-]+\))*" r"( and \([a-z\d\-]+\))? filed",
+            "amendment-introduction",
+        ),
     ]
 
     def classify_action(self, action):
@@ -72,7 +76,9 @@ class KYBillScraper(Scraper, LXMLMixin):
         bill_url = session_url(session) + "%s_bills.html" % chamber_map[chamber]
         yield from self.scrape_bill_list(chamber, session, bill_url)
 
-        resolution_url = session_url(session) + "%s_resolutions.html" % chamber_map[chamber]
+        resolution_url = (
+            session_url(session) + "%s_resolutions.html" % chamber_map[chamber]
+        )
         yield from self.scrape_bill_list(chamber, session, resolution_url)
 
     def scrape_bill_list(self, chamber, session, url):
@@ -82,18 +88,24 @@ class KYBillScraper(Scraper, LXMLMixin):
         for link in page.xpath("//div[contains(@class,'container')]/p/a"):
             if re.search(r"\d{1,4}\.htm", link.attrib.get("href", "")):
                 bill_id = link.text
-                match = re.match(r".*\/([a-z]+)([\d+])\.html", link.attrib.get("href", ""))
+                match = re.match(
+                    r".*\/([a-z]+)([\d+])\.html", link.attrib.get("href", "")
+                )
                 if match:
                     bill_abbr = match.group(1)
                     bill_id = bill_abbr.upper() + bill_id.replace(" ", "")
                 else:
                     bill_id = bill_abbr + bill_id
 
-                yield from self.parse_bill(chamber, session, bill_id, link.attrib["href"])
+                yield from self.parse_bill(
+                    chamber, session, bill_id, link.attrib["href"]
+                )
 
     def parse_actions(self, page, bill, chamber):
         # //div[preceding-sibling::a[@id="actions"]]
-        action_rows = page.xpath('//div[preceding-sibling::a[@id="actions"]][1]/table[1]/tbody/tr')
+        action_rows = page.xpath(
+            '//div[preceding-sibling::a[@id="actions"]][1]/table[1]/tbody/tr'
+        )
         for row in action_rows:
             action_date = row.xpath("th[1]/text()")[0].strip()
 
@@ -113,7 +125,10 @@ class KYBillScraper(Scraper, LXMLMixin):
 
                 classifications = self.classify_action(action_text)
                 bill.add_action(
-                    action_text, action_date, chamber=actor, classification=classifications,
+                    action_text,
+                    action_date,
+                    chamber=actor,
+                    classification=classifications,
                 )
 
     # Get the field to the right for a given table header
@@ -133,26 +148,7 @@ class KYBillScraper(Scraper, LXMLMixin):
             self.info("{} Withdrawn, skipping".format(bill_id))
             return
 
-        version = self.parse_bill_field(page, "Bill Documents")
-        source_url = version.xpath("a[1]/@href")[0]
-        version_title = version.xpath("a[1]/text()")[0].strip()
-
-        if version is None:
-            # Bill withdrawn
-            self.logger.warning("Bill withdrawn.")
-            return
-        else:
-            if source_url.endswith(".doc"):
-                mimetype = "application/msword"
-            elif source_url.endswith(".pdf"):
-                mimetype = "application/pdf"
-
         title = self.parse_bill_field(page, "Title").text_content()
-
-        # actions = self.get_nodes(
-        #     page,
-        #     '//div[@class="StandardText leftDivMargin"]/'
-        #     'div[@class="StandardText"][last()]//text()[normalize-space()]')
 
         if "CR" in bill_id:
             bill_type = "concurrent resolution"
@@ -163,14 +159,26 @@ class KYBillScraper(Scraper, LXMLMixin):
         else:
             bill_type = "bill"
 
-        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
+        bill = Bill(
+            bill_id,
+            legislative_session=session,
+            chamber=chamber,
+            title=title,
+            classification=bill_type,
+        )
         bill.subject = self._subjects[bill_id]
         bill.add_source(url)
 
-        bill.add_version_link(version_title, source_url, media_type=mimetype)
+        version_ct = self.parse_versions(page, bill)
+
+        if version_ct < 1:
+            # Bill withdrawn
+            self.logger.warning("Bill withdrawn.")
+            return
 
         self.parse_actions(page, bill, chamber)
         self.parse_subjects(page, bill)
+        self.parse_proposed_amendments(page, bill)
 
         # LM is "Locally Mandated fiscal impact"
         fiscal_notes = page.xpath('//a[contains(@href, "/LM.pdf")]')
@@ -185,7 +193,10 @@ class KYBillScraper(Scraper, LXMLMixin):
 
         for link in page.xpath("//td/span/a[contains(@href, 'Legislator-Profile')]"):
             bill.add_sponsorship(
-                link.text.strip(), classification="primary", entity_type="person", primary=True,
+                link.text.strip(),
+                classification="primary",
+                entity_type="person",
+                primary=True,
             )
 
         if page.xpath("//th[contains(text(),'Votes')]"):
@@ -199,9 +210,47 @@ class KYBillScraper(Scraper, LXMLMixin):
 
         yield bill
 
+    def parse_versions(self, page, bill):
+        xpath_expr = '//tr[th[text()="Bill Documents"]]/td[1]/a'
+        version_count = 0
+        for row in page.xpath(xpath_expr):
+            source_url = row.attrib['href']
+            version_title = row.xpath("text()")[0].strip()
+
+            if source_url.endswith(".doc"):
+                mimetype = "application/msword"
+            elif source_url.endswith(".pdf"):
+                mimetype = "application/pdf"
+            else:
+                self.warning("Unknown mimetype for {}".format(source_url))
+
+            bill.add_version_link(version_title, source_url, media_type=mimetype)
+            version_count += 1
+        return version_count
+
+    def parse_proposed_amendments(self, page, bill):
+        # div.bill-table with an H4 "Proposed Amendments", all a's in the first TD of the first TR
+        # that point to a path including "recorddocuments"
+        xpath = '//div[contains(@class, "bill-table") and descendant::h4[text()="Proposed Amendments"]]' \
+            '//tr[1]/td[1]/a[contains(@href,"recorddocuments")]'
+
+        for link in page.xpath(xpath):
+            note = link.xpath("text()")[0].strip()
+            note = 'Proposed {}'.format(note)
+            url = link.attrib["href"]
+            bill.add_document_link(
+                note=note,
+                url=url
+            )
+
     def scrape_votes(self, vote_url, bill, chamber):
+        filename, response = self.urlretrieve(vote_url)
         # Grabs text from pdf
-        pdflines = [line.decode("utf-8") for line in convert_pdf(vote_url, "text").splitlines()]
+        pdflines = [
+            line.decode("utf-8") for line in convert_pdf(filename, "text").splitlines()
+        ]
+        os.remove(filename)
+
         vote_date = 0
         voters = defaultdict(list)
         for x in range(len(pdflines)):
@@ -250,7 +299,9 @@ class KYBillScraper(Scraper, LXMLMixin):
                 y = 0
                 next_line = 0
                 next_line = pdflines[x + y]
-                while ("ABSTAINED : " not in next_line) and ("PASSES :" not in next_line):
+                while ("ABSTAINED : " not in next_line) and (
+                    "PASSES :" not in next_line
+                ):
                     next_line = next_line.split("  ")
                     if next_line and "NAYS" not in next_line:
                         for v in next_line:
@@ -265,7 +316,9 @@ class KYBillScraper(Scraper, LXMLMixin):
                 next_line = pdflines[x + y]
                 while "NOT VOTING :" not in next_line:
                     next_line = next_line.split("  ")
-                    if next_line and ("ABSTAINED" not in next_line or "PASSES" not in next_line):
+                    if next_line and (
+                        "ABSTAINED" not in next_line or "PASSES" not in next_line
+                    ):
                         for v in next_line:
                             if v:
                                 voters["abstain"].append(v.strip())

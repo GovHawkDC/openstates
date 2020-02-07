@@ -1,20 +1,12 @@
 import re
-
-from pupa.scrape import Jurisdiction, Organization
-
-from openstates.utils import url_xpath
-
+from openstates.utils import url_xpath, State
 from .people import KYPersonScraper
-
-# from .committees import KYCommitteeScraper
 from .bills import KYBillScraper
 
+# from .committees import KYCommitteeScraper
 
-class Kentucky(Jurisdiction):
-    division_id = "ocd-division/country:us/state:ky"
-    classification = "government"
-    name = "Kentucky"
-    url = "http://www.lrc.ky.gov/"
+
+class Kentucky(State):
     scrapers = {
         "people": KYPersonScraper,
         # 'committees': KYCommitteeScraper,
@@ -169,19 +161,10 @@ class Kentucky(Jurisdiction):
         "1997 Special Session (May)",
     ]
 
-    def get_organizations(self):
-        legislature_name = "Kentucky General Assembly"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
-
     def get_session_list(self):
-        sessions = url_xpath("https://apps.legislature.ky.gov/record/pastses.html", "//td/div/a/text()")
+        sessions = url_xpath(
+            "https://apps.legislature.ky.gov/record/pastses.html", "//td/div/a/text()"
+        )
 
         for index, session in enumerate(sessions):
             # Remove escaped whitespace characters.
