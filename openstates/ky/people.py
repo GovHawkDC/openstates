@@ -50,7 +50,13 @@ class KYPersonScraper(Scraper):
         district = sidebar.xpath('//div[@class="circle"]/h3/text()')[0]
         district = district.lstrip("0")
 
-        person = Person(name=full_name, district=district, party=party, primary_org=chamber, image=photo_url,)
+        person = Person(
+            name=full_name,
+            district=district,
+            party=party,
+            primary_org=chamber,
+            image=photo_url,
+        )
         person.add_source(member_url)
         person.add_link(member_url)
 
@@ -87,6 +93,8 @@ class KYPersonScraper(Scraper):
         if address.strip() == "":
             self.warning("Missing Capitol Office!!")
         else:
-            person.add_contact_detail(type="address", value=address, note="Capitol Office")
+            person.add_contact_detail(
+                type="address", value=address, note="Capitol Office"
+            )
 
         yield person
