@@ -1,13 +1,10 @@
-from pupa.scrape import Jurisdiction, Organization
-
-from openstates.utils import url_xpath
+from openstates.utils import url_xpath, State
 
 from .bills import MNBillScraper
-
-# from .committees import MNCommitteeScraper
 from .people import MNPersonScraper
 from .vote_events import MNVoteScraper
 
+# from .committees import MNCommitteeScraper
 # from .events import MNEventScraper
 
 """
@@ -22,11 +19,7 @@ sense to get vote data from the bill pages.
 """
 
 
-class Minnesota(Jurisdiction):
-    division_id = "ocd-division/country:us/state:mn"
-    classification = "government"
-    name = "Minnesota"
-    url = "http://state.mn.us/"
+class Minnesota(State):
     scrapers = {
         "bills": MNBillScraper,
         # "committees": MNCommitteeScraper,
@@ -110,20 +103,20 @@ class Minnesota(Jurisdiction):
             "end_date": "2018-05-21",
         },
         {
-            "_scraped_name": "91st Legislature, 2019-2020",
-            "classification": "primary",
-            "identifier": "2019-2020",
-            "name": "2019-2020 Regular Session",
-            "start_date": "2019-01-08",
-            "end_date": "2019-06-20",
-        },
-        {
             "_scraped_name": "91st Legislature, 2019 1st Special Session",
             "classification": "primary",
             "identifier": "2019s1",
             "name": "2019, First Special Session",
             "start_date": "2019-05-24",
             "end_date": "2019-05-29",
+        },
+        {
+            "_scraped_name": "91st Legislature, 2019-2020",
+            "classification": "primary",
+            "identifier": "2019-2020",
+            "name": "2019-2020 Regular Session",
+            "start_date": "2019-01-08",
+            "end_date": "2019-06-20",
         },
     ]
     ignored_scraped_sessions = [
@@ -145,17 +138,6 @@ class Minnesota(Jurisdiction):
         "79th Legislature, 1995-1996",
         "79th Legislature, 1995 1st Special Session",
     ]
-
-    def get_organizations(self):
-        legis = Organization("Minnesota Legislature", classification="legislature")
-
-        upper = Organization("Minnesota Senate", classification="upper", parent_id=legis._id)
-        lower = Organization("Minnesota House of Representatives", classification="lower", parent_id=legis._id,)
-
-        yield Organization("Governor of Minnesota", classification="executive")
-        yield legis
-        yield upper
-        yield lower
 
     def get_session_list(self):
         return url_xpath(

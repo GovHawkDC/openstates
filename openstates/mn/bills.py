@@ -15,11 +15,16 @@ BILL_DETAIL_URL = "https://www.revisor.mn.gov/bills/bill.php" "?b=%s&f=%s&ssn=0&
 
 # The versions of a bill use a different base URL.
 VERSION_URL_BASE = "https://www.revisor.mn.gov/bills/"
-VERSION_URL = "https://www.revisor.mn.gov/bin/getbill.php" "?session_year=%s&session_number=%s&number=%s&version=list"
+VERSION_URL = (
+    "https://www.revisor.mn.gov/bin/getbill.php"
+    "?session_year=%s&session_number=%s&number=%s&version=list"
+)
 
 # Search URL
 BILL_SEARCH_URL = (
-    "https://www.revisor.mn.gov/bills/" "status_result.php?body=%s&session=%s&bill=%s-%s" "&bill_type=%s&submit_bill=GO"
+    "https://www.revisor.mn.gov/bills/"
+    "status_result.php?body=%s&session=%s&bill=%s-%s"
+    "&bill_type=%s&submit_bill=GO"
 )
 
 # https://www.revisor.mn.gov/bills/status_search.php?body=House
@@ -51,8 +56,14 @@ class MNBillScraper(Scraper, LXMLMixin):
     # Regular expressions to match category of actions
     _categorizers = (
         ("Introduced", "introduction"),
-        ("Introduction and first reading, referred to", ["introduction", "referral-committee"],),
-        ("Committee report, to pass as amended and re-refer to", ["referral-committee"],),
+        (
+            "Introduction and first reading, referred to",
+            ["introduction", "referral-committee"],
+        ),
+        (
+            "Committee report, to pass as amended and re-refer to",
+            ["referral-committee"],
+        ),
         ("Introduction and first reading", "introduction"),
         ("Referred (by Chair )?to", "referral-committee"),
         ("Second reading", "reading-2"),
@@ -88,6 +99,9 @@ class MNBillScraper(Scraper, LXMLMixin):
         if self.is_testing():
             self.debug("TESTING...")
 
+        # SSL broken as of Jan 2020
+        self.verify = False
+
         if not session:
             session = self.latest_session()
             self.info("no session specified, using %s", session)
@@ -101,8 +115,12 @@ class MNBillScraper(Scraper, LXMLMixin):
             # If testing and certain bills to test, only test those
             if self.is_testing() and len(self.testing_bills) > 0:
                 for b in self.testing_bills:
-                    bill_url = BILL_DETAIL_URL % (self.search_chamber(chamber), b, 2019)
-                    version_url = VERSION_URL % (self.search_session(session)[-4:], self.search_session(session)[0], b,)
+                    bill_url = BILL_DETAIL_URL % (self.search_chamber(chamber), b, 2017)
+                    version_url = VERSION_URL % (
+                        self.search_session(session)[-4:],
+                        self.search_session(session)[0],
+                        b,
+                    )
                     yield self.get_bill_info(chamber, session, bill_url, version_url)
 
             else:
@@ -112,7 +130,9 @@ class MNBillScraper(Scraper, LXMLMixin):
 
                 # Get each bill
                 for b in bills:
-                    yield self.get_bill_info(chamber, session, b["bill_url"], b["version_url"])
+                    yield self.get_bill_info(
+                        chamber, session, b["bill_url"], b["version_url"]
+                    )
 
     def get_full_bill_list(self, chamber, session):
         """
@@ -135,7 +155,13 @@ class MNBillScraper(Scraper, LXMLMixin):
                 # body: "House" or "Senate"
                 # session: legislative session id
                 # bill: Range start-end (e.g. 1-10)
-                url = BILL_SEARCH_URL % (search_chamber, search_session, start, start + stride, bill_type,)
+                url = BILL_SEARCH_URL % (
+                    search_chamber,
+                    search_session,
+                    start,
+                    start + stride,
+                    bill_type,
+                )
                 # Parse HTML
                 html = self.get(url).text
                 doc = lxml.html.fromstring(html)
@@ -154,7 +180,9 @@ class MNBillScraper(Scraper, LXMLMixin):
 
             # Second column: status link
             bill_details_link = row.xpath("td[2]/a")[0]
-            bill["bill_url"] = urllib.parse.urljoin(BILL_DETAIL_URL_BASE, bill_details_link.get("href"))
+            bill["bill_url"] = urllib.parse.urljoin(
+                BILL_DETAIL_URL_BASE, bill_details_link.get("href")
+            )
 
             # Version link sometimes goes to wrong place, forge it
             bill["version_url"] = VERSION_URL % (
@@ -180,31 +208,53 @@ class MNBillScraper(Scraper, LXMLMixin):
         doc = self.lxmlize(bill_detail_url)
 
         # Check if bill hasn't been transmitted to the other chamber yet
-        transmit_check = self.get_node(doc, '//h1[text()[contains(.,"Bills")]]/following-sibling::ul/li/text()')
-        if transmit_check is not None and "has not been transmitted" in transmit_check.strip():
+        transmit_check = self.get_node(
+            doc, '//h1[text()[contains(.,"Bills")]]/following-sibling::ul/li/text()'
+        )
+        if (
+            transmit_check is not None
+            and "has not been transmitted" in transmit_check.strip()
+        ):
             self.logger.debug(
-                "Bill has not been transmitted to other chamber " "... skipping {0}".format(bill_detail_url)
+                "Bill has not been transmitted to other chamber "
+                "... skipping {0}".format(bill_detail_url)
             )
             return
 
         # Get the basic parts of the bill
-        bill_id = self.get_node(doc, '//h1[contains(@class,"card-title float-left mr-4")]/text()')
+        bill_id = self.get_node(
+            doc, '//h1[contains(@class,"card-title float-left mr-4")]/text()'
+        )
         self.logger.debug(bill_id)
-        bill_title_text = self.get_node(doc, '//h2[text()[contains(.,"Description")]]/following-sibling::p/text()')
+        bill_title_text = self.get_node(
+            doc, '//h2[text()[contains(.,"Description")]]/following-sibling::p/text()'
+        )
         if bill_title_text is not None:
             bill_title = bill_title_text.strip()
         else:
-            long_desc_url = self.get_node(doc, '//a[text()[contains(.,"Long Description")]]/@href')
+            long_desc_url = self.get_node(
+                doc, '//a[text()[contains(.,"Long Description")]]/@href'
+            )
             long_desc_page = self.lxmlize(long_desc_url)
-            long_desc_text = self.get_node(long_desc_page, "//h1/" "following-sibling::p/text()")
+            long_desc_text = self.get_node(
+                long_desc_page, "//h1/" "following-sibling::p/text()"
+            )
             if long_desc_text is not None:
                 bill_title = long_desc_text.strip()
             else:
                 bill_title = "No title found."
                 self.logger.warning("No title found for {}.".format(bill_id))
         self.logger.debug(bill_title)
-        bill_type = {"F": "bill", "R": "resolution", "C": "concurrent resolution"}[bill_id[1].upper()]
-        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=bill_title, classification=bill_type,)
+        bill_type = {"F": "bill", "R": "resolution", "C": "concurrent resolution"}[
+            bill_id[1].upper()
+        ]
+        bill = Bill(
+            bill_id,
+            legislative_session=session,
+            chamber=chamber,
+            title=bill_title,
+            classification=bill_type,
+        )
 
         # Add source
         bill.add_source(bill_detail_url)
@@ -213,7 +263,10 @@ class MNBillScraper(Scraper, LXMLMixin):
             bill.add_subject(subject)
 
         # Get companion bill.
-        companion = doc.xpath('//table[@class="status_info"]//tr[1]/td[2]' '/a[starts-with(@href, "?")]/text()')
+        companion = doc.xpath(
+            '//table[@class="status_info"]//tr[1]/td[2]'
+            '/a[starts-with(@href, "?")]/text()'
+        )
         companion = self.make_bill_id(companion[0]) if len(companion) > 0 else None
         companion_chamber = self.chamber_from_bill(companion)
         if companion is not None:
@@ -257,11 +310,10 @@ class MNBillScraper(Scraper, LXMLMixin):
             # Subjects look like "Name of Subject (##)" -- split off the #
             subject = option.text.rsplit(" (")[0]
             value = option.get("value")
-            opt_url = "%sstatus_result.php?body=%s&search=topic&session=%s" "&topic[]=%s&submit_topic=GO" % (
-                BILL_DETAIL_URL_BASE,
-                search_chamber,
-                search_session,
-                value,
+            opt_url = (
+                "%sstatus_result.php?body=%s&search=topic&session=%s"
+                "&topic[]=%s&submit_topic=GO"
+                % (BILL_DETAIL_URL_BASE, search_chamber, search_session, value)
             )
             opt_html = self.get(opt_url).text
             opt_doc = lxml.html.fromstring(opt_html)
@@ -297,25 +349,33 @@ class MNBillScraper(Scraper, LXMLMixin):
                 committee = the_rest.xpath("a[contains(@href,'committee')]/text()")
                 extra = "".join(the_rest.xpath("span[not(@style)]/text() | a/text()"))
                 # skip non-actions (don't have date)
-                if action_text in ("Chapter number", "See also", "See", "Effective date", "Secretary of State",):
+                if action_text in (
+                    "Chapter number",
+                    "See also",
+                    "See",
+                    "Effective date",
+                    "Secretary of State",
+                ):
                     continue
 
                 # dates are really inconsistent here, sometimes in action_text
                 try:
-                    action_date = datetime.datetime.strptime(action_date, "%m/%d/%Y").date()
+                    action_date = datetime.datetime.strptime(
+                        action_date, "%m/%d/%Y"
+                    ).date()
                 except ValueError:
                     try:
-                        action_date = datetime.datetime.strptime(extra, "%m/%d/%y").date()
+                        action_date = datetime.datetime.strptime(
+                            extra, "%m/%d/%y"
+                        ).date()
                     except ValueError:
                         try:
-                            action_date = datetime.datetime.strptime(extra, "%m/%d/%Y").date()
+                            action_date = datetime.datetime.strptime(
+                                extra, "%m/%d/%Y"
+                            ).date()
                         except ValueError:
-                            possible_date = re.search(r"\d{2}\/\d{2}\/\d{2}", action_text)
-                            if possible_date:
-                                action_date = datetime.datetime.strptime(possible_date.group(0), "%m/%d/%y").date()
-                            else:
-                                self.warning("ACTION without date: %s" % action_text)
-                                continue
+                            self.warning("ACTION without date: %s" % action_text)
+                            continue
 
                 # categorize actions
                 action_type = None
@@ -332,7 +392,9 @@ class MNBillScraper(Scraper, LXMLMixin):
                 if isinstance(action_type, list):
                     for atype in action_type:
                         if atype is not None and (
-                            atype.startswith("governor") or atype.startswith("executive") or atype.startswith("became")
+                            atype.startswith("governor")
+                            or atype.startswith("executive")
+                            or atype.startswith("became")
                         ):
                             bill_action["action_chamber"] = "executive"
                             break
@@ -390,7 +452,10 @@ class MNBillScraper(Scraper, LXMLMixin):
 
             sponsor_name = sponsor.strip()
             bill.add_sponsorship(
-                sponsor_name, classification=sponsor_type, entity_type="person", primary=is_primary,
+                sponsor_name,
+                classification=sponsor_type,
+                entity_type="person",
+                primary=is_primary,
             )
 
         return bill
@@ -408,14 +473,19 @@ class MNBillScraper(Scraper, LXMLMixin):
 
         version_html = version_resp.text
         if "resolution" in version_resp.url:
-            bill.add_version_link("resolution text", version_resp.url, media_type="text/html")
+            bill.add_version_link(
+                "resolution text", version_resp.url, media_type="text/html"
+            )
         else:
             version_doc = lxml.html.fromstring(version_html)
             for v in version_doc.xpath('//a[starts-with(@href, "text.php")]'):
                 version_url = urllib.parse.urljoin(VERSION_URL_BASE, v.get("href"))
                 if "pdf" not in version_url:
                     bill.add_version_link(
-                        v.text.strip(), version_url, media_type="text/html", on_duplicate="ignore",
+                        v.text.strip(),
+                        version_url,
+                        media_type="text/html",
+                        on_duplicate="ignore",
                     )
 
         return bill

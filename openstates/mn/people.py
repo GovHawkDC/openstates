@@ -7,10 +7,7 @@ from pupa.scrape import Person, Scraper
 from spatula import Page, CSV, Spatula
 from openstates.utils import validate_phone_number, validate_email_address
 
-PARTIES = {
-    "DFL": "Democratic-Farmer-Labor",
-    "R": "Republican",
-}
+PARTIES = {"DFL": "Democratic-Farmer-Labor", "R": "Republican"}
 
 
 class SenList(CSV):
@@ -29,11 +26,16 @@ class SenList(CSV):
         doc.make_links_absolute(self._html_url)
         xpath = '//div[@id="alphabetically"]' '//div[@class="media my-3"]'
         for div in doc.xpath(xpath):
-            main_link, email_link = filter(lambda link: link.get("href"), div.xpath(".//a"))
+            main_link, email_link = filter(
+                lambda link: link.get("href"), div.xpath(".//a")
+            )
             name = main_link.text_content().split(" (")[0]
             leg = self.extra_info[name]
             leg["office_phone"] = next(
-                filter(lambda string: re.match(r"\d{3}-\d{3}-\d{4}", string.strip()), div.xpath(".//text()"),)
+                filter(
+                    lambda string: re.match(r"\d{3}-\d{3}-\d{4}", string.strip()),
+                    div.xpath(".//text()"),
+                )
             ).strip()
             leg["url"] = main_link.get("href")
             leg["image"] = div.xpath(".//img/@src")[0]
@@ -41,7 +43,9 @@ class SenList(CSV):
                 leg["email"] = email_link.get("href").replace("mailto:", "")
 
         logger = logging.getLogger("pupa")
-        logger.info("collected preliminary data on {} legislators".format(len(self.extra_info)))
+        logger.info(
+            "collected preliminary data on {} legislators".format(len(self.extra_info))
+        )
         assert self.extra_info
 
     def handle_list_item(self, row):
@@ -58,9 +62,13 @@ class SenList(CSV):
             image=self.extra_info[name]["image"],
         )
         leg.add_link(self.extra_info[name]["url"])
-        leg.add_contact_detail(type="voice", value=self.extra_info[name]["office_phone"], note="capitol")
+        leg.add_contact_detail(
+            type="voice", value=self.extra_info[name]["office_phone"], note="capitol"
+        )
         if "email" in self.extra_info[name]:
-            leg.add_contact_detail(type="email", value=self.extra_info[name]["email"], note="capitol")
+            leg.add_contact_detail(
+                type="email", value=self.extra_info[name]["email"], note="capitol"
+            )
 
         row["Zipcode"] = row["Zipcode"].strip()
         # Accommodate for multiple address column naming conventions.
@@ -69,7 +77,10 @@ class SenList(CSV):
         row["Address"] = next((a for a in address1_fields if a is not None), False)
         row["Address2"] = next((a for a in address2_fields if a is not None), False)
 
-        if (a in row["Address2"] for a in ["95 University Avenue W", "100 Rev. Dr. Martin Luther King"]):
+        if (
+            a in row["Address2"]
+            for a in ["95 University Avenue W", "100 Rev. Dr. Martin Luther King"]
+        ):
             address = "{Address}\n{Address2}\n{City}, {State} {Zipcode}".format(**row)
             if "Rm. Number" in row:
                 address = "{0} {1}".format(row["Rm. Number"], address)
@@ -105,7 +116,11 @@ class RepList(Page):
         party_text = name_match.group(3)
         party = PARTIES[party_text]
 
-        info_texts = [x.strip() for x in item.xpath("./div/text()[normalize-space()]") if x.strip()]
+        info_texts = [
+            x.strip()
+            for x in item.xpath("./div/text()[normalize-space()]")
+            if x.strip()
+        ]
         address = "\n".join((info_texts[0], info_texts[1]))
 
         phone_text = info_texts[2]
@@ -117,7 +132,12 @@ class RepList(Page):
             email = email_text
 
         rep = Person(
-            name=name, district=district, party=party, primary_org="lower", role="Representative", image=photo_url,
+            name=name,
+            district=district,
+            party=party,
+            primary_org="lower",
+            role="Representative",
+            image=photo_url,
         )
         rep.add_link(url)
         rep.add_contact_detail(type="address", value=address, note="capitol")

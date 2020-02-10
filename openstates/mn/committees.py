@@ -67,7 +67,9 @@ class MNCommitteeScraper(Scraper):
         doc = lxml.html.fromstring(html)
 
         for com in doc.xpath('//h2[@class="commhighlight"]'):
-            members_url = com.xpath('following-sibling::p[1]/a[text()="Members"]/@href')[0]
+            members_url = com.xpath(
+                'following-sibling::p[1]/a[text()="Members"]/@href'
+            )[0]
 
             com = Organization(com.text, chamber="lower", classification="committee")
             com.add_source(members_url)
@@ -76,7 +78,9 @@ class MNCommitteeScraper(Scraper):
                 member_html = self.get(members_url).text
                 mdoc = lxml.html.fromstring(member_html)
             except HTTPError:
-                self.warning("Member list for {} failed to respond; skipping".format(com.name))
+                self.warning(
+                    "Member list for {} failed to respond; skipping".format(com.name)
+                )
                 continue
 
             # each legislator in their own table
