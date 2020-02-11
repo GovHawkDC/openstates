@@ -23,7 +23,7 @@ class MDVoteScraper(Scraper, LXMLMixin):
         links = doc.xpath("//table[1]/tbody/tr/td[3]/a/@href")
 
         # keep upping this number until we see them paginate
-        if len(links) > 25:
+        if len(links) > 40:
             raise Exception("check for pagination")
 
         seen_urls = set()
@@ -126,6 +126,8 @@ class MDVoteScraper(Scraper, LXMLMixin):
             bill=bill_id,
             bill_chamber=bill_chamber,
         )
+        # URL includes sequence ID, will be unique
+        vote.pupa_id = url
         vote.add_source(url)
         vote.set_count("yes", yes_count)
         vote.set_count("no", no_count)
