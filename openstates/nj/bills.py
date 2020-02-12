@@ -5,6 +5,7 @@ import csv
 import pytz
 import zipfile
 import collections
+import sys
 from datetime import datetime
 
 import scrapelib
@@ -140,8 +141,13 @@ class NJBillScraper(Scraper, MDBMixin):
         com_csv = self.access_to_csv("Committee")
 
         self._committees = {}
-
         for com in com_csv:
+
+            if 'House' not in com:
+                self.warning("COM ISSUE")
+                print(com)
+                continue
+
             # map XYZ -> "Assembly/Senate _________ Committee"
             self._committees[com["Code"]] = " ".join((chamber[com["House"]], com["Description"], "Committee"))
 
