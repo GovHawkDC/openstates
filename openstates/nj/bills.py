@@ -185,10 +185,10 @@ class NJBillScraper(Scraper, MDBMixin):
         bill_dict = {}
 
         for rec in main_bill_csv:
-            if "BillType" not in rec:
-                self.warning("Missing billtype")
-                print(rec)
-            bill_type = rec["BillType"].strip()
+            try:
+                bill_type = rec["BillType"].strip()
+            except KeyError:
+                continue
             bill_number = int(rec["BillNumber"])
             bill_id = bill_type + str(bill_number)
             title = rec["Synopsis"]
