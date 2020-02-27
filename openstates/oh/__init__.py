@@ -35,7 +35,7 @@ class Ohio(Jurisdiction):
             "end_date": "2017-12-31",
         },
         {
-            "_scraped_name": "133 (2019-2020) ",
+            "_scraped_name": "133 (2019-2020)",
             "identifier": "133",
             "name": "133rd Legislature (2019-2020)",
             "start_date": "2019-01-07",
