@@ -21,7 +21,9 @@ SESSION_DATA_ID = {
     "2020A": "64656",
 }
 
-BAD_URLS = ["http://leg.colorado.gov/content/ssa2017a2017-05-04t104016z-hb17-1312-1-activity-vote-summary"]
+BAD_URLS = [
+    "http://leg.colorado.gov/content/ssa2017a2017-05-04t104016z-hb17-1312-1-activity-vote-summary"
+]
 
 
 class COBillScraper(Scraper, LXMLMixin):
@@ -41,13 +43,16 @@ class COBillScraper(Scraper, LXMLMixin):
         for chamber in chambers:
             page = self.scrape_bill_list(session, chamber, 0)
             bill_list = page.xpath(
-                '//header[contains(@class,"search-result-single-item")]' '/h4[contains(@class,"node-title")]/a/@href'
+                '//header[contains(@class,"search-result-single-item")]'
+                '/h4[contains(@class,"node-title")]/a/@href'
             )
 
             for bill_url in bill_list:
                 yield from self.scrape_bill(session, chamber, bill_url)
 
-            pagination_str = page.xpath('//div[contains(@class, "view-header")]/text()')[0]
+            pagination_str = page.xpath(
+                '//div[contains(@class, "view-header")]/text()'
+            )[0]
             max_results = re.search(r"of (\d+) results", pagination_str)
             max_results = int(max_results.group(1))
             max_page = int(math.ceil(max_results / 25.0))
@@ -111,9 +116,13 @@ class COBillScraper(Scraper, LXMLMixin):
 
         bill_title = page.xpath('//span[@property="dc:title"]/@content')[0]
 
-        bill_summary = page.xpath('string(//div[contains(@class,"field-name-field-bill-summary")])')
+        bill_summary = page.xpath(
+            'string(//div[contains(@class,"field-name-field-bill-summary")])'
+        )
         bill_summary = bill_summary.strip()
-        bill = Bill(bill_number, legislative_session=session, chamber=chamber, title=bill_title)
+        bill = Bill(
+            bill_number, legislative_session=session, chamber=chamber, title=bill_title
+        )
         if bill_summary:
             bill.add_abstract(bill_summary, "summary")
         bill.add_source("{}{}".format(CO_URL_BASE, bill_url))
@@ -134,11 +143,16 @@ class COBillScraper(Scraper, LXMLMixin):
         sponsors = page.xpath('//div[contains(@class,"sponsor-item")]')
         for sponsor in sponsors:
             sponsor_name = sponsor.xpath(".//h4/a/text()")[0]
-            sponsor_chamber = sponsor.xpath('.//span[contains(@class, "member-title")]/text()')[0]
+            sponsor_chamber = sponsor.xpath(
+                './/span[contains(@class, "member-title")]/text()'
+            )[0]
             sponsor_chamber = chamber_map[sponsor_chamber]
 
             bill.add_sponsorship(
-                sponsor_name, classification="primary", entity_type="person", primary=True,
+                sponsor_name,
+                classification="primary",
+                entity_type="person",
+                primary=True,
             )
 
     def scrape_versions(self, bill, page):
@@ -165,7 +179,9 @@ class COBillScraper(Scraper, LXMLMixin):
                 version_name = "{} ({})".format(version_type, version_date)
 
             if version_url not in seen_versions:
-                bill.add_version_link(version_name, version_url, media_type="application/pdf")
+                bill.add_version_link(
+                    version_name, version_url, media_type="application/pdf"
+                )
                 seen_versions.append(version_url)
 
     def scrape_actions(self, bill, page):
@@ -179,6 +195,9 @@ class COBillScraper(Scraper, LXMLMixin):
         actions = page.xpath('//div[@id="bill-documents-tabs7"]//table//tbody//tr')
 
         for action in actions:
+            action_date = action.xpath("td[1]/text()")
+            if len(action_date) < 1:
+                continue
             action_date = action.xpath("td[1]/text()")[0]
             action_date = dt.datetime.strptime(action_date, "%m/%d/%Y")
             action_date = self._tz.localize(action_date)
@@ -192,7 +211,9 @@ class COBillScraper(Scraper, LXMLMixin):
 
             action_name = action.xpath("td[3]/text()")[0]
 
-            attrs = dict(description=action_name, chamber=action_actor, date=action_date)
+            attrs = dict(
+                description=action_name, chamber=action_actor, date=action_date
+            )
             attrs.update(self.categorizer.categorize(action_name))
             comms = attrs.pop("committees", [])
             legislators = attrs.pop("legislators", [])
@@ -219,19 +240,25 @@ class COBillScraper(Scraper, LXMLMixin):
             else:
                 version_name = "Fiscal Note {} ({})".format(version_type, version_date)
 
-            bill.add_document_link(version_name, version_url, media_type="application/pdf")
+            bill.add_document_link(
+                version_name, version_url, media_type="application/pdf"
+            )
 
     def scrape_research_notes(self, bill, page):
         note = page.xpath('//div[contains(@class,"research-note")]/@href')
         if note:
             note_url = note[0]
-            bill.add_document_link("Research Note", note_url, media_type="application/pdf")
+            bill.add_document_link(
+                "Research Note", note_url, media_type="application/pdf"
+            )
 
     def scrape_committee_report(self, bill, page):
         note = page.xpath('//a[text()="Committee Report"]/@href')
         if note:
             note_url = note[0]
-            bill.add_version_link("Committee Amendment", note_url, media_type="application/pdf")
+            bill.add_version_link(
+                "Committee Amendment", note_url, media_type="application/pdf"
+            )
 
     def scrape_amendments(self, bill, page):
         # CO Amendments are Buried in their hearing summary pages as attachments
@@ -248,7 +275,9 @@ class COBillScraper(Scraper, LXMLMixin):
             # A hearing can discuss multiple bills,
             # so first make a list of all amendments
             # mentioned in summary tables revelant to this bill
-            table_xpath = '//table[.//*[contains(text(), "{}")]]'.format(bill.identifier)
+            table_xpath = '//table[.//*[contains(text(), "{}")]]'.format(
+                bill.identifier
+            )
             bill_tables = page.xpath(table_xpath)
             if bill_tables:
                 for table in bill_tables:
@@ -262,7 +291,9 @@ class COBillScraper(Scraper, LXMLMixin):
             # as something like: amendment L.001 (Attachment Q)
             for amendment in amendments:
                 references = re.findall(
-                    r"amendment ({}) \(Attachment (\w+)\)".format(amendment), page_text, re.IGNORECASE,
+                    r"amendment ({}) \(Attachment (\w+)\)".format(amendment),
+                    page_text,
+                    re.IGNORECASE,
                 )
                 for reference in references:
                     amendment_name = "Amendment {}".format(reference[0])
@@ -271,14 +302,21 @@ class COBillScraper(Scraper, LXMLMixin):
 
                     # Return the first URL with amendment_filename in it
                     # and don't error on missing
-                    amendment_url = next((url for url in pdf_links if amendment_filename in url), None)
+                    amendment_url = next(
+                        (url for url in pdf_links if amendment_filename in url), None
+                    )
                     if amendment_url:
                         bill.add_version_link(
-                            amendment_name, amendment_url, media_type="application/pdf", on_duplicate="ignore",
+                            amendment_name,
+                            amendment_url,
+                            media_type="application/pdf",
+                            on_duplicate="ignore",
                         )
                     else:
                         self.warning(
-                            "Didn't find attachment for %s %s", amendment_name, amendment_letter,
+                            "Didn't find attachment for %s %s",
+                            amendment_name,
+                            amendment_letter,
                         )
 
     def scrape_votes(self, bill, page):
@@ -288,7 +326,8 @@ class COBillScraper(Scraper, LXMLMixin):
                 vote_url = vote.xpath(".//a/@href")[0]
 
                 parent_committee_row = vote.xpath(
-                    'ancestor::ul[@class="accordion"]/li/' 'a[@class="accordion-title"]/h5/text()'
+                    'ancestor::ul[@class="accordion"]/li/'
+                    'a[@class="accordion-title"]/h5/text()'
                 )[0]
                 parent_committee_row = parent_committee_row.strip()
 
@@ -296,7 +335,9 @@ class COBillScraper(Scraper, LXMLMixin):
                 # so we cannot save the vote information
                 header = parent_committee_row
                 if not header:
-                    self.warning("No date and committee information available in the vote header.")
+                    self.warning(
+                        "No date and committee information available in the vote header."
+                    )
                     return
 
                 if "Senate" in header:
@@ -328,13 +369,16 @@ class COBillScraper(Scraper, LXMLMixin):
 
         if "withdrawn" not in motion:
             yes_no_counts = page.xpath(
-                "//tr/td[preceding-sibling::td/descendant::" "font[contains(text(),'Aye')]]/font/text()"
+                "//tr/td[preceding-sibling::td/descendant::"
+                "font[contains(text(),'Aye')]]/font/text()"
             )
             other_counts = page.xpath(
-                "//tr/td[preceding-sibling::td/descendant::" "font[contains(text(),'Absent')]]/font/text()"
+                "//tr/td[preceding-sibling::td/descendant::"
+                "font[contains(text(),'Absent')]]/font/text()"
             )
             abstain_counts = page.xpath(
-                "//tr/td[preceding-sibling::td/descendant::" "font[contains(text(),'17C')]]/font/text()"
+                "//tr/td[preceding-sibling::td/descendant::"
+                "font[contains(text(),'17C')]]/font/text()"
             )
             yes_count = int(yes_no_counts[0])
             no_count = int(yes_no_counts[2])
@@ -366,7 +410,10 @@ class COBillScraper(Scraper, LXMLMixin):
             vote.set_count("abstain", abstain_count)
             vote.add_source(vote_url)
 
-            rolls = page.xpath("//tr[preceding-sibling::tr/descendant::" "td/div/b/font[contains(text(),'Vote')]]")
+            rolls = page.xpath(
+                "//tr[preceding-sibling::tr/descendant::"
+                "td/div/b/font[contains(text(),'Vote')]]"
+            )
 
             vote_abrv = {
                 "Y": "yes",
