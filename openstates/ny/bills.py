@@ -121,7 +121,7 @@ class NYBillScraper(Scraper):
                 no_count += 1
 
         # Count all other types of votes.
-        other_vote_types = ("EXC", "ABS", "ABD")
+        other_vote_types = ("EXC", "ABS", "ABD", "EL")
         for vote_type in other_vote_types:
             if vote_rolls.get(vote_type, []):
                 for legislator in vote_rolls[vote_type]["items"]:
