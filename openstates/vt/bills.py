@@ -18,15 +18,21 @@ class VTBillScraper(Scraper, LXMLMixin):
         year_slug = self.jurisdiction.get_year_slug(session)
 
         # Load all bills and resolutions via the private API
-        bills_url = "http://legislature.vermont.gov/bill/loadBillsReleased/{}/".format(year_slug)
+        bills_url = "http://legislature.vermont.gov/bill/loadBillsReleased/{}/".format(
+            year_slug
+        )
         bills_json = self.get(bills_url).text
         bills = json.loads(bills_json)["data"] or []
 
-        bills_url = "http://legislature.vermont.gov/bill/loadBillsIntroduced/{}/".format(year_slug)
+        bills_url = "http://legislature.vermont.gov/bill/loadBillsIntroduced/{}/".format(
+            year_slug
+        )
         bills_json = self.get(bills_url).text
         bills.extend(json.loads(bills_json)["data"] or [])
 
-        resolutions_url = "http://legislature.vermont.gov/bill/loadAllResolutionsByChamber/{}/both".format(year_slug)
+        resolutions_url = "http://legislature.vermont.gov/bill/loadAllResolutionsByChamber/{}/both".format(
+            year_slug
+        )
         resolutions_json = self.get(resolutions_url).text
         bills.extend(json.loads(resolutions_json)["data"] or [])
 
@@ -74,7 +80,9 @@ class VTBillScraper(Scraper, LXMLMixin):
                 bill_chamber = "upper"
 
             else:
-                raise AssertionError("Unknown bill type found: '{}'".format(info["BillNumber"]))
+                raise AssertionError(
+                    "Unknown bill type found: '{}'".format(info["BillNumber"])
+                )
 
             bill_id = info["BillNumber"].replace(".", "").replace(" ", "")
             # put one space back in between type and number
@@ -94,13 +102,16 @@ class VTBillScraper(Scraper, LXMLMixin):
                 bill.add_source(bills_url)
 
             # Load the bill's information page to access its metadata
-            bill_url = "http://legislature.vermont.gov/bill/status/{0}/{1}".format(year_slug, info["BillNumber"])
+            bill_url = "http://legislature.vermont.gov/bill/status/{0}/{1}".format(
+                year_slug, info["BillNumber"]
+            )
             doc = self.lxmlize(bill_url)
             bill.add_source(bill_url)
 
             # Capture sponsors
             sponsors = doc.xpath(
-                '//dl[@class="summary-table"]/dt[text()="Sponsor(s)"]/' "following-sibling::dd[1]/ul/li"
+                '//dl[@class="summary-table"]/dt[text()="Sponsor(s)"]/'
+                "following-sibling::dd[1]/ul/li"
             )
             sponsor_type = "primary"
             for sponsor in sponsors:
@@ -108,8 +119,15 @@ class VTBillScraper(Scraper, LXMLMixin):
                     sponsor_type = "cosponsor"
                     continue
 
-                sponsor_name = sponsor.xpath("a/text()")[0].replace("Rep.", "").replace("Sen.", "").strip()
-                if sponsor_name and not (sponsor_name[:5] == "Less" and len(sponsor_name) == 5):
+                sponsor_name = (
+                    sponsor.xpath("a/text()")[0]
+                    .replace("Rep.", "")
+                    .replace("Sen.", "")
+                    .strip()
+                )
+                if sponsor_name and not (
+                    sponsor_name[:5] == "Less" and len(sponsor_name) == 5
+                ):
                     bill.add_sponsorship(
                         name=sponsor_name,
                         classification=sponsor_type,
@@ -138,10 +156,13 @@ class VTBillScraper(Scraper, LXMLMixin):
             # If there is no internal bill ID, then it has no extra information
             try:
                 internal_bill_id = re.search(
-                    r'"bill/loadBillDetailedStatus/.+?/(\d+)"', lxml.etree.tostring(doc).decode("utf-8"),
+                    r'"bill/loadBillDetailedStatus/.+?/(\d+)"',
+                    lxml.etree.tostring(doc).decode("utf-8"),
                 ).group(1)
             except AttributeError:
-                self.warning("Bill {} appears to have no activity".format(info["BillNumber"]))
+                self.warning(
+                    "Bill {} appears to have no activity".format(info["BillNumber"])
+                )
                 yield bill
                 continue
 
@@ -172,15 +193,22 @@ class VTBillScraper(Scraper, LXMLMixin):
                     action_type = "executive-signature"
                 elif "Vetoed by the Governor" in action["FullStatus"]:
                     action_type = "executive-veto"
-                elif "Read first time" in action["FullStatus"] or "Read 1st time" in action["FullStatus"]:
+                elif (
+                    "Read first time" in action["FullStatus"]
+                    or "Read 1st time" in action["FullStatus"]
+                ):
                     action_type = "introduction"
                 elif "Reported favorably" in action["FullStatus"]:
                     action_type = "committee-passage-favorable"
-                elif actor == "lower" and any(x.lower().startswith("aspassed") for x in action["keywords"].split(";")):
+                elif actor == "lower" and any(
+                    x.lower().startswith("aspassed")
+                    for x in action["keywords"].split(";")
+                ):
                     action_type = "passage"
                     chambers_passed.add("H")
                 elif actor == "upper" and any(
-                    x.lower().startswith(" aspassed") or x.lower().startswith("aspassed")
+                    x.lower().startswith(" aspassed")
+                    or x.lower().startswith("aspassed")
                     for x in action["keywords"].split(";")
                 ):
                     action_type = "passage"
@@ -195,7 +223,8 @@ class VTBillScraper(Scraper, LXMLMixin):
                 bill.add_action(
                     description=re.sub(HTML_TAGS_RE, "", action["FullStatus"]),
                     date=datetime.datetime.strftime(
-                        datetime.datetime.strptime(action["StatusDate"], "%m/%d/%Y"), "%Y-%m-%d",
+                        datetime.datetime.strptime(action["StatusDate"], "%m/%d/%Y"),
+                        "%Y-%m-%d",
                     ),
                     chamber=actor,
                     classification=action_type,
@@ -211,8 +240,9 @@ class VTBillScraper(Scraper, LXMLMixin):
 
             for vote in votes:
                 roll_call_id = vote["VoteHeaderID"]
-                roll_call_url = "http://legislature.vermont.gov/bill/" "loadBillRollCallDetails/{0}/{1}".format(
-                    year_slug, roll_call_id
+                roll_call_url = (
+                    "http://legislature.vermont.gov/bill/"
+                    "loadBillRollCallDetails/{0}/{1}".format(year_slug, roll_call_id)
                 )
                 roll_call_json = self.get(roll_call_url).text
                 roll_call = json.loads(roll_call_json)["data"]
@@ -231,12 +261,22 @@ class VTBillScraper(Scraper, LXMLMixin):
                     else:
                         roll_call_not_voting.append(member_name)
 
-                if "Passed -- " in vote["FullStatus"] or "Veto of Governor overridden" in vote["FullStatus"]:
+                if (
+                    "Passed -- " in vote["FullStatus"]
+                    # seems like we've seen both
+                    or "Governor overridden" in vote["FullStatus"]
+                    or "Governor overriden" in vote["FullStatus"]
+                ):
                     did_pass = True
-                elif "Failed -- " in vote["FullStatus"] or "Veto of the Governor sustained" in vote["FullStatus"]:
+                elif (
+                    "Failed -- " in vote["FullStatus"]
+                    or "Veto of the Governor sustained" in vote["FullStatus"]
+                ):
                     did_pass = False
                 else:
-                    raise AssertionError("Roll call vote result is unclear")
+                    raise AssertionError(
+                        "Roll call vote result is unclear: " + vote["FullStatus"]
+                    )
 
                 # Check vote counts
                 yea_count = int(re.search(r"Yeas = (\d+)", vote["FullStatus"]).group(1))
@@ -246,7 +286,8 @@ class VTBillScraper(Scraper, LXMLMixin):
                     bill=bill,
                     chamber=("lower" if vote["ChamberCode"] == "H" else "upper"),
                     start_date=datetime.datetime.strftime(
-                        datetime.datetime.strptime(vote["StatusDate"], "%m/%d/%Y"), "%Y-%m-%d",
+                        datetime.datetime.strptime(vote["StatusDate"], "%m/%d/%Y"),
+                        "%Y-%m-%d",
                     ),
                     motion_text=re.sub(HTML_TAGS_RE, "", vote["FullStatus"]).strip(),
                     result="pass" if did_pass else "fail",
