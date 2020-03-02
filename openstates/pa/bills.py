@@ -54,23 +54,36 @@ class PABillScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
-        xpath = "/".join(['//div[contains(@class, "BillInfo-ShortTitle")]', 'div[@class="BillInfo-Section-Data"]',])
+        xpath = "/".join(
+            [
+                '//div[contains(@class, "BillInfo-ShortTitle")]',
+                'div[@class="BillInfo-Section-Data"]',
+            ]
+        )
         title = page.xpath(xpath).pop().text_content().strip()
         if not title:
             return
-        bill = Bill(bill_id, legislative_session=session, title=title, chamber=chamber, classification=btype,)
+        bill = Bill(
+            bill_id,
+            legislative_session=session,
+            title=title,
+            chamber=chamber,
+            classification=btype,
+        )
         bill.add_source(url)
 
         self.parse_bill_versions(bill, page)
 
         self.parse_history(
-            bill, chamber, utils.history_url(chamber, session, special, type_abbr, bill_num),
+            bill,
+            chamber,
+            utils.history_url(chamber, session, special, type_abbr, bill_num),
         )
 
         # only fetch votes if votes were seen in history
         # if vote_count:
         yield from self.parse_votes(
-            bill, utils.vote_url(chamber, session, special, type_abbr, bill_num),
+            bill, utils.vote_url(chamber, session, special, type_abbr, bill_num)
         )
 
         # Dedupe sources.
@@ -98,7 +111,10 @@ class PABillScraper(Scraper):
                         continue
 
                 bill.add_version_link(
-                    "Printer's No. %s" % printers_number, href, media_type=mimetype, on_duplicate="ignore",
+                    "Printer's No. %s" % printers_number,
+                    href,
+                    media_type=mimetype,
+                    on_duplicate="ignore",
                 )
 
             # House and Senate Amendments
@@ -113,7 +129,10 @@ class PABillScraper(Scraper):
                 mimetype = self.mimetype_from_class(a)
                 href = a.attrib["href"]
                 bill.add_document_link(
-                    "House Fiscal Note", href, media_type=mimetype, on_duplicate="ignore",
+                    "House Fiscal Note",
+                    href,
+                    media_type=mimetype,
+                    on_duplicate="ignore",
                 )
 
             # Senate Fiscal Notes
@@ -121,7 +140,10 @@ class PABillScraper(Scraper):
                 mimetype = self.mimetype_from_class(a)
                 href = a.attrib["href"]
                 bill.add_document_link(
-                    "Senate Fiscal Note", href, media_type=mimetype, on_duplicate="ignore",
+                    "Senate Fiscal Note",
+                    href,
+                    media_type=mimetype,
+                    on_duplicate="ignore",
                 )
 
             # Actuarial Notes
@@ -129,7 +151,10 @@ class PABillScraper(Scraper):
                 mimetype = self.mimetype_from_class(a)
                 href = a.attrib["href"]
                 bill.add_document_link(
-                    "Actuarial Note {}".format(printers_number), href, media_type=mimetype, on_duplicate="ignore",
+                    "Actuarial Note {}".format(printers_number),
+                    href,
+                    media_type=mimetype,
+                    on_duplicate="ignore",
                 )
 
     def scrape_amendments(self, bill, link, chamber_pretty):
@@ -138,13 +163,18 @@ class PABillScraper(Scraper):
         page.make_links_absolute(link)
 
         for row in page.xpath('//div[contains(@class,"AmendList-Wrapper")]'):
-            version_name = row.xpath('div[contains(@class,"AmendList-AmendNo")]/text()')[0].strip()
+            version_name = row.xpath(
+                'div[contains(@class,"AmendList-AmendNo")]/text()'
+            )[0].strip()
             version_name = "{} Amendment {}".format(chamber_pretty, version_name)
             for a in row.xpath('div[contains(@class,"AmendList-FileTypes")]/a'):
                 mimetype = self.mimetype_from_class(a)
                 version_link = a.attrib["href"]
                 bill.add_version_link(
-                    version_name, version_link, media_type=mimetype, on_duplicate="ignore",
+                    version_name,
+                    version_link,
+                    media_type=mimetype,
+                    on_duplicate="ignore",
                 )
 
     def parse_history(self, bill, chamber, url):
@@ -166,7 +196,10 @@ class PABillScraper(Scraper):
     def parse_sponsors(self, bill, page):
         first = True
 
-        xpath = "//div[contains(@class, 'BillInfo-PrimeSponsor')]" "/div[@class='BillInfo-Section-Data']/a"
+        xpath = (
+            "//div[contains(@class, 'BillInfo-PrimeSponsor')]"
+            "/div[@class='BillInfo-Section-Data']/a"
+        )
         sponsors = page.xpath(xpath)
 
         first = True
@@ -195,7 +228,10 @@ class PABillScraper(Scraper):
             else:
                 name = sponsor.strip().title()
                 bill.add_sponsorship(
-                    name, classification=sponsor_type, primary=sponsor_type == "primary", entity_type="person",
+                    name,
+                    classification=sponsor_type,
+                    primary=sponsor_type == "primary",
+                    entity_type="person",
                 )
 
     def parse_actions(self, bill, chamber, page):
@@ -211,7 +247,9 @@ class PABillScraper(Scraper):
             elif action.startswith("(Remarks see"):
                 continue
 
-            match = re.match(r"(.*),\s+(\w+\.?\s+\d{1,2},\s+\d{4})( \(\d+-\d+\))?", action)
+            match = re.match(
+                r"(.*),\s+(\w+\.?\s+\d{1,2},\s+\d{4})( \(\d+-\d+\))?", action
+            )
 
             if not match:
                 continue
@@ -219,7 +257,9 @@ class PABillScraper(Scraper):
             action = match.group(1)
             date = utils.parse_action_date(match.group(2))
             types = list(actions.categorize(action))
-            bill.add_action(action, tz.localize(date), chamber=chamber, classification=types)
+            bill.add_action(
+                action, tz.localize(date), chamber=chamber, classification=types
+            )
 
     def parse_votes(self, bill, url):
         bill.add_source(url)
@@ -315,7 +355,7 @@ class PABillScraper(Scraper):
         vote.set_count("other", other)
 
         for div in page.xpath('//*[contains(@class, "RollCalls-Vote")]'):
-            name = div.text_content().strip()
+            name = div[0].tail.strip()
             name = re.sub(r"^[\s,]+", "", name)
             name = re.sub(r"[\s,]+$", "", name)
             class_attr = div.attrib["class"].lower()
