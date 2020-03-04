@@ -80,7 +80,7 @@ class AKBillScraper(Scraper):
             "CR": "concurrent resolution",
         }
 
-        bill_list_url = "https://www.akleg.gov/basis/Bill/Range/{session}"
+        bill_list_url = f"https://www.akleg.gov/basis/Bill/Range/{session}"
         doc = lxml.html.fromstring(self.get(bill_list_url).text)
         doc.make_links_absolute(bill_list_url)
         for bill_link in doc.xpath("//tr//td[1]//nobr[1]//a[1]"):
@@ -106,17 +106,30 @@ class AKBillScraper(Scraper):
         doc.make_links_absolute(url)
 
         title = doc.xpath('//span[text()="Title"]')[0].getparent()
-        if title:
+        short_title = doc.xpath('//span[text()="Short Title "]')[0].getparent()
+
+        if len(title) > 1 and title[1].text:
             title = title[1].text.strip().strip('"')
+        elif len(short_title) > 1 and short_title[1].text:
+            self.warning("Falling back to short title on {}".format(url))
+            title = short_title[1].text.strip().strip('"')
         else:
-            self.warning("skipping bill {url}, no information")
+            self.warning("skipping bill {}, no Title".format(url))
             return
 
-        bill = Bill(bill_id, title=title, chamber=chamber, classification=bill_type, legislative_session=session,)
+        bill = Bill(
+            bill_id,
+            title=title,
+            chamber=chamber,
+            classification=bill_type,
+            legislative_session=session,
+        )
         bill.add_source(url)
 
         # Get sponsors
-        spons_str = doc.xpath('//span[contains(text(), "Sponsor(S)")]')[0].getparent()[1].text
+        spons_str = (
+            doc.xpath('//span[contains(text(), "Sponsor(S)")]')[0].getparent()[1].text
+        )
         sponsors_match = re.match(r"(SENATOR|REPRESENTATIVE)", spons_str)
         if sponsors_match:
             sponsors = spons_str.split(",")
@@ -124,14 +137,20 @@ class AKBillScraper(Scraper):
 
             if sponsor:
                 bill.add_sponsorship(
-                    sponsors[0].split()[1], entity_type="person", classification="primary", primary=True,
+                    sponsors[0].split()[1],
+                    entity_type="person",
+                    classification="primary",
+                    primary=True,
                 )
 
             for sponsor in sponsors[1:]:
                 sponsor = sponsor.strip()
                 if sponsor:
                     bill.add_sponsorship(
-                        sponsor, entity_type="person", classification="cosponsor", primary=False,
+                        sponsor,
+                        entity_type="person",
+                        classification="cosponsor",
+                        primary=False,
                     )
 
         else:
@@ -139,12 +158,17 @@ class AKBillScraper(Scraper):
             spons_str = spons_str.strip()
 
             if re.match(r" BY REQUEST OF THE GOVERNOR$", spons_str):
-                spons_str = re.sub(r" BY REQUEST OF THE GOVERNOR$", "", spons_str).title()
+                spons_str = re.sub(
+                    r" BY REQUEST OF THE GOVERNOR$", "", spons_str
+                ).title()
                 spons_str = spons_str + " Committee (by request of the governor)"
 
             if spons_str:
                 bill.add_sponsorship(
-                    spons_str, entity_type="person", classification="primary", primary=True,
+                    spons_str,
+                    entity_type="person",
+                    classification="primary",
+                    primary=True,
                 )
 
         # Get actions
@@ -155,7 +179,9 @@ class AKBillScraper(Scraper):
             action = action.text_content().strip()
             raw_chamber = action[0:3]
             journal_entry_number = journal.text_content()
-            act_date = datetime.datetime.strptime(date.text_content().strip(), "%m/%d/%Y")
+            act_date = datetime.datetime.strptime(
+                date.text_content().strip(), "%m/%d/%Y"
+            )
             if raw_chamber == "(H)":
                 act_chamber = "lower"
             elif raw_chamber == "(S)":
@@ -167,7 +193,12 @@ class AKBillScraper(Scraper):
                 if vote_href:
                     vote_href = vote_href[0].replace(" ", "")
                     yield from self.parse_vote(
-                        bill, journal_entry_number, action, act_chamber, act_date, vote_href,
+                        bill,
+                        journal_entry_number,
+                        action,
+                        act_chamber,
+                        act_date,
+                        vote_href,
                     )
 
             action, atype = self.clean_action(action)
@@ -178,7 +209,10 @@ class AKBillScraper(Scraper):
                 act_date = datetime.datetime.strptime(match.group(1), "%m/%d/%y")
 
             bill.add_action(
-                action, chamber=act_chamber, date=act_date.strftime("%Y-%m-%d"), classification=atype,
+                action,
+                chamber=act_chamber,
+                date=act_date.strftime("%Y-%m-%d"),
+                classification=atype,
             )
 
         # Get subjects
@@ -186,7 +220,9 @@ class AKBillScraper(Scraper):
             bill.add_subject(subj.strip())
 
         # Get versions - to do
-        text_list_url = "https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab1_4"
+        text_list_url = (
+            f"https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab1_4"
+        )
         bill.add_source(text_list_url)
 
         text_doc = lxml.html.fromstring(self.get(text_list_url).text)
@@ -197,23 +233,25 @@ class AKBillScraper(Scraper):
             bill.add_version_link(name, text_url, media_type="text/html")
 
         # Get documents - to do
-        doc_list_url = "https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab5_4"
+        doc_list_url = (
+            f"https://www.akleg.gov/basis/Bill/Detail/{session}?Root={bill_id}#tab5_4"
+        )
         doc_list = lxml.html.fromstring(self.get(doc_list_url).text)
         doc_list.make_links_absolute(doc_list_url)
         bill.add_source(doc_list_url)
+        seen = set()
         for href in doc_list.xpath('//a[contains(@href, "get_documents")][@onclick]'):
             h_name = href.text_content()
             h_href = href.attrib["href"]
-            if h_name.strip():
-                try:
-                    bill.add_document_link(h_name, h_href)
-                except KeyError:
-                    self.warning("Duplicate found")
-                    return
+            if h_name.strip() and h_href not in seen:
+                bill.add_document_link(h_name, h_href)
+                seen.add(h_href)
 
         yield bill
 
-    def parse_vote(self, bill, journal_entry_number, action, act_chamber, act_date, url):
+    def parse_vote(
+        self, bill, journal_entry_number, action, act_chamber, act_date, url
+    ):
         # html = self.get(url).text
         # doc = lxml.html.fromstring(html)
         yes = no = other = 0
@@ -239,7 +277,7 @@ class AKBillScraper(Scraper):
             bill=bill,
             start_date=act_date.strftime("%Y-%m-%d"),
             chamber=act_chamber,
-            motion_text=action,
+            motion_text=action + " #" + journal_entry_number,
             result=result,
             classification="passage",
         )
@@ -355,7 +393,9 @@ class AKBillScraper(Scraper):
             dept = match.group(3)
             dept = self._fiscal_dept_mapping.get(dept, dept)
 
-            action = "Fiscal Note {num}: {impact} ({dept})".format(num=num, impact=impact, dept=dept)
+            action = "Fiscal Note {num}: {impact} ({dept})".format(
+                num=num, impact=impact, dept=dept
+            )
 
         match = self._comm_re.match(action)
         if match:
@@ -402,7 +442,9 @@ class AKBillScraper(Scraper):
             action = action.replace("READ THE THIRD TIME", "Read the third time")
         if "TRANSMITTED TO GOVERNOR" in action:
             atype.append("executive-receipt")
-            action = action.replace("TRANSMITTED TO GOVERNOR", "Transmitted to Governor")
+            action = action.replace(
+                "TRANSMITTED TO GOVERNOR", "Transmitted to Governor"
+            )
         if "SIGNED INTO LAW" in action:
             atype.append("executive-signature")
             action = action.replace("SIGNED INTO LAW", "Signed into law")
