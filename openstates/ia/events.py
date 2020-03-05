@@ -47,7 +47,8 @@ class IAEventScraper(Scraper):
         page = lxml.html.fromstring(self.get(url).text)
         page.make_links_absolute(url)
         for link in page.xpath(
-            "//div[contains(@class, 'meetings')]/table[1]/" "tbody/tr[not(contains(@class, 'hidden'))]"
+            "//div[contains(@class, 'meetings')]/table[1]/"
+            "tbody/tr[not(contains(@class, 'hidden'))]"
         ):
             comm = link.xpath("string(./td[2]/a[1]/text())").strip()
             desc = comm + " Committee Hearing"
@@ -84,7 +85,12 @@ class IAEventScraper(Scraper):
                         self.warning("error parsing timestamp %s", when)
                         continue
 
-            event = Event(name=desc, description=desc, start_date=self._tz.localize(when), location_name=location,)
+            event = Event(
+                name=desc,
+                description=desc,
+                start_date=self._tz.localize(when),
+                location_name=location,
+            )
 
             event.add_source(url)
             event.add_participant(comm, note="host", type="committee")

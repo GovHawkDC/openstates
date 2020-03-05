@@ -48,7 +48,9 @@ class IABillScraper(Scraper):
         bill_id = bill_number.replace(" ", "+")
         subject_url = (
             "https://www.legis.iowa.gov/legislation/BillBook?ga={}"
-            "&billName={}&billVersion=i&action=getTaggedTopics&bl=false".format(session_id, bill_id)
+            "&billName={}&billVersion=i&action=getTaggedTopics&bl=false".format(
+                session_id, bill_id
+            )
         )
 
         html = req.get(subject_url, cookies=req.cookies).text
@@ -63,7 +65,8 @@ class IABillScraper(Scraper):
         sidebar.make_links_absolute("https://www.legis.iowa.gov")
 
         hist_url = (
-            f"https://www.legis.iowa.gov/legislation/billTracking/" f"billHistory?billName={bill_id}&ga={session_id}"
+            f"https://www.legis.iowa.gov/legislation/billTracking/"
+            f"billHistory?billName={bill_id}&ga={session_id}"
         )
         req_session = requests.Session()
         req = requests.get(hist_url)
@@ -74,12 +77,16 @@ class IABillScraper(Scraper):
         page = lxml.html.fromstring(req.text)
         page.make_links_absolute("https://www.legis.iowa.gov")
 
-        title = page.xpath('string(//div[@id="content"]/div[@class=' '"divideVert"]/div/div[4]/div[2])').strip()
+        title = page.xpath(
+            'string(//div[@id="content"]/div[@class=' '"divideVert"]/div/div[4]/div[2])'
+        ).strip()
 
         if title == "":
             # Sometimes the title is moved, see
             # https://www.legis.iowa.gov/legislation/billTracking/billHistory?billName=SF%20139&ga=88
-            title = page.xpath('string(//div[@id="content"]/div[@class=' '"divideVert"]/div[4]/div[2])').strip()
+            title = page.xpath(
+                'string(//div[@id="content"]/div[@class=' '"divideVert"]/div[4]/div[2])'
+            ).strip()
             if title == "":
                 self.warning("URL: %s gives us an *EMPTY* bill. Aborting." % url)
                 return
@@ -96,13 +103,24 @@ class IABillScraper(Scraper):
         else:
             bill_type = ["bill"]
 
-        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
+        bill = Bill(
+            bill_id,
+            legislative_session=session,
+            chamber=chamber,
+            title=title,
+            classification=bill_type,
+        )
 
         bill.add_source(hist_url)
 
         # base url for text version (version_abbrev, session_id, bill_id)
-        version_html_url_template = "https://www.legis.iowa.gov/docs/" "publications/LG{}/{}/attachments/{}.html"
-        version_pdf_url_template = "https://www.legis.iowa.gov/docs/" "publications/LG{}/{}/{}.pdf"
+        version_html_url_template = (
+            "https://www.legis.iowa.gov/docs/"
+            "publications/LG{}/{}/attachments/{}.html"
+        )
+        version_pdf_url_template = (
+            "https://www.legis.iowa.gov/docs/" "publications/LG{}/{}/{}.pdf"
+        )
 
         # get pieces of version_link
         vpieces = sidebar.xpath('//select[@id="billVersions"]/option')
@@ -116,22 +134,35 @@ class IABillScraper(Scraper):
                     version_abbrev.upper(), session_id, bill_id.replace(" ", "")
                 )
 
-                bill.add_version_link(note=version_name, url=version_html_url, media_type="text/html")
+                bill.add_version_link(
+                    note=version_name, url=version_html_url, media_type="text/html"
+                )
 
                 # Get PDF document of bill version.
                 version_pdf_url = version_pdf_url_template.format(
                     version_abbrev.upper(), session_id, bill_id.replace(" ", "")
                 )
 
-                bill.add_version_link(note=version_name, url=version_pdf_url, media_type="application/pdf")
+                if "Marked Up" in version_name:
+                    version_pdf_url = sidebar.xpath(
+                        "//iframe[@id='bbContextDoc']/@src"
+                    )[0]
 
-        sponsors_str = page.xpath('string(//div[@id="content"]/div[@class=' '"divideVert"]/div/div[4]/div[1])').strip()
+                bill.add_version_link(
+                    note=version_name, url=version_pdf_url, media_type="application/pdf"
+                )
+
+        sponsors_str = page.xpath(
+            'string(//div[@id="content"]/div[@class=' '"divideVert"]/div/div[4]/div[1])'
+        ).strip()
 
         if re.search("^By ", sponsors_str):
             sponsors = re.split(",| and ", sponsors_str.split("By ")[1])
         # for some bills sponsors listed in different format
         else:
-            sponsors = re.findall(r"[\w-]+(?:, [A-Z]\.)?(?:,|(?: and)|\.$)", sponsors_str)
+            sponsors = re.findall(
+                r"[\w-]+(?:, [A-Z]\.)?(?:,|(?: and)|\.$)", sponsors_str
+            )
 
         for sponsor in sponsors:
             sponsor = sponsor.replace(" and", "").strip(" .,")
@@ -154,10 +185,15 @@ class IABillScraper(Scraper):
                 continue
 
             bill.add_sponsorship(
-                name=sponsor, classification="primary", entity_type="person", primary=True,
+                name=sponsor,
+                classification="primary",
+                entity_type="person",
+                primary=True,
             )
 
-        for tr in page.xpath("//table[contains(@class, 'billActionTable')][1]/tbody/tr"):
+        for tr in page.xpath(
+            "//table[contains(@class, 'billActionTable')][1]/tbody/tr"
+        ):
             date = tr.xpath("string(td[contains(text(), ', 20')])").strip()
             if date.startswith("***"):
                 continue
@@ -184,7 +220,9 @@ class IABillScraper(Scraper):
                         amd_name = "Amendment {}".format(anchor.text.strip())
 
                         if amd_url not in version_urls:
-                            bill.add_version_link(note=amd_name, url=amd_url, media_type="application/pdf")
+                            bill.add_version_link(
+                                note=amd_name, url=amd_url, media_type="application/pdf"
+                            )
                             version_urls.append(amd_url)
                         else:
                             self.info("Already Added {}, skipping".format(amd_url))
@@ -244,11 +282,19 @@ class IABillScraper(Scraper):
                 continue
 
             if "$history" not in action:
-                bill.add_action(description=action, date=date, chamber=actor, classification=atype)
+                bill.add_action(
+                    description=action, date=date, chamber=actor, classification=atype
+                )
 
         self.scrape_subjects(bill, bill_id, session, req_session)
 
         yield bill
 
     def get_session_id(self, session):
-        return {"2011-2012": "84", "2013-2014": "85", "2015-2016": "86", "2017-2018": "87", "2019-2020": "88",}[session]
+        return {
+            "2011-2012": "84",
+            "2013-2014": "85",
+            "2015-2016": "86",
+            "2017-2018": "87",
+            "2019-2020": "88",
+        }[session]

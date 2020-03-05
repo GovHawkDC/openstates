@@ -1,18 +1,12 @@
 import re
-from pupa.scrape import Jurisdiction, Organization
-
-from openstates.utils import url_xpath
+from openstates.utils import url_xpath, State
 from .people import IAPersonScraper
 from .bills import IABillScraper
 from .votes import IAVoteScraper
 from .events import IAEventScraper
 
 
-class Iowa(Jurisdiction):
-    division_id = "ocd-division/country:us/state:ia"
-    classification = "government"
-    name = "Iowa"
-    url = "https://www.legis.iowa.gov/"
+class Iowa(State):
     scrapers = {
         "people": IAPersonScraper,
         "bills": IABillScraper,
@@ -27,8 +21,16 @@ class Iowa(Jurisdiction):
             "name": "2011-2012 Regular Session",
             "start_date": "2011-01-10",
         },
-        {"_scraped_name": "General Assembly: 85", "identifier": "2013-2014", "name": "2013-2014 Regular Session",},
-        {"_scraped_name": "General Assembly: 86", "identifier": "2015-2016", "name": "2015-2016 Regular Session",},
+        {
+            "_scraped_name": "General Assembly: 85",
+            "identifier": "2013-2014",
+            "name": "2013-2014 Regular Session",
+        },
+        {
+            "_scraped_name": "General Assembly: 86",
+            "identifier": "2015-2016",
+            "name": "2015-2016 Regular Session",
+        },
         {
             "_scraped_name": "General Assembly: 87",
             "identifier": "2017-2018",
@@ -59,17 +61,6 @@ class Iowa(Jurisdiction):
         "General Assembly: 76",
     ]
 
-    def get_organizations(self):
-        legislature_name = "Iowa General Assembly"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
-
     def get_session_list(self):
         sessions = url_xpath(
             "https://www.legis.iowa.gov/legislation/findLegislation",
@@ -78,5 +69,8 @@ class Iowa(Jurisdiction):
 
         return [
             x[0]
-            for x in filter(lambda x: x != [], [re.findall(r"^.*Assembly: [0-9]+", session) for session in sessions],)
+            for x in filter(
+                lambda x: x != [],
+                [re.findall(r"^.*Assembly: [0-9]+", session) for session in sessions],
+            )
         ]
