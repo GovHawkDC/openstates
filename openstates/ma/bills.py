@@ -193,6 +193,8 @@ class MABillScraper(Scraper):
         if "SRes" in bill_id:
             bill_id = bill_id.replace("SRes", "SR")
 
+        self.info(bill_title)
+
         bill = Bill(
             bill_id,
             legislative_session=session,
