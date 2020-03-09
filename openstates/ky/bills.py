@@ -329,7 +329,7 @@ class KYBillScraper(Scraper, LXMLMixin):
                 lines_to_go_through = math.ceil(not_voting / len(line.split()))
                 next_line = pdflines[x]
                 for y in range(lines_to_go_through):
-                    if len(pdflines) >= (x + y + 2):
+                    if len(pdflines) > (x + y + 2):
                         next_line = pdflines[x + y + 2].split("  ")
                         for v in next_line:
                             if v:
