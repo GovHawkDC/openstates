@@ -113,7 +113,7 @@ class BillDetail(Page):
                 elif version_url.endswith("HTML"):
                     mimetype = "text/html"
 
-                self.obj.add_version_link(name, version_url, media_type=mimetype)
+                self.obj.add_version_link(name, version_url, media_type=mimetype, on_duplicate="ignore")
         except IndexError:
             self.obj.extras["places"] = []  # set places to something no matter what
             self.scraper.warning("No version table for {}".format(self.obj.identifier))
@@ -150,7 +150,7 @@ class BillDetail(Page):
                     elif version_url.endswith("HTML"):
                         mimetype = "text/html"
 
-                    self.obj.add_version_link(name, version_url, media_type=mimetype)
+                    self.obj.add_version_link(name, version_url, media_type=mimetype, on_duplicate="ignore")
         except IndexError:
             self.scraper.warning(
                 "No {} amendments table for {}".format(amend_type, self.obj.identifier)
