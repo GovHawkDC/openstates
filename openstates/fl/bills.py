@@ -373,6 +373,10 @@ class FloorVote(PDF):
 
 class UpperComVote(PDF):
     def handle_page(self):
+        if len(self.lines) < 5:
+            self.scraper.warning("Vote appears to be empty")
+            return
+
         (_, motion) = self.lines[5].split("FINAL ACTION:")
         motion = motion.strip()
         if not motion:
