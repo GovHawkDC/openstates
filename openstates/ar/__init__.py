@@ -1,6 +1,4 @@
-from pupa.scrape import Jurisdiction, Organization
-from openstates.utils import url_xpath
-
+from openstates.utils import url_xpath, State
 from .people import ARLegislatorScraper
 from .bills import ARBillScraper
 
@@ -8,11 +6,7 @@ from .bills import ARBillScraper
 # from .events import AREventScraper
 
 
-class Arkansas(Jurisdiction):
-    division_id = "ocd-division/country:us/state:ar"
-    classification = "government"
-    name = "Arkansas"
-    url = "http://www.arkleg.state.ar.us"
+class Arkansas(State):
     scrapers = {
         "people": ARLegislatorScraper,
         # 'committees': ARCommitteeScraper,
@@ -29,7 +23,7 @@ class Arkansas(Jurisdiction):
             "start_date": "2011-01-10",
         },
         {
-            "_scraped_name": "Fiscal Session 2012",
+            "_scraped_name": "Fiscal Session, 2012",
             "classification": "special",
             "end_date": "2012-03-09",
             "identifier": "2012F",
@@ -149,10 +143,16 @@ class Arkansas(Jurisdiction):
         {
             "_scraped_name": "Regular Session, 2019",
             "classification": "primary",
-            "end_date": "2019-01-19",
             "identifier": "2019",
             "name": "2019 Regular Session",
-            "start_date": "2019-03-30",
+            "start_date": "2019-01-14",
+        },
+        {
+            "_scraped_name": "Fiscal Session, 2020",
+            "classification": "special",
+            "identifier": "2020F",
+            "name": "2020 Fiscal Session",
+            "start_date": "2020-04-08",
         },
     ]
     ignored_scraped_sessions = [
@@ -161,49 +161,38 @@ class Arkansas(Jurisdiction):
         "Regular Session, 2007",
         "First Extraordinary Session, 2008",
         "Regular Session, 2005",
-        "First Extraordinary Session, 2006 ",
-        "Regular Session, 2003 ",
+        "First Extraordinary Session, 2006",
+        "Regular Session, 2003",
         "First Extraordinary Session, 2003",
         "Second Extraordinary Session, 2003",
-        "Regular Session, 2001 ",
+        "Regular Session, 2001",
         "First Extraordinary Session, 2002",
         "Regular Session, 1999",
         "First Extraordinary Session, 2000",
         "Second Extraordinary Session, 2000",
-        "Regular Session, 1997 ",
-        "Regular Session, 1995 ",
-        "First Extraordinary Session, 1995 ",
-        "Regular Session, 1993 ",
-        "First Extraordinary Session, 1993 ",
+        "Regular Session, 1997",
+        "Regular Session, 1995",
+        "First Extraordinary Session, 1995",
+        "Regular Session, 1993",
+        "First Extraordinary Session, 1993",
         "Second Extraordinary Session, 1993",
         "Regular Session, 1991",
-        "First Extraordinary Session, 1991 ",
-        "Second Extraordinary Session, 1991 ",
+        "First Extraordinary Session, 1991",
+        "Second Extraordinary Session, 1991",
         "Regular Session, 1989",
         "First Extraordinary Session, 1989",
         "Second Extraordinary Session, 1989",
-        "Third Extraordinary Session, 1989 ",
-        "Regular Session, 1987 ",
+        "Third Extraordinary Session, 1989",
+        "Regular Session, 1987",
         "First Extraordinary Session, 1987",
         "Second Extraordinary Session, 1987",
         "Third Extraordinary Session, 1987",
         "Fourth Extraordinary Session, 1987",
     ]
 
-    def get_organizations(self):
-        legislature_name = "Arkansas General Assembly"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
-
     def get_session_list(self):
         links = url_xpath(
-            "http://www.arkleg.state.ar.us/assembly/2013/2013R/Pages" "/Previous%20Legislatures.aspx", "//a",
+            "https://www.arkleg.state.ar.us/Bills/Search", "//label[@class='session']"
         )
-        sessions = [a.text_content() for a in links if "Session" in a.attrib.get("title", "")]
+        sessions = [a.text_content() for a in links]
         return sessions

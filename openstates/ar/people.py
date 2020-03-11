@@ -25,7 +25,11 @@ class ARLegislatorScraper(Scraper):
         page = self.get(url).text
         root = lxml.html.fromstring(page)
 
-        for a in root.xpath('//table[@class="dxgvTable"]' '/tr[contains(@class, "dxgvDataRow")]' "/td[1]/a"):
+        for a in root.xpath(
+            '//table[@class="dxgvTable"]'
+            '/tr[contains(@class, "dxgvDataRow")]'
+            "/td[1]/a"
+        ):
             member_url = a.get("href").replace("../", "/")
 
             yield from self.scrape_member(chamber, member_url)
@@ -77,7 +81,13 @@ class ARLegislatorScraper(Scraper):
             self.warning("Member has no district listed; skipping them")
             return
 
-        person = Person(name=full_name, district=district, party=party, primary_org=chamber, image=photo_url,)
+        person = Person(
+            name=full_name,
+            district=district,
+            party=party,
+            primary_org=chamber,
+            image=photo_url,
+        )
 
         person.add_link(member_url)
         person.add_source(member_url)
@@ -99,7 +109,9 @@ class ARLegislatorScraper(Scraper):
             person.add_contact_detail(type="email", value=email, note="District Office")
 
         try:
-            person.extras["occupation"] = re.search(r"Occupation(.+)\r", info_box).group(1)
+            person.extras["occupation"] = re.search(
+                r"Occupation(.+)\r", info_box
+            ).group(1)
         except AttributeError:
             pass
 
