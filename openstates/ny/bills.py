@@ -215,6 +215,8 @@ class NYBillScraper(Scraper):
         if bill_data["summary"]:
             bill.add_abstract(bill_data["summary"], note="")
 
+        print(bill_data["amendments"]["items"])
+
         bill_active_version = bill_data["amendments"]["items"][active_version]
 
         # Parse sponsors.
