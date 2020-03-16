@@ -36,7 +36,10 @@ def backoff(function, *args, **kwargs):
                 raise ValueError("Roll Call Vote isn't published")
 
             backoff = (attempt + 1) * 15
-            log.warning("[attempt %s]: Connection broke. Backing off for %s seconds." % (attempt, backoff))
+            log.warning(
+                "[attempt %s]: Connection broke. Backing off for %s seconds."
+                % (attempt, backoff)
+            )
             log.info(str(e))
             time.sleep(backoff)
 
@@ -44,6 +47,7 @@ def backoff(function, *args, **kwargs):
 
 
 SESSION_SITE_IDS = {
+    "2020_ss": 28,
     "2019_20": 27,
     "2018_ss": 26,
     "2017_18": 25,

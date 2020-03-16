@@ -1,5 +1,4 @@
-from pupa.scrape import Jurisdiction, Organization
-
+from openstates.utils import State
 from .util import get_client, backoff
 from .bills import GABillScraper
 from .people import GAPersonScraper
@@ -7,21 +6,33 @@ from .people import GAPersonScraper
 # from .committees import GACommitteeScraper
 
 
-class Georgia(Jurisdiction):
-    division_id = "ocd-division/country:us/state:ga"
-    classification = "government"
-    name = "Georgia"
-    url = "http://www.legis.ga.gov/"
+class Georgia(State):
     scrapers = {
         "bills": GABillScraper,
         "people": GAPersonScraper,
         # 'committee': GACommitteeScraper,
     }
     legislative_sessions = [
-        {"_scraped_name": "2011-2012 Regular Session", "identifier": "2011_12", "name": "2011-2012 Regular Session",},
-        {"_scraped_name": "2011 Special Session", "identifier": "2011_ss", "name": "2011 Special Session",},
-        {"_scraped_name": "2013-2014 Regular Session", "identifier": "2013_14", "name": "2013-2014 Regular Session",},
-        {"_scraped_name": "2015-2016 Regular Session", "identifier": "2015_16", "name": "2015-2016 Regular Session",},
+        {
+            "_scraped_name": "2011-2012 Regular Session",
+            "identifier": "2011_12",
+            "name": "2011-2012 Regular Session",
+        },
+        {
+            "_scraped_name": "2011 Special Session",
+            "identifier": "2011_ss",
+            "name": "2011 Special Session",
+        },
+        {
+            "_scraped_name": "2013-2014 Regular Session",
+            "identifier": "2013_14",
+            "name": "2013-2014 Regular Session",
+        },
+        {
+            "_scraped_name": "2015-2016 Regular Session",
+            "identifier": "2015_16",
+            "name": "2015-2016 Regular Session",
+        },
         {
             "_scraped_name": "2017-2018 Regular Session",
             "identifier": "2017_18",
@@ -43,6 +54,13 @@ class Georgia(Jurisdiction):
             "start_date": "2019-01-14",
             "end_date": "2020-03-31",
         },
+        {
+            "_scraped_name": "2020 Special Session",
+            "identifier": "2020_ss",
+            "name": "2020 Special Session",
+            "start_date": "2020-03-16",
+            "end_date": "2020-03-20",
+        },
     ]
     ignored_scraped_sessions = [
         "2009-2010 Regular Session",
@@ -56,17 +74,6 @@ class Georgia(Jurisdiction):
         "2001-2002 Regular Session",
     ]
 
-    def get_organizations(self):
-        legislature_name = "Georgia General Assembly"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
-
     def get_session_list(self):
         sessions = get_client("Session").service
 
@@ -74,4 +81,6 @@ class Georgia(Jurisdiction):
         # import pdb; pdb.set_trace()
         # sessions <-- check the Id for the _guid
 
-        return [x["Description"].strip() for x in backoff(sessions.GetSessions)["Session"]]
+        return [
+            x["Description"].strip() for x in backoff(sessions.GetSessions)["Session"]
+        ]

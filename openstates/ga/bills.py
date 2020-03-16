@@ -129,7 +129,9 @@ class GABillScraper(Scraper):
             self.info("no session specified, using %s", session)
         sid = SESSION_SITE_IDS[session]
 
-        legislation = backoff(self.lservice.GetLegislationForSession, sid)["LegislationIndex"]
+        legislation = backoff(self.lservice.GetLegislationForSession, sid)[
+            "LegislationIndex"
+        ]
 
         for leg in legislation:
             lid = leg["Id"]
@@ -137,7 +139,15 @@ class GABillScraper(Scraper):
             history = [x for x in instrument["StatusHistory"][0]]
 
             actions = reversed(
-                [{"code": x["Code"], "action": x["Description"], "_guid": x["Id"], "date": x["Date"],} for x in history]
+                [
+                    {
+                        "code": x["Code"],
+                        "action": x["Description"],
+                        "_guid": x["Id"],
+                        "date": x["Date"],
+                    }
+                    for x in history
+                ]
             )
 
             guid = instrument["Id"]
@@ -147,7 +157,7 @@ class GABillScraper(Scraper):
             bill_chamber = chamber_map[bill_prefix[0]]
             bill_type = bill_type_map[bill_prefix[1:]]
 
-            bill_id = "%s %s" % (bill_prefix, instrument["Number"],)
+            bill_id = "%s %s" % (bill_prefix, instrument["Number"])
             if instrument["Suffix"]:
                 bill_id += instrument["Suffix"]
 
@@ -158,7 +168,11 @@ class GABillScraper(Scraper):
                 continue
 
             bill = Bill(
-                bill_id, legislative_session=session, chamber=bill_chamber, title=title, classification=bill_type,
+                bill_id,
+                legislative_session=session,
+                chamber=bill_chamber,
+                title=title,
+                classification=bill_type,
             )
             bill.add_abstract(description, note="description")
             bill.extras = {"guid": guid}
@@ -198,7 +212,9 @@ class GABillScraper(Scraper):
             committees = instrument["Committees"]
             if committees:
                 for committee in committees[0]:
-                    ccommittees[{"House": "lower", "Senate": "upper",}[committee["Type"]]].append(committee["Name"])
+                    ccommittees[
+                        {"House": "lower", "Senate": "upper"}[committee["Type"]]
+                    ].append(committee["Name"])
 
             for action in actions:
                 action_chamber = chamber_map[action["code"][0]]
@@ -226,10 +242,7 @@ class GABillScraper(Scraper):
                 )
                 for committee in committees:
                     act.add_related_entity(committee, "organization")
-                act.extras = {
-                    "code": action["code"],
-                    "guid": action["_guid"],
-                }
+                act.extras = {"code": action["code"], "guid": action["_guid"]}
 
             sponsors = []
             if instrument["Authors"]:
@@ -249,7 +262,9 @@ class GABillScraper(Scraper):
                 )
 
             for version in instrument["Versions"]["DocumentDescription"]:
-                name, url, doc_id, version_id = [version[x] for x in ["Description", "Url", "Id", "Version"]]
+                name, url, doc_id, version_id = [
+                    version[x] for x in ["Description", "Url", "Id", "Version"]
+                ]
                 link = bill.add_version_link(name, url, media_type="application/pdf")
                 link["extras"] = {
                     "_internal_document_id": doc_id,
@@ -258,6 +273,6 @@ class GABillScraper(Scraper):
 
             bill.add_source(self.msource)
             bill.add_source(self.lsource)
-            bill.add_source(SOURCE_URL.format(**{"session": session, "bid": guid,}))
+            bill.add_source(SOURCE_URL.format(**{"session": session, "bid": guid}))
 
             yield bill
