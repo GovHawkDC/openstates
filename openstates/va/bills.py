@@ -9,6 +9,9 @@ from spatula import Page, Spatula
 from pupa.scrape import Scraper, Bill, VoteEvent
 from .common import SESSION_SITE_IDS
 
+import http.client
+http.client.HTTPConnection._http_vsn = 10
+http.client.HTTPConnection._http_vsn_str = 'HTTP/1.0'
 
 tz = pytz.timezone("America/New_York")
 
