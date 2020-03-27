@@ -244,7 +244,12 @@ class KYBillScraper(Scraper, LXMLMixin):
             )
 
     def scrape_votes(self, vote_url, bill, chamber):
-        filename, response = self.urlretrieve(vote_url)
+        try:
+            filename, response = self.urlretrieve(vote_url)
+        except scrapelib.HTTPError:
+            self.logger.warning("PDF not posted or available")
+            return
+        
         # Grabs text from pdf
         pdflines = [
             line.decode("utf-8") for line in convert_pdf(filename, "text").splitlines()
