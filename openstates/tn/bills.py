@@ -49,7 +49,11 @@ _categorizer_rules = (
     Rule(r"(?i)ref\. to (?P<committees>.+?Comm\.)", "referral-committee"),
     Rule(r"^Failed In S\.(?P<committees>.+?Comm\.)", "committee-failure"),
     Rule(r"^Failed In s/c (?P<committees>.+)", "committee-failure"),
-    Rule(r"Rcvd\. from H., ref\. to S\. (?P<committees>.+)", "referral-committee", chamber="upper",),
+    Rule(
+        r"Rcvd\. from H., ref\. to S\. (?P<committees>.+)",
+        "referral-committee",
+        chamber="upper",
+    ),
     Rule(r"Placed on cal\. (?P<committees>.+?) for", stop=False),
     Rule(r"Taken off notice for cal in s/c (?P<committees>.+)"),
     Rule(r"to be heard in (?P<committees>.+?Comm\.)"),
@@ -64,9 +68,16 @@ _categorizer_rules = (
     Rule(r"Recalled from S. (?P<committees>.+?Comm.)"),
     # Amendments
     Rule(r"^Am\..+?tabled", "amendment-deferral"),
-    Rule(r"^Am\. withdrawn\.\(Amendment \d+ \- (?P<version>\S+)", "amendment-withdrawal"),
-    Rule(r"^Am\. reconsidered(, withdrawn)?\.\(Amendment \d \- (?P<version>.+?\))", "amendment-withdrawal",),
-    Rule(r"adopted am\.\(Amendment \d+ of \d+ - (?P<version>\S+)\)", "amendment-passage"),
+    Rule(
+        r"^Am\. withdrawn\.\(Amendment \d+ \- (?P<version>\S+)", "amendment-withdrawal"
+    ),
+    Rule(
+        r"^Am\. reconsidered(, withdrawn)?\.\(Amendment \d \- (?P<version>.+?\))",
+        "amendment-withdrawal",
+    ),
+    Rule(
+        r"adopted am\.\(Amendment \d+ of \d+ - (?P<version>\S+)\)", "amendment-passage"
+    ),
     Rule(r"refused to concur.+?in.+?am", "amendment-failure"),
     # Bill passage
     Rule(r"^Passed H\.", "passage", chamber="lower"),
@@ -147,7 +158,7 @@ def categorize_action(action):
     return list(types), attrs
 
 
-def actions_from_table(bill, actions_table):
+def actions_from_table(self, bill, actions_table):
     """
     """
     action_rows = actions_table.xpath("tr")
@@ -165,7 +176,19 @@ def actions_from_table(bill, actions_table):
         action_date = strptime(tds[1].text.strip(), "%m/%d/%Y").date()
         action_types, attrs = categorize_action(action_taken)
         # Overwrite any presumtive fields that are inaccurate, usually chamber.
-        action = dict(action=action_taken, date=action_date, classification=action_types, chamber=chamber,)
+        if action_date < self.minimum_date.date():
+            self.warning(
+                "{} occurred on {}, before minimum date. Skipping"
+                .format(action_taken, action_date.strftime("%Y-%m-%d"))
+            )
+            continue
+
+        action = dict(
+            action=action_taken,
+            date=action_date,
+            classification=action_types,
+            chamber=chamber,
+        )
         action.update(**attrs)
 
         # Finally, if a vote tally is given, switch the chamber.
@@ -180,7 +203,10 @@ def actions_from_table(bill, actions_table):
         # TODO: Add `committees` scraped from the action using related_entities
         # Can we also make use of `version`?
         bill.add_action(
-            action["action"], action["date"], chamber=action["chamber"], classification=action["classification"],
+            action["action"],
+            action["date"],
+            chamber=action["chamber"],
+            classification=action["classification"],
         )
 
 
@@ -222,10 +248,25 @@ def listing_matches_chamber(listing, chamber):
 
 
 class TNBillScraper(Scraper):
+    # On rare occasions the TN site dumps actions and votes from previous sessions
+    # on bill pages, so establish a minimum sensible action date
+    minimum_date = False
+
     def scrape(self, session=None, chamber=None):
         if not session:
             session = self.latest_session()
             self.info("no session specified, using %s", session)
+
+        session_meta = next(
+            each
+            for each in self.jurisdiction.legislative_sessions
+            if each["identifier"] == session
+        )
+
+        self.minimum_date = datetime.datetime.strptime(session_meta['start_date'], '%Y-%m-%d')
+        self.minimum_date = self.minimum_date - datetime.timedelta(days=60)
+
+        print(self.minimum_date)
 
         self._seen_votes = set()
         chambers = [chamber] if chamber else ["upper", "lower"]
@@ -257,7 +298,9 @@ class TNBillScraper(Scraper):
             if not listing_matches_chamber(bill_listing, chamber):
                 self.logger.info(
                     "Skipping bill listing '{bill_listing}' "
-                    "Does not match chamber '{chamber}'".format(bill_listing=bill_listing, chamber=chamber)
+                    "Does not match chamber '{chamber}'".format(
+                        bill_listing=bill_listing, chamber=chamber
+                    )
                 )
                 continue
 
@@ -267,7 +310,10 @@ class TNBillScraper(Scraper):
             bill_list_page.make_links_absolute(bill_listing)
 
             for bill_link in set(
-                bill_list_page.xpath('//h1[text()="Legislation"]/following-sibling::div/' "div/div/div//a/@href")
+                bill_list_page.xpath(
+                    '//h1[text()="Legislation"]/following-sibling::div/'
+                    "div/div/div//a/@href"
+                )
             ):
                 bill = self.scrape_bill(session, bill_link)
                 if bill:
@@ -318,7 +364,11 @@ class TNBillScraper(Scraper):
         subjects = filter(None, subjects)
 
         bill = Bill(
-            bill_id, legislative_session=session, chamber=primary_chamber, title=title, classification=bill_type,
+            bill_id,
+            legislative_session=session,
+            chamber=primary_chamber,
+            title=title,
+            classification=bill_type,
         )
         for subject in subjects:
             bill.add_subject(subject)
@@ -327,22 +377,34 @@ class TNBillScraper(Scraper):
             bill.add_identifier(secondary_bill_id)
 
         if page.xpath('//span[@id="lblCompNumber"]/a'):
-            companion_id = page.xpath('//span[@id="lblCompNumber"]/a')[0].text_content().strip()
+            companion_id = (
+                page.xpath('//span[@id="lblCompNumber"]/a')[0].text_content().strip()
+            )
             bill.add_related_bill(
-                identifier=companion_id, legislative_session=session, relation_type="companion",
+                identifier=companion_id,
+                legislative_session=session,
+                relation_type="companion",
             )
 
         bill.add_source(bill_url)
 
         # Primary Sponsor
-        sponsor = page.xpath("//span[@id='lblBillPrimeSponsor']")[0].text_content().split("by")[-1]
+        sponsor = (
+            page.xpath("//span[@id='lblBillPrimeSponsor']")[0]
+            .text_content()
+            .split("by")[-1]
+        )
         sponsor = sponsor.replace("*", "").strip()
         if sponsor:
-            bill.add_sponsorship(sponsor, classification="primary", entity_type="person", primary=True)
+            bill.add_sponsorship(
+                sponsor, classification="primary", entity_type="person", primary=True
+            )
 
         # bill text
         btext = page.xpath("//span[@id='lblBillNumber']/a")[0]
-        bill.add_version_link("Current Version", btext.get("href"), media_type="application/pdf")
+        bill.add_version_link(
+            "Current Version", btext.get("href"), media_type="application/pdf"
+        )
 
         # documents
         summary = page.xpath('//a[contains(@href, "BillSummaryArchive")]')
@@ -357,27 +419,38 @@ class TNBillScraper(Scraper):
         # amendment notes in image with alt text describing doc inside <a>
         amend_fns = page.xpath('//img[contains(@alt, "Fiscal Memo")]')
         for afn in amend_fns:
-            bill.add_document_link(afn.get("alt"), afn.getparent().get("href"), on_duplicate="ignore")
+            bill.add_document_link(
+                afn.get("alt"), afn.getparent().get("href"), on_duplicate="ignore"
+            )
 
         # actions
         atable = page.xpath("//table[@id='gvBillActionHistory']")[0]
-        actions_from_table(bill, atable)
+        actions_from_table(self, bill, atable)
 
         # if there is a matching bill
         if secondary_bill_id:
             # secondary sponsor
-            secondary_sponsor = page.xpath("//span[@id='lblCompPrimeSponsor']")[0].text_content().split("by")[-1]
-            secondary_sponsor = secondary_sponsor.replace("*", "").replace(")", "").strip()
+            secondary_sponsor = (
+                page.xpath("//span[@id='lblCompPrimeSponsor']")[0]
+                .text_content()
+                .split("by")[-1]
+            )
+            secondary_sponsor = (
+                secondary_sponsor.replace("*", "").replace(")", "").strip()
+            )
             # Skip black-name sponsors.
             if secondary_sponsor:
                 bill.add_sponsorship(
-                    secondary_sponsor, classification="primary", entity_type="person", primary=True,
+                    secondary_sponsor,
+                    classification="primary",
+                    entity_type="person",
+                    primary=True,
                 )
 
             # secondary actions
             if page.xpath("//table[@id='gvCoActionHistory']"):
                 cotable = page.xpath("//table[@id='gvCoActionHistory']")[0]
-                actions_from_table(bill, cotable)
+                actions_from_table(self, bill, cotable)
 
         # votes
         yield from self.scrape_vote_events(bill, page, bill_url)
@@ -388,7 +461,9 @@ class TNBillScraper(Scraper):
     def scrape_vote_events(self, bill, page, link):
         chamber_labels = (("lower", "lblHouseVoteData"), ("upper", "lblSenateVoteData"))
         for chamber, element_id in chamber_labels:
-            raw_vote_data = page.xpath("//*[@id='{}']".format(element_id))[0].text_content()
+            raw_vote_data = page.xpath("//*[@id='{}']".format(element_id))[
+                0
+            ].text_content()
             votes = self.scrape_votes_for_chamber(chamber, raw_vote_data, bill, link)
             for vote in votes:
                 yield vote
@@ -405,6 +480,13 @@ class TNBillScraper(Scraper):
             vote_date = re.search(r"(\d+/\d+/\d+)", motion)
             if vote_date:
                 vote_date = datetime.datetime.strptime(vote_date.group(), "%m/%d/%Y")
+
+            if (vote_date.date() < self.minimum_date.date()):
+                self.warning(
+                    "{} occurred on {}, before minimum date. Skipping"
+                    .format(motion, vote_date.strftime("%Y-%m-%d"))
+                )
+                return
 
             passed = (
                 "Passed" in motion
