@@ -35,7 +35,9 @@ def clean_journal(root):
             parent.remove(el)
 
     for el in root.xpath("//p[contains(text(), 'JOURNAL')]"):
-        if ("HOUSE JOURNAL" in el.text or "SENATE JOURNAL" in el.text) and "Day" in el.text:
+        if (
+            "HOUSE JOURNAL" in el.text or "SENATE JOURNAL" in el.text
+        ) and "Day" in el.text:
             parent = el.getparent()
             parent.remove(el)
 
@@ -67,7 +69,16 @@ def names(el):
             continue
 
         name = clean_name_special_cases(name)
-        names.append(name)
+
+        if ";" in name:
+            names_still_with_semicolon = name.split(";")
+            for n in names_still_with_semicolon:
+                n = n.strip().replace(".", "")
+                if " — " in n:
+                    n = n.split()[-1]
+                names.append(n)
+        else:
+            names.append(name)
 
     if names:
         # First item in the list will have stuff to ignore before an mdash
@@ -146,7 +157,9 @@ class BaseVote(object):
 class MaybeVote(BaseVote):
     yeas_pattern = re.compile(r"yeas[\s\xa0]+(\d+)|(\d+)[\s\xa0]+yeas", re.IGNORECASE)
     nays_pattern = re.compile(r"nays[\s\xa0]+(\d+)|(\d+)[\s\xa0]+nays", re.IGNORECASE)
-    present_pattern = re.compile(r"present[\s\xa0]+(\d+)|(\d+)[\s\xa0]+present", re.IGNORECASE)
+    present_pattern = re.compile(
+        r"present[\s\xa0]+(\d+)|(\d+)[\s\xa0]+present", re.IGNORECASE
+    )
     record_pattern = re.compile(r"\(record[\s\xa0]+(\d+)\)", re.IGNORECASE)
     passed_pattern = re.compile(r"(adopted|passed|prevailed)", re.IGNORECASE)
     check_prev_pattern = re.compile(r"the (motion|resolution)", re.IGNORECASE)
@@ -155,7 +168,11 @@ class MaybeVote(BaseVote):
 
     @property
     def is_valid(self):
-        return super(MaybeVote, self).is_valid and self.yeas is not None and self.nays is not None
+        return (
+            super(MaybeVote, self).is_valid
+            and self.yeas is not None
+            and self.nays is not None
+        )
 
     @property
     def is_amendment(self):
@@ -207,7 +224,8 @@ class MaybeViva(BaseVote):
     @property
     def is_valid(self):
         return (
-            super(MaybeViva, self).is_valid and self.viva_voce_pattern.search(self.previous.text_content()) is not None
+            super(MaybeViva, self).is_valid
+            and self.viva_voce_pattern.search(self.previous.text_content()) is not None
         )
 
     @property
@@ -323,8 +341,12 @@ class TXVoteScraper(Scraper):
         day_num = 1
         while journal_day <= today:
             if "lower" in chambers:
-                journal_root = "https://journals.house.texas.gov/HJRNL/%s/HTML/" % session
-                journal_url = journal_root + session + "DAY" + str(day_num).zfill(2) + "FINAL.HTM"
+                journal_root = (
+                    "https://journals.house.texas.gov/HJRNL/%s/HTML/" % session
+                )
+                journal_url = (
+                    journal_root + session + "DAY" + str(day_num).zfill(2) + "FINAL.HTM"
+                )
                 try:
                     self.get(journal_url)
                 except scrapelib.HTTPError:
@@ -333,7 +355,9 @@ class TXVoteScraper(Scraper):
                     yield from self.scrape_journal(journal_url, "lower", session)
 
             if "upper" in chambers:
-                journal_root = "https://journals.senate.texas.gov/SJRNL/%s/HTML/" % session
+                journal_root = (
+                    "https://journals.senate.texas.gov/SJRNL/%s/HTML/" % session
+                )
                 journal_url = journal_root + "%sSJ%s-%s-F.HTM" % (
                     session,
                     str(journal_day.month).zfill(2),
@@ -364,7 +388,10 @@ class TXVoteScraper(Scraper):
             if year is None:
                 return
             fname = os.path.split(urlparse.urlparse(url).path)[-1]
-            date_str = re.match(r"%sSJ(\d\d-\d\d).*\.HTM" % session, fname).group(1) + " %s" % year
+            date_str = (
+                re.match(r"%sSJ(\d\d-\d\d).*\.HTM" % session, fname).group(1)
+                + " %s" % year
+            )
             date = datetime.datetime.strptime(date_str, "%m-%d %Y").date()
 
         for vn, vote in enumerate(votes(root, session, chamber)):
@@ -383,11 +410,18 @@ class TXVoteScraper(Scraper):
         else:
             session_num = session
         session_instance = next(
-            (s for s in self.jurisdiction.legislative_sessions if s["identifier"] == session_num), None,
+            (
+                s
+                for s in self.jurisdiction.legislative_sessions
+                if s["identifier"] == session_num
+            ),
+            None,
         )
 
         if session_instance is None:
             self.warning("Session metadata could not be found for %s", session)
             return None
-        year = datetime.datetime.strptime(session_instance["start_date"], "%Y-%m-%d").year
+        year = datetime.datetime.strptime(
+            session_instance["start_date"], "%Y-%m-%d"
+        ).year
         return year
