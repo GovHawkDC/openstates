@@ -46,7 +46,9 @@ class WIBillScraper(Scraper):
 
     def scrape_subjects(self, year, site_id):
         last_url = None
-        next_url = "http://docs.legis.wisconsin.gov/%s/related/subject_index/index/" % year
+        next_url = (
+            "http://docs.legis.wisconsin.gov/%s/related/subject_index/index/" % year
+        )
         last_subject = None
 
         # if you visit this page in your browser it is infinite-scrolled
@@ -72,7 +74,9 @@ class WIBillScraper(Scraper):
                 bill_id = bill_a.text_content().split()[-1]
 
                 # subject is in the immediately preceding span
-                preceding_subject = bill_a.xpath('./preceding::div[contains(@class,"qsSubject")]/text()')
+                preceding_subject = bill_a.xpath(
+                    './preceding::div[contains(@class,"qsSubject")]/text()'
+                )
                 # there wasn't a subject get the one from end of the prior page
                 if not preceding_subject:
                     preceding_subject = last_subject[0]
@@ -108,7 +112,12 @@ class WIBillScraper(Scraper):
         types = ("bill", "joint_resolution", "resolution")
 
         for type in types:
-            url = "http://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (year, site_id, chamber_slug, type,)
+            url = "http://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (
+                year,
+                site_id,
+                chamber_slug,
+                type,
+            )
 
             yield from self.scrape_bill_list(chamber, session, url)
 
@@ -133,9 +142,19 @@ class WIBillScraper(Scraper):
             bill_id = bill_url.rsplit("/", 1)[-1]
             bill_id = bill_id.upper()
 
-            title = b.xpath('./div[@class="span6"]/text()')[0].replace(" - Relating to: ", "").strip()
+            title = (
+                b.xpath('./div[@class="span6"]/text()')[0]
+                .replace(" - Relating to: ", "")
+                .strip()
+            )
 
-            bill = Bill(bill_id, legislative_session=session, title=title, chamber=chamber, classification=bill_type,)
+            bill = Bill(
+                bill_id,
+                legislative_session=session,
+                title=title,
+                chamber=chamber,
+                classification=bill_type,
+            )
             bill.subject = list(set(self.subjects[bill_id]))
             yield from self.scrape_bill_history(bill, bill_url, chamber)
 
@@ -169,10 +188,14 @@ class WIBillScraper(Scraper):
                 or "Engrossed Resolution" in a.text
                 or "Text as Enrolled" in a.text
             ):
-                bill.add_version_link(a.text, a.get("href"), media_type="text/html", on_duplicate="ignore")
+                bill.add_version_link(
+                    a.text, a.get("href"), media_type="text/html", on_duplicate="ignore"
+                )
 
                 pdf = a.xpath("following-sibling::span/a/@href")[0]
-                bill.add_version_link(a.text, pdf, media_type="application/pdf", on_duplicate="ignore")
+                bill.add_version_link(
+                    a.text, pdf, media_type="application/pdf", on_duplicate="ignore"
+                )
 
             elif a.text in (
                 "Amendments",
@@ -186,7 +209,7 @@ class WIBillScraper(Scraper):
                     if extra_a.text:
                         bill.add_document_link(extra_a.text, extra_a.get("href"))
             else:
-                self.warning("unknown document %s %s" % (bill.identifier, a.text))
+                bill.add_document_link(a.text, a.get("href"), media_type="text/html")
 
         # add actions (second history dl is the full list)
         hist_table = doc.xpath('//table[@class="history"]')[1]
@@ -213,11 +236,17 @@ class WIBillScraper(Scraper):
                 kwargs["related_entities"] = [
                     {
                         "entity_type": "committee",
-                        "name": re.sub("R(ead (first time )?and r)?eferred to committee", "", action,),
+                        "name": re.sub(
+                            "R(ead (first time )?and r)?eferred to committee",
+                            "",
+                            action,
+                        ),
                     }
                 ]
 
-            bill.add_action(action, TIMEZONE.localize(date), chamber=actor, classification=atype)
+            bill.add_action(
+                action, TIMEZONE.localize(date), chamber=actor, classification=atype
+            )
 
             # Amendment links, only on passage
             if atype is not None and "amendment-passage" in atype:
@@ -225,11 +254,17 @@ class WIBillScraper(Scraper):
                 version_name = amd_link.text_content()
                 version_url = amd_link.get("href")
                 bill.add_version_link(
-                    version_name, version_url, media_type="text/html", on_duplicate="ignore",
+                    version_name,
+                    version_url,
+                    media_type="text/html",
+                    on_duplicate="ignore",
                 )
                 pdf_url = "{}.pdf".format(version_url)
                 bill.add_version_link(
-                    version_name, pdf_url, media_type="application/pdf", on_duplicate="ignore",
+                    version_name,
+                    pdf_url,
+                    media_type="application/pdf",
+                    on_duplicate="ignore",
                 )
 
             # if this is a vote, add a Vote to the bill
@@ -379,7 +414,9 @@ class WIBillScraper(Scraper):
         vote.motion_text = motion
 
         header_td = doc.xpath('//div/p[text()[contains(., "AYES")]]')[0].text_content()
-        vote_counts = re.findall(r"AYES - (\d+).*NAYS - (\d+).*NOT VOTING - (\d+).*", header_td)
+        vote_counts = re.findall(
+            r"AYES - (\d+).*NAYS - (\d+).*NOT VOTING - (\d+).*", header_td
+        )
 
         vote.set_count("yes", int(vote_counts[0][0]))
         vote.set_count("no", int(vote_counts[0][1]))
