@@ -202,6 +202,11 @@ class NYBillScraper(Scraper):
     def _scrape_bill(self, session, bill_data):
         details = self._parse_bill_details(bill_data)
 
+        if details is None:
+            print(bill_data)
+            self.warning("Scrape bill failed")
+            return
+
         (senate_url, assembly_url, bill_chamber, bill_type, bill_id, title, (prefix, number, active_version),) = details
 
         bill = Bill(
@@ -214,8 +219,6 @@ class NYBillScraper(Scraper):
 
         if bill_data["summary"]:
             bill.add_abstract(bill_data["summary"], note="")
-
-        print(bill_data["amendments"]["items"])
 
         bill_active_version = bill_data["amendments"]["items"][active_version]
 
