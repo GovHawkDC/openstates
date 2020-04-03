@@ -12,14 +12,23 @@ _categorizer_rules = (
             r"vote by Representative(?P<legislators>.+)",
             r"amended (?P<committees>.+?) committee",
             r"coauthored by (?P<legislators>.+)",
-            (r"Remove Senator .+? as principal Senate author " r"and substitute with Senator (?P<legislators>.+?)"),
+            (
+                r"Remove Senator .+? as principal Senate author "
+                r"and substitute with Senator (?P<legislators>.+?)"
+            ),
             r"(?i)committee substitute (?P<committees>.+)",
             r"(?i)remove\s{,10}as\s{,10}author\s{,10}(?P<legislators>.+);",
             r"(?i)SCs\s{,10}named\s{,10}(?P<legislators>.+)",
-            (r"Pending removal author Senator (?P<legislators>.+?) " r"and replace with Senator"),
+            (
+                r"Pending removal author Senator (?P<legislators>.+?) "
+                r"and replace with Senator"
+            ),
             r"(?i)Representative\(s\)\s{,10}(?P<legislators>.+)",
             r"Withdrawn from Calendar; (?P<committees>.+)",
-            (r"Pending removal author Senator .+? and replace " r"with Senator (?P<legislators>.+)"),
+            (
+                r"Pending removal author Senator .+? and replace "
+                r"with Senator (?P<legislators>.+)"
+            ),
             r"Ayes:\s+(?P<yes_votes>\d+)\s+Nays:\s+(?P<no_votes>\d+)",
             (
                 r"remove as principal author Representative .+? and substitute "
@@ -39,7 +48,10 @@ _categorizer_rules = (
                 r"Pending removal principal author Representative (?P<legislators>.+) "
                 r"and replace with Representative .+"
             ),
-            (r"remove as principal author Representative (?P<legislators>.+?) " r"and substitute with Representative"),
+            (
+                r"remove as principal author Representative (?P<legislators>.+?) "
+                r"and substitute with Representative"
+            ),
             r"CR; Do Pass(, as amended,|, amended by)? (?P<committees>.+)",
             r"coauthor (Senator|Representative) (?P<legislators>.+)",
             r"Ayes:\s+(?P<yes_votes>\d+)\s+Nays:\s+(?P<no_votes>\d+)",
@@ -57,11 +69,26 @@ _categorizer_rules = (
     Rule([u"^Amendment failed"], [u"amendment-failure"]),
     Rule([u"^Amendment restore"], [u"amendment-passage"]),
     Rule("First Reading", ("introduction", "reading-1")),
-    Rule([u"Second Reading referred to (?P<committees>.+)"], [u"referral-committee", u"reading-2"],),
-    Rule([u"Second Reading referred to (?P<committees>.+? Committee)"], [u"referral-committee", u"reading-2"],),
-    Rule([u"Second Reading referred to .+? then to (?P<committees>.+)"], [u"referral-committee", u"reading-2"],),
-    Rule([u"Second Reading referred to (?P<committees>.+?) then to "], [u"referral-committee", u"reading-2"],),
-    Rule([u"Second Reading referred to .+? then to (?P<committees>.+)"], [u"referral-committee", u"reading-2"],),
+    Rule(
+        [u"Second Reading referred to (?P<committees>.+)"],
+        [u"referral-committee", u"reading-2"],
+    ),
+    Rule(
+        [u"Second Reading referred to (?P<committees>.+? Committee)"],
+        [u"referral-committee", u"reading-2"],
+    ),
+    Rule(
+        [u"Second Reading referred to .+? then to (?P<committees>.+)"],
+        [u"referral-committee", u"reading-2"],
+    ),
+    Rule(
+        [u"Second Reading referred to (?P<committees>.+?) then to "],
+        [u"referral-committee", u"reading-2"],
+    ),
+    Rule(
+        [u"Second Reading referred to .+? then to (?P<committees>.+)"],
+        [u"referral-committee", u"reading-2"],
+    ),
     Rule([u"(?i)Placed on Third Reading"], [u"reading-3"]),
     Rule([u"^(?i)Third Reading"], [u"reading-3"]),
     Rule(r"committee substitute (?P<committees>.+?);"),
@@ -70,11 +97,19 @@ _categorizer_rules = (
     Rule([u"CR; Do not pass (?P<committees>.+)"], [u"committee-failure"]),
     Rule([u"rereferred to (?P<committees>.+)"], [u"referral-committee"]),
     Rule([u"Referred to (?P<committees>.+?)"], [u"referral-committee"]),
-    Rule([u"Reported Do Pass, amended by committee substitute (?P<committees>.+?);"], [u"committee-passage"],),
+    Rule(
+        [u"Reported Do Pass, amended by committee substitute (?P<committees>.+?);"],
+        [u"committee-passage"],
+    ),
     Rule([u"^(?i)Reported Do Pass"], [u"committee-passage"]),
-    Rule([u"Do pass, amended by committee substitute (?P<committees>)"], [u"committee-passage"],),
+    Rule(
+        [u"Do pass, amended by committee substitute (?P<committees>)"],
+        [u"committee-passage"],
+    ),
     Rule([u"Sent to Governor"], [u"executive-receipt"], actor="governor"),
-    Rule([u"^(Signed|Approved) by Governor"], [u"executive-signature"], actor="governor"),
+    Rule(
+        [u"^(Signed|Approved) by Governor"], [u"executive-signature"], actor="governor"
+    ),
     Rule([u"^Vetoed"], [u"executive-veto"], actor="governor"),
 )
 

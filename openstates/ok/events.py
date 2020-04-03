@@ -39,7 +39,9 @@ class OKEventScraper(Scraper):
             where = re.search(r"^\s*PLACE:\s+(.+)", data, re.M).group(1)
             where = where.strip()
 
-            event = Event(name=title, start_date=self._tz.localize(when), location_name=where)
+            event = Event(
+                name=title, start_date=self._tz.localize(when), location_name=where
+            )
             event.add_source(url)
 
             yield event

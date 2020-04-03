@@ -27,6 +27,7 @@ class OKBillScraper(Scraper):
         "2017-2018": "1800",
         "2019-2020": "1900",
         "2020": "2000",
+        "2020SS1": "201X",
     }
 
     def scrape(self, chamber=None, session=None, only_bills=None):
@@ -90,7 +91,9 @@ class OKBillScraper(Scraper):
             self.warning("error (%s) fetching %s, skipping" % (e, url))
             return
 
-        title = page.xpath("string(//span[contains(@id, 'PlaceHolder1_txtST')])").strip()
+        title = page.xpath(
+            "string(//span[contains(@id, 'PlaceHolder1_txtST')])"
+        ).strip()
         if not title:
             self.warning("blank bill on %s - skipping", url)
             return
@@ -104,7 +107,13 @@ class OKBillScraper(Scraper):
         else:
             bill_type = ["bill"]
 
-        bill = Bill(bill_id, legislative_session=session, chamber=chamber, title=title, classification=bill_type,)
+        bill = Bill(
+            bill_id,
+            legislative_session=session,
+            chamber=chamber,
+            title=title,
+            classification=bill_type,
+        )
         bill.add_source(url)
         bill.subject = self.subject_map[bill_id]
 
@@ -115,10 +124,15 @@ class OKBillScraper(Scraper):
                 raise Exception(name)
             if "otherAuth" in link.attrib["id"]:
                 bill.add_sponsorship(
-                    name, classification="cosponsor", entity_type="person", primary=False,
+                    name,
+                    classification="cosponsor",
+                    entity_type="person",
+                    primary=False,
                 )
             else:
-                bill.add_sponsorship(name, classification="primary", entity_type="person", primary=True)
+                bill.add_sponsorship(
+                    name, classification="primary", entity_type="person", primary=True
+                )
 
         act_table = page.xpath("//table[contains(@id, 'Actions')]")[0]
         for tr in act_table.xpath("tr")[2:]:
@@ -162,10 +176,14 @@ class OKBillScraper(Scraper):
             name = link.text.strip()
 
             if re.search("COMMITTEE REPORTS|SCHEDULED CCR", version_url, re.IGNORECASE):
-                bill.add_document_link(note=name, url=version_url, media_type="application/pdf")
+                bill.add_document_link(
+                    note=name, url=version_url, media_type="application/pdf"
+                )
                 continue
 
-            bill.add_version_link(note=name, url=version_url, media_type="application/pdf")
+            bill.add_version_link(
+                note=name, url=version_url, media_type="application/pdf"
+            )
 
         self.scrape_amendments(bill, page)
 
@@ -193,7 +211,9 @@ class OKBillScraper(Scraper):
         for link in page.xpath(amd_xpath):
             version_url = link.xpath("@href")[0]
             version_name = link.xpath("string(.)").strip()
-            bill.add_version_link(version_name, version_url, media_type="application/pdf")
+            bill.add_version_link(
+                version_name, version_url, media_type="application/pdf"
+            )
 
     def scrape_votes(self, bill, url):
         page = lxml.html.fromstring(self.get(url).text.replace(u"\xa0", " "))
@@ -212,7 +232,9 @@ class OKBillScraper(Scraper):
                 chamber = "upper"
                 motion_index = 13
 
-            motion = header.xpath("string(following-sibling::p[%d])" % motion_index).strip()
+            motion = header.xpath(
+                "string(following-sibling::p[%d])" % motion_index
+            ).strip()
             motion = re.sub(r"\s+", " ", motion)
             if not motion.strip():
                 self.warning("Motion text not found")
@@ -247,7 +269,10 @@ class OKBillScraper(Scraper):
                 line = sib.xpath("string()").replace("\r\n", " ").strip()
                 if "*****" in line:
                     break
-                regex = r"(YEAS|NAYS|EXCUSED|VACANT|CONSTITUTIONAL " r"PRIVILEGE|NOT VOTING|N/V)\s*:\s*(\d+)(.*)"
+                regex = (
+                    r"(YEAS|NAYS|EXCUSED|VACANT|CONSTITUTIONAL "
+                    r"PRIVILEGE|NOT VOTING|N/V)\s*:\s*(\d+)(.*)"
+                )
                 match = re.match(regex, line)
                 if match:
                     if match.group(1) == "YEAS" and "RCS#" not in line:

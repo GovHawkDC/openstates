@@ -1,16 +1,12 @@
-from pupa.scrape import Jurisdiction, Organization
+from openstates.utils import State
 from .people import OKPersonScraper
+from .bills import OKBillScraper
 
 # from .committees import OKCommitteeScraper
 # from .events import OKEventScraper
-from .bills import OKBillScraper
 
 
-class Oklahoma(Jurisdiction):
-    division_id = "ocd-division/country:us/state:ok"
-    classification = "government"
-    name = "Oklahoma"
-    url = "http://www.oklegislature.gov/"
+class Oklahoma(State):
     scrapers = {
         "people": OKPersonScraper,
         # 'committees': OKCommitteeScraper,
@@ -26,11 +22,39 @@ class Oklahoma(Jurisdiction):
     #   - update the session slug in the Bill scraper
     #   - ignore the odd-year session
     legislative_sessions = [
-        {"_scraped_name": "2012 Regular Session", "identifier": "2011-2012", "name": "2011-2012 Regular Session",},
-        {"_scraped_name": "2012 Special Session", "identifier": "2012SS1", "name": "2012 Special Session",},
-        {"_scraped_name": "2014 Regular Session", "identifier": "2013-2014", "name": "2013-2014 Regular Session",},
-        {"_scraped_name": "2013 Special Session", "identifier": "2013SS1", "name": "2013 Special Session",},
-        {"_scraped_name": "2016 Regular Session", "identifier": "2015-2016", "name": "2015-2016 Regular Session",},
+        {
+            "_scraped_name": "2012 Regular Session",
+            "identifier": "2011-2012",
+            "name": "2011-2012 Regular Session",
+            "start_date": "2011-02-07",
+            "end_date": "2012-05-25",
+        },
+        {
+            "_scraped_name": "2012 Special Session",
+            "identifier": "2012SS1",
+            "name": "2012 Special Session",
+        },
+        {
+            "_scraped_name": "2014 Regular Session",
+            "identifier": "2013-2014",
+            "name": "2013-2014 Regular Session",
+            "start_date": "2013-02-04",
+            "end_date": "2014-05-24",
+        },
+        {
+            "_scraped_name": "2013 Special Session",
+            "identifier": "2013SS1",
+            "name": "2013 Special Session",
+            "start_date": "2013-09-02",
+            "end_date": "2013-09-09",
+        },
+        {
+            "_scraped_name": "2016 Regular Session",
+            "identifier": "2015-2016",
+            "name": "2015-2016 Regular Session",
+            "start_date": "2015-02-02",
+            "end_date": "2016-05-27",
+        },
         {
             "_scraped_name": "2017 First Special Session",
             "identifier": "2017SS1",
@@ -65,6 +89,13 @@ class Oklahoma(Jurisdiction):
             "name": "2020 Regular Session",
             "start_date": "2019-02-03",
         },
+        {
+            "_scraped_name": "2020 First Special Session",
+            "identifier": "2020SS1",
+            "name": "2020 First Special Session",
+            "start_date": "2020-04-02",
+            "end_date": "2020-04-03",
+        },
     ]
     ignored_scraped_sessions = [
         "2017 Regular Session",
@@ -97,17 +128,6 @@ class Oklahoma(Jurisdiction):
         "1994 Regular Session",
         "1993 Regular Session",
     ]
-
-    def get_organizations(self):
-        legislature_name = "Oklahoma Legislature"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
 
     def get_session_list(self):
         from openstates.utils import url_xpath
