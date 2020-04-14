@@ -113,6 +113,7 @@ class AssemblyBillPage(LXMLMixin):
                 "ER": "excused",
                 "AB": "absent",
                 "NV": "not voting",
+                "EL": "other",
             }
 
             for vote_pair in votes:
