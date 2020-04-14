@@ -155,16 +155,12 @@ class MABillScraper(Scraper):
             response = self.get(bill_url)
             self.info("GET (with `requests`) - {}".format(bill_url))
         except requests.exceptions.RequestException:
-            self.info(u"Server Error on {}".format(bill_url))
+            self.warning(u"Server Error on {}".format(bill_url))
             return False
 
         html = response.text
 
         page = lxml.html.fromstring(html)
-
-        if not page.xpath('//div[contains(@class, "followable")]/h1/text()'):
-            self.info(u"Server Error on {}".format(bill_url))
-            return False
 
         # The state website will periodically miss a few bills' titles for a few days
         # These titles will be extant on the bill list page, but missing on the bill detail page
@@ -192,8 +188,6 @@ class MABillScraper(Scraper):
 
         if "SRes" in bill_id:
             bill_id = bill_id.replace("SRes", "SR")
-
-        self.info(bill_title)
 
         bill = Bill(
             bill_id,
