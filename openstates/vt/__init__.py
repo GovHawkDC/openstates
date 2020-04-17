@@ -1,5 +1,4 @@
-from pupa.scrape import Jurisdiction, Organization
-from openstates.utils import url_xpath
+from openstates.utils import url_xpath, State
 from .people import VTPersonScraper
 
 # from .committees import VTCommitteeScraper
@@ -17,11 +16,7 @@ from .events import VTEventScraper
 settings = dict(SCRAPELIB_RPM=20)
 
 
-class Vermont(Jurisdiction):
-    division_id = "ocd-division/country:us/state:vt"
-    classification = "government"
-    name = "Vermont"
-    url = "http://legislature.vermont.gov/"
+class Vermont(State):
     scrapers = {
         "people": VTPersonScraper,
         # 'committees': VTCommitteeScraper,
@@ -34,24 +29,32 @@ class Vermont(Jurisdiction):
             "classification": "primary",
             "identifier": "2009-2010",
             "name": "2009-2010 Regular Session",
+            "start_date": "2009-01-07",
+            "end_date": "2010-05-12",
         },
         {
             "_scraped_name": "2011-2012 Session",
             "classification": "primary",
             "identifier": "2011-2012",
             "name": "2011-2012 Regular Session",
+            "start_date": "2011-01-05",
+            "end_date": "2012-05-05",
         },
         {
             "_scraped_name": "2013-2014 Session",
             "classification": "primary",
             "identifier": "2013-2014",
             "name": "2013-2014 Regular Session",
+            "start_date": "2013-01-09",
+            "end_date": "2014-05-10",
         },
         {
             "_scraped_name": "2015-2016 Session",
             "classification": "primary",
             "identifier": "2015-2016",
             "name": "2015-2016 Regular Session",
+            "start_date": "2015-01-07",
+            "end_date": "2016-05-06",
         },
         {
             "_scraped_name": "2017-2018 Session",
@@ -66,7 +69,8 @@ class Vermont(Jurisdiction):
             "classification": "special",
             "identifier": "2018ss1",
             "name": "2018 Special Session",
-            "start_date": "2018-05-22",
+            "start_date": "2018-05-23",
+            "end_date": "2018-06-29",
         },
         {
             "_scraped_name": "2019-2020 Session",
@@ -76,34 +80,18 @@ class Vermont(Jurisdiction):
             "start_date": "2019-01-09",
         },
     ]
-    ignored_scraped_sessions = [
-        "2020 Training Session",
-        "2009 Special Session",
-    ]
+    ignored_scraped_sessions = ["2020 Training Session", "2009 Special Session"]
 
-    site_ids = {
-        "2018ss1": "2018.1",
-    }
+    site_ids = {"2018ss1": "2018.1"}
 
     def get_year_slug(self, session):
         return self.site_ids.get(session, session[5:])
 
-    def get_organizations(self):
-        legislature_name = "Vermont General Assembly"
-        legislature = Organization(name=legislature_name, classification="legislature")
-        governor = Organization(name="Office of the Governor", classification="executive")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield governor
-        yield upper
-        yield lower
-
     def get_session_list(self):
         sessions = url_xpath(
             "http://legislature.vermont.gov/bill/search/2016",
-            '//fieldset/div[@id="Form_SelectSession_selected_session_Holder"]' "/div/select/option/text()",
+            '//fieldset/div[@id="Form_SelectSession_selected_session_Holder"]'
+            "/div/select/option/text()",
         )
         sessions = (session.replace(",", "").strip() for session in sessions)
         return sessions

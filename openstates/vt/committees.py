@@ -11,7 +11,9 @@ class VTCommitteeScraper(Scraper):
         year_slug = self.jurisdiction.get_year_slug(session)
 
         # Load all committees via the private API
-        committee_dump_url = "http://legislature.vermont.gov/committee/loadList/{}/".format(year_slug)
+        committee_dump_url = "http://legislature.vermont.gov/committee/loadList/{}/".format(
+            year_slug
+        )
         json_data = self.get(committee_dump_url).text
         committees = json.loads(json_data)["data"]
 
@@ -35,13 +37,19 @@ class VTCommitteeScraper(Scraper):
                 else:
                     chamber = "legislature"
             else:
-                raise AssertionError("Unknown committee type found: '{}'".format(info["CommitteeType"]))
-            comm = Organization(name=info["CommitteeName"], chamber=chamber, classification="committee")
+                raise AssertionError(
+                    "Unknown committee type found: '{}'".format(info["CommitteeType"])
+                )
+            comm = Organization(
+                name=info["CommitteeName"], chamber=chamber, classification="committee"
+            )
 
             # Determine membership and member roles
             # First, parse the member list and make sure it isn't a placeholder
             REMOVE_TAGS_RE = r"<.*?>"
-            members = [re.sub(REMOVE_TAGS_RE, "", x) for x in info["Members"].split("</br>")]
+            members = [
+                re.sub(REMOVE_TAGS_RE, "", x) for x in info["Members"].split("</br>")
+            ]
             members = [x.strip() for x in members if x.strip()]
 
             for member in members:
@@ -57,7 +65,9 @@ class VTCommitteeScraper(Scraper):
                 if "," in member:
                     (member, role) = [x.strip() for x in member.split(",")]
                     if "jr" in role.lower() or "sr" in role.lower():
-                        raise AssertionError("Name suffix confused for a committee role")
+                        raise AssertionError(
+                            "Name suffix confused for a committee role"
+                        )
                 else:
                     role = "member"
 
