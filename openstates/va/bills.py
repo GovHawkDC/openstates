@@ -9,9 +9,6 @@ from spatula import Page, Spatula
 from pupa.scrape import Scraper, Bill, VoteEvent
 from .common import SESSION_SITE_IDS
 
-import http.client
-http.client.HTTPConnection._http_vsn = 10
-http.client.HTTPConnection._http_vsn_str = 'HTTP/1.0'
 
 tz = pytz.timezone("America/New_York")
 
@@ -273,7 +270,7 @@ class BillDetailPage(Page, Spatula):
 
                 try:
                     next_action = next_ali.text_content().split(" \xa0")[1].split(": ", 1)[1]
-                except (ValueError, AttributeError) as e:
+                except (AttributeError, ValueError):
                     next_action = ""
 
                 vrematch_next = self.vote_strip_re.match(next_action)

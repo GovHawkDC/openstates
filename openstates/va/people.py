@@ -15,11 +15,7 @@ CHAMBER_MOVES = {
     'A. Benton "Ben" Chafin-Elect': "upper",
     "A. Benton Chafin-Senate Elect": "upper",
 }
-PARTY_MAP = {
-    "R": "Republican",
-    "D": "Democratic",
-    "I": "Independent",
-}
+PARTY_MAP = {"R": "Republican", "D": "Democratic", "I": "Independent"}
 TIMEZONE = pytz.timezone("US/Eastern")
 
 
@@ -52,9 +48,15 @@ class MemberDetail(Page):
                     email = text.strip("email: ").strip()
                 else:
                     address.append(text.strip())
-                office_type = "Capitol Office" if "Capitol Square" in address else "District Office"
+                office_type = (
+                    "Capitol Office"
+                    if "Capitol Square" in address
+                    else "District Office"
+                )
 
-            self.obj.add_contact_detail(type="address", value="\n".join(address), note=office_type)
+            self.obj.add_contact_detail(
+                type="address", value="\n".join(address), note=office_type
+            )
             if phone:
                 self.obj.add_contact_detail(type="voice", value=phone, note=office_type)
             if email:
@@ -64,7 +66,9 @@ class MemberDetail(Page):
         for com in item.xpath('//ul[@class="linkSect"][1]/li/a/text()'):
             key = (com, self.chamber)
             if key not in self.kwargs["committees"]:
-                org = Organization(name=com, chamber=self.chamber, classification="committee",)
+                org = Organization(
+                    name=com, chamber=self.chamber, classification="committee"
+                )
                 org.add_source(self.url)
                 self.kwargs["committees"][key] = org
 
@@ -84,7 +88,9 @@ class SenateDetail(MemberDetail):
 
     def get_photo_url(self):
         lis_id = get_lis_id(self.chamber, self.url)
-        profile_url = "http://apps.senate.virginia.gov/Senator/memberpage.php?id={}".format(lis_id)
+        profile_url = "http://apps.senate.virginia.gov/Senator/memberpage.php?id={}".format(
+            lis_id
+        )
         page = lxml.html.fromstring(self.scraper.get(profile_url).text)
         src = page.xpath('.//img[@class="profile_pic"]/@src')
         img = src[0] if src else None
@@ -101,7 +107,9 @@ class DelegateDetail(MemberDetail):
         lis_id = get_lis_id(self.chamber, self.url)
         if lis_id:
             lis_id = "{}{:04d}".format(lis_id[0], int(lis_id[1:]))
-            return ("http://memdata.virginiageneralassembly.gov" "/images/display_image/{}").format(lis_id)
+            return (
+                "http://memdata.virginiageneralassembly.gov" "/images/display_image/{}"
+            ).format(lis_id)
 
 
 class MemberList(Page):
@@ -180,10 +188,16 @@ class VaPersonScraper(Scraper, Spatula):
         if not session:
             session = self.jurisdiction.legislative_sessions[-1]
             self.info("no session specified, using %s", session["identifier"])
-        url = "http://lis.virginia.gov/{}/mbr/MBR.HTM".format(SESSION_SITE_IDS[session["identifier"]])
+        url = "http://lis.virginia.gov/{}/mbr/MBR.HTM".format(
+            SESSION_SITE_IDS[session["identifier"]]
+        )
         committees = {}
-        yield from self.scrape_page_items(SenateList, session=session, url=url, committees=committees)
-        yield from self.scrape_page_items(DelegateList, session=session, url=url, committees=committees)
+        yield from self.scrape_page_items(
+            SenateList, session=session, url=url, committees=committees
+        )
+        yield from self.scrape_page_items(
+            DelegateList, session=session, url=url, committees=committees
+        )
         for committee in committees.values():
             yield committee
 
