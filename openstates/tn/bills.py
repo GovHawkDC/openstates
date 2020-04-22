@@ -261,7 +261,7 @@ class TNBillScraper(Scraper):
                 session_details["_scraped_name"]
             )
         else:
-            index_page = "http://wapp.capitol.tn.gov/apps/indexes/"
+            index_page = "http://wapp.capitol.tn.gov/apps/indexes/?GA={}".format(session_details["identifier"])
             xpath = '//td[contains(@class,"webindex")]/a'
 
         index_list_page = self.get(index_page).text
@@ -298,6 +298,8 @@ class TNBillScraper(Scraper):
                     yield bill
 
     def scrape_bill(self, session, bill_url):
+        session_details = self.jurisdiction.sessions_by_id[session]
+
         page = self.get(bill_url).text
         page = lxml.html.fromstring(page)
         page.make_links_absolute(bill_url)
@@ -380,9 +382,16 @@ class TNBillScraper(Scraper):
 
         # bill text
         btext = page.xpath("//span[@id='lblBillNumber']/a")[0]
-        bill.add_version_link(
-            "Current Version", btext.get("href"), media_type="application/pdf"
-        )
+        # ensure proper session is in link, sometimes they link old versions
+        if '/{}/'.format(session_details['identifier']) in btext.get("href"):
+            bill.add_version_link(
+                "Current Version", btext.get("href"), media_type="application/pdf"
+            )
+        else:
+            self.info(
+                "Unknown version url {}".format(btext.get("href'"))
+            )
+            self.info(bill_url)
 
         # documents
         summary = page.xpath('//a[contains(@href, "BillSummaryArchive")]')
