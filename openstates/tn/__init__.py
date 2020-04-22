@@ -1,19 +1,12 @@
-from pupa.scrape import Jurisdiction, Organization
-
-from openstates.utils import url_xpath
-
+from openstates.utils import url_xpath, State
 from .bills import TNBillScraper
-
-# from .committees import TNCommitteeScraper
 from .events import TNEventScraper
 from .people import TNPersonScraper
 
+# from .committees import TNCommitteeScraper
 
-class Tennessee(Jurisdiction):
-    division_id = "ocd-division/country:us/state:tn"
-    classification = "government"
-    name = "Tennessee"
-    url = "http://www.capitol.tn.gov/"
+
+class Tennessee(State):
     scrapers = {
         "bills": TNBillScraper,
         # 'committees': TNCommitteeScraper,
@@ -26,42 +19,48 @@ class Tennessee(Jurisdiction):
         #     "classification": "primary",
         #     "identifier": "106",
         #     "name": "106th Regular Session (2009-2010)"
+        #     "start_date": "2009-01-13",
+        #     "end_date": "2010-06-10",
         # },
         {
             "_scraped_name": "107th General Assembly",
             "classification": "primary",
-            "end_date": "2012-01-10",
             "identifier": "107",
             "name": "107th Regular Session (2011-2012)",
             "start_date": "2011-01-11",
+            "end_date": "2012-05-01",
         },
         {
             "_scraped_name": "108th General Assembly",
             "classification": "primary",
             "identifier": "108",
             "name": "108th Regular Session (2013-2014)",
+            "start_date": "2013-01-08",
+            "end_date": "2014-04-18",
         },
         {
             "_scraped_name": "109th General Assembly",
             "classification": "primary",
             "identifier": "109",
             "name": "109th Regular Session (2015-2016)",
+            "start_date": "2015-01-13",
+            "end_date": "2016-04-22",
         },
         {
             "_scraped_name": "1st Extraordinary Session (February 2015)",
             "classification": "special",
-            "end_date": "2016-02-29",
             "identifier": "109s1",
             "name": "109th First Extraordinary Session (February 2016)",
             "start_date": "2016-02-01",
+            "end_date": "2016-02-29",
         },
         {
             "_scraped_name": "2nd Extraordinary Session (September 2016)",
             "classification": "special",
-            "end_date": "2016-09-14",
             "identifier": "109s2",
             "name": "109th Second Extraordinary Session (September 2016)",
             "start_date": "2016-09-12",
+            "end_date": "2016-09-14",
         },
         {
             "_scraped_name": "110th General Assembly",
@@ -69,7 +68,7 @@ class Tennessee(Jurisdiction):
             "identifier": "110",
             "name": "110th Regular Session (2017-2018)",
             "start_date": "2017-01-10",
-            "end_date": "2017-05-29",
+            "end_date": "2018-04-27",
         },
         {
             "_scraped_name": "111th General Assembly",
@@ -91,17 +90,6 @@ class Tennessee(Jurisdiction):
         "99th General Assembly",
     ]
 
-    def get_organizations(self):
-        legislature_name = "Tennessee General Assembly"
-
-        legislature = Organization(name=legislature_name, classification="legislature")
-        upper = Organization("Senate", classification="upper", parent_id=legislature._id)
-        lower = Organization("House", classification="lower", parent_id=legislature._id)
-
-        yield legislature
-        yield upper
-        yield lower
-
     def get_session_list(self):
         # Special sessions are available in the archive, but not in current session.
         # Solution is to scrape special session as part of regular session
@@ -120,6 +108,8 @@ class Tennessee(Jurisdiction):
         if hasattr(self, "_sessions_by_id"):
             return self._sessions_by_id
 
-        self._sessions_by_id = {session["identifier"]: session for session in self.legislative_sessions}
+        self._sessions_by_id = {
+            session["identifier"]: session for session in self.legislative_sessions
+        }
 
         return self._sessions_by_id

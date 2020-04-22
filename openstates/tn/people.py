@@ -60,7 +60,14 @@ class TNPersonScraper(Scraper):
             # Member URL can't be guessed from the chamber and district alone
             # It may be `h46_JaneSmith.html` instead of `h46.html`, for example
             member_url = row.xpath("./td[2]/a/@href")[0]
-            member_photo_url = root_url + url_chamber_name + "/members/images/" + abbr + district + ".jpg"
+            member_photo_url = (
+                root_url
+                + url_chamber_name
+                + "/members/images/"
+                + abbr
+                + district
+                + ".jpg"
+            )
 
             try:
                 member_page = self.get(member_url, allow_redirects=False).text
@@ -85,28 +92,42 @@ class TNPersonScraper(Scraper):
             name = name.replace("Representative ", "")
             name = name.replace("Senator ", "")
 
-            capitol_office_node = member_page.xpath('//div[@data-mobilehide="contact"]/p')[0]
+            capitol_office_node = member_page.xpath(
+                '//div[@data-mobilehide="contact"]/p'
+            )[0]
             capitol_office_details = capitol_office_node.text_content()
-            fax_text = [part for part in capitol_office_details.splitlines() if "Fax" in part]
+            fax_text = [
+                part for part in capitol_office_details.splitlines() if "Fax" in part
+            ]
             fax = None
             if fax_text:
                 fax = fax_text[0].replace("Fax", "").replace(":", "").strip()
 
             person = Person(
-                name=name.strip(), image=member_photo_url, primary_org=chamber, district=district, party=party,
+                name=name.strip(),
+                image=member_photo_url,
+                primary_org=chamber,
+                district=district,
+                party=party,
             )
             person.add_link(member_url)
             person.add_source(chamber_url)
             person.add_source(member_url)
 
             # TODO: add district address from this page
-            person.add_contact_detail(type="address", value=address, note="Capitol Office")
+            person.add_contact_detail(
+                type="address", value=address, note="Capitol Office"
+            )
             person.add_contact_detail(type="voice", value=phone, note="Capitol Office")
 
             email_href = row.xpath("td[1]/a/@href")
             if email_href:
-                email = html.parser.HTMLParser().unescape(email_href[0][len("mailto:") :])
-                person.add_contact_detail(type="email", value=email, note="Capitol Office")
+                email = html.parser.HTMLParser().unescape(
+                    email_href[0][len("mailto:") :]
+                )
+                person.add_contact_detail(
+                    type="email", value=email, note="Capitol Office"
+                )
             if fax:
                 person.add_contact_detail(type="fax", value=fax, note="Capitol Office")
 

@@ -158,7 +158,7 @@ def categorize_action(action):
     return list(types), attrs
 
 
-def actions_from_table(self, bill, actions_table):
+def actions_from_table(bill, actions_table):
     """
     """
     action_rows = actions_table.xpath("tr")
@@ -176,13 +176,6 @@ def actions_from_table(self, bill, actions_table):
         action_date = strptime(tds[1].text.strip(), "%m/%d/%Y").date()
         action_types, attrs = categorize_action(action_taken)
         # Overwrite any presumtive fields that are inaccurate, usually chamber.
-        if action_date < self.minimum_date.date():
-            self.warning(
-                "{} occurred on {}, before minimum date. Skipping"
-                .format(action_taken, action_date.strftime("%Y-%m-%d"))
-            )
-            continue
-
         action = dict(
             action=action_taken,
             date=action_date,
@@ -248,25 +241,10 @@ def listing_matches_chamber(listing, chamber):
 
 
 class TNBillScraper(Scraper):
-    # On rare occasions the TN site dumps actions and votes from previous sessions
-    # on bill pages, so establish a minimum sensible action date
-    minimum_date = False
-
     def scrape(self, session=None, chamber=None):
         if not session:
             session = self.latest_session()
             self.info("no session specified, using %s", session)
-
-        session_meta = next(
-            each
-            for each in self.jurisdiction.legislative_sessions
-            if each["identifier"] == session
-        )
-
-        self.minimum_date = datetime.datetime.strptime(session_meta['start_date'], '%Y-%m-%d')
-        self.minimum_date = self.minimum_date - datetime.timedelta(days=60)
-
-        print(self.minimum_date)
 
         self._seen_votes = set()
         chambers = [chamber] if chamber else ["upper", "lower"]
@@ -283,7 +261,7 @@ class TNBillScraper(Scraper):
                 session_details["_scraped_name"]
             )
         else:
-            index_page = "http://wapp.capitol.tn.gov/apps/indexes/"
+            index_page = "http://wapp.capitol.tn.gov/apps/indexes/?GA={}".format(session_details["identifier"])
             xpath = '//td[contains(@class,"webindex")]/a'
 
         index_list_page = self.get(index_page).text
@@ -320,6 +298,8 @@ class TNBillScraper(Scraper):
                     yield bill
 
     def scrape_bill(self, session, bill_url):
+        session_details = self.jurisdiction.sessions_by_id[session]
+
         page = self.get(bill_url).text
         page = lxml.html.fromstring(page)
         page.make_links_absolute(bill_url)
@@ -402,9 +382,16 @@ class TNBillScraper(Scraper):
 
         # bill text
         btext = page.xpath("//span[@id='lblBillNumber']/a")[0]
-        bill.add_version_link(
-            "Current Version", btext.get("href"), media_type="application/pdf"
-        )
+        # ensure proper session is in link, sometimes they link old versions
+        if '/{}/'.format(session_details['identifier']) in btext.get("href"):
+            bill.add_version_link(
+                "Current Version", btext.get("href"), media_type="application/pdf"
+            )
+        else:
+            self.info(
+                "Unknown version url {}".format(btext.get("href'"))
+            )
+            self.info(bill_url)
 
         # documents
         summary = page.xpath('//a[contains(@href, "BillSummaryArchive")]')
@@ -425,7 +412,7 @@ class TNBillScraper(Scraper):
 
         # actions
         atable = page.xpath("//table[@id='gvBillActionHistory']")[0]
-        actions_from_table(self, bill, atable)
+        actions_from_table(bill, atable)
 
         # if there is a matching bill
         if secondary_bill_id:
@@ -450,7 +437,7 @@ class TNBillScraper(Scraper):
             # secondary actions
             if page.xpath("//table[@id='gvCoActionHistory']"):
                 cotable = page.xpath("//table[@id='gvCoActionHistory']")[0]
-                actions_from_table(self, bill, cotable)
+                actions_from_table(bill, cotable)
 
         # votes
         yield from self.scrape_vote_events(bill, page, bill_url)
@@ -480,13 +467,6 @@ class TNBillScraper(Scraper):
             vote_date = re.search(r"(\d+/\d+/\d+)", motion)
             if vote_date:
                 vote_date = datetime.datetime.strptime(vote_date.group(), "%m/%d/%Y")
-
-            if (vote_date.date() < self.minimum_date.date()):
-                self.warning(
-                    "{} occurred on {}, before minimum date. Skipping"
-                    .format(motion, vote_date.strftime("%Y-%m-%d"))
-                )
-                return
 
             passed = (
                 "Passed" in motion
