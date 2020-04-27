@@ -41,7 +41,9 @@ class KYBillScraper(Scraper, LXMLMixin):
         ("1st reading", "reading-1"),
         ("2nd reading", "reading-2"),
         ("3rd reading", "reading-3"),
-        ("passed", "passage"),
+        (r"passed", "passage"),
+        (r"bill passed", "passage"),
+        ("line items vetoed", "executive-veto-line-item"),
         ("delivered to secretary of state", "became-law"),
         ("veto overridden", "veto-override-passage"),
         ("adopted by voice vote", "passage"),
@@ -53,7 +55,7 @@ class KYBillScraper(Scraper, LXMLMixin):
 
     def classify_action(self, action):
         for regex, classification in self._action_classifiers:
-            if re.match(regex, action):
+            if re.match(regex, action, re.IGNORECASE):
                 return classification
         return None
 
@@ -95,7 +97,7 @@ class KYBillScraper(Scraper, LXMLMixin):
                     bill_abbr = match.group(1)
                     bill_id = bill_abbr.upper() + bill_id.replace(" ", "")
                 else:
-                    bill_id = bill_abbr + bill_id
+                    bill_id = bill_abbr.upper() + bill_id
 
                 yield from self.parse_bill(
                     chamber, session, bill_id, link.attrib["href"]
@@ -214,7 +216,7 @@ class KYBillScraper(Scraper, LXMLMixin):
         xpath_expr = '//tr[th[text()="Bill Documents"]]/td[1]/a'
         version_count = 0
         for row in page.xpath(xpath_expr):
-            source_url = row.attrib['href']
+            source_url = row.attrib["href"]
             version_title = row.xpath("text()")[0].strip()
 
             if source_url.endswith(".doc"):
@@ -231,25 +233,24 @@ class KYBillScraper(Scraper, LXMLMixin):
     def parse_proposed_amendments(self, page, bill):
         # div.bill-table with an H4 "Proposed Amendments", all a's in the first TD of the first TR
         # that point to a path including "recorddocuments"
-        xpath = '//div[contains(@class, "bill-table") and descendant::h4[text()="Proposed Amendments"]]' \
+        xpath = (
+            '//div[contains(@class, "bill-table") and descendant::h4[text()="Proposed Amendments"]]'
             '//tr[1]/td[1]/a[contains(@href,"recorddocuments")]'
+        )
 
         for link in page.xpath(xpath):
             note = link.xpath("text()")[0].strip()
-            note = 'Proposed {}'.format(note)
+            note = "Proposed {}".format(note)
             url = link.attrib["href"]
-            bill.add_document_link(
-                note=note,
-                url=url
-            )
+            bill.add_document_link(note=note, url=url)
 
     def scrape_votes(self, vote_url, bill, chamber):
+
         try:
             filename, response = self.urlretrieve(vote_url)
         except scrapelib.HTTPError:
             self.logger.warning("PDF not posted or available")
             return
-        
         # Grabs text from pdf
         pdflines = [
             line.decode("utf-8") for line in convert_pdf(filename, "text").splitlines()
