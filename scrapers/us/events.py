@@ -105,7 +105,7 @@ class USEventScraper(Scraper, LXMLMixin):
                 com, type="committee", note="host",
             )
 
-            event.add_source("https:/www.senate.gov/committees/hearings_meetings.htm")
+            event.add_source("https://www.senate.gov/committees/hearings_meetings.htm")
 
             yield event
 
