@@ -388,6 +388,11 @@ class PRBillScraper(Scraper):
 
             version_title = self.clean_broken_html(version_row.xpath("text()")[0])
 
+            # occasionally they post some weird broken files
+            # that bomb out the scraper
+            if self.classify_media_type(version_url) is None:
+                continue
+
             if is_document:
                 bill.add_document_link(
                     note=version_title,
