@@ -19,7 +19,9 @@ class Us(Jurisdiction):
         {"classification": "primary",
          "identifier": "116",
          "name": "116th Congress",
-         "start_date": "2019-01-03"},
+         "start_date": "2019-01-03",
+         "end_date": "2021-01-03"
+         },
     ]
     ignored_scraped_sessions = []
 
