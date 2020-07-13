@@ -3,7 +3,7 @@ from .people import OHLegislatorScraper
 from .bills import OHBillScraper
 
 # from .events import OHEventScraper
-
+settings = dict(SCRAPELIB_TIMEOUT=300)
 
 class Ohio(State):
     scrapers = {
