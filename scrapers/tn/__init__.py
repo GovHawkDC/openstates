@@ -79,10 +79,10 @@ class Tennessee(State):
             "end_date": "2020-06-19",
         },
         {
-            "_scraped_name": "FIRST EXTRAORDINARY SESSION (AUGUST 2019)",
+            "_scraped_name": "Second Extraordinary Session (August 2020)",
             "classification": "special",
-            "identifier": "111S1",
-            "name": "111th First Extraordinary Session (August 2019)",
+            "identifier": "111S2",
+            "name": "111th Second Extraordinary Session (August 2020)",
             "start_date": "2020-08-05",
             # TODO: Add real end date after session
             "end_date": "2020-08-14",
