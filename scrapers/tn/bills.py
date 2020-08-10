@@ -272,7 +272,7 @@ class TNBillScraper(Scraper):
 
             bill_listing = bill_listing.attrib["href"]
 
-            if not listing_matches_chamber(bill_listing, chamber):
+            if session_details["classification"] != "special" and not listing_matches_chamber(bill_listing, chamber):
                 self.logger.info(
                     "Skipping bill listing '{bill_listing}' "
                     "Does not match chamber '{chamber}'".format(
@@ -286,12 +286,11 @@ class TNBillScraper(Scraper):
             bill_list_page = lxml.html.fromstring(bill_list_page)
             bill_list_page.make_links_absolute(bill_listing)
 
-            for bill_link in set(
-                bill_list_page.xpath(
-                    '//h1[text()="Legislation"]/following-sibling::div/'
-                    "div/div/div//a/@href"
-                )
-            ):
+            if session_details["classification"] == "special":
+                bill_link_xpath = '//table//a[contains(@href, "BillNumber=")]/@href'
+            else:
+                bill_link_xpath = '//h1[text()="Legislation"]/following-sibling::div/div/div/div//a/@href'
+            for bill_link in set(bill_list_page.xpath(bill_link_xpath)):
                 bill = self.scrape_bill(session, bill_link)
                 if bill:
                     yield bill
