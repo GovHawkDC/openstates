@@ -1,5 +1,5 @@
 from openstates.scrape import Jurisdiction, Organization
-import openstates_metadata
+from openstates.metadata import lookup
 
 _name_fixes = {
     "SouthCarolina": "South Carolina",
@@ -25,10 +25,10 @@ class MetaShim(type):
     def __new__(cls, name, bases, dct):
         c = super().__new__(cls, name, bases, dct)
         if name != "State":
-            c.classification = "government"
+            c.classification = "state"
             # while we're here, load the metadata (formerly on a cached property)
             name = _name_fixes.get(name, name)
-            c.metadata = openstates_metadata.lookup(name=name)
+            c.metadata = lookup(name=name)
         return c
 
 
@@ -36,6 +36,12 @@ class State(Jurisdiction, metaclass=MetaShim):
     @property
     def division_id(self):
         return self.metadata.division_id
+
+    @property
+    def jurisdiction_id(self):
+        return "{}/government".format(
+            self.division_id.replace("ocd-division", "ocd-jurisdiction"),
+        )
 
     @property
     def name(self):
