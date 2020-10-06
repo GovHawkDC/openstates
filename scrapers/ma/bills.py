@@ -5,11 +5,13 @@ from datetime import datetime
 import lxml.html
 from openstates.scrape import Scraper, Bill, VoteEvent
 from openstates.utils import convert_pdf
+import urllib3
 
 from .actions import Categorizer
 
 
 class MABillScraper(Scraper):
+    urllib3.disable_warnings()
     verify = False
 
     categorizer = Categorizer()
@@ -261,7 +263,10 @@ class MABillScraper(Scraper):
     def scrape_cosponsors(self, bill, bill_url):
         # https://malegislature.gov/Bills/189/S1194/CoSponsor
         cosponsor_url = "{}/CoSponsor".format(bill_url)
-        html = self.get_as_ajax(cosponsor_url).text
+        try:
+            html = self.get_as_ajax(cosponsor_url).text
+        except SSLError:
+            return
         page = lxml.html.fromstring(html)
         cosponsor_rows = page.xpath("//tbody/tr")
         for row in cosponsor_rows:
