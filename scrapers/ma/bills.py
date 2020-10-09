@@ -265,7 +265,7 @@ class MABillScraper(Scraper):
         cosponsor_url = "{}/CoSponsor".format(bill_url)
         try:
             html = self.get_as_ajax(cosponsor_url).text
-        except SSLError:
+        except requests.exceptions.SSLError:
             return
         page = lxml.html.fromstring(html)
         cosponsor_rows = page.xpath("//tbody/tr")
