@@ -7,7 +7,7 @@ from .bills import MABillScraper
 from .events import MAEventScraper
 
 # from .committees import MACommitteeScraper
-
+settings = dict(SCRAPELIB_TIMEOUT=600)
 
 class Massachusetts(State):
     scrapers = {

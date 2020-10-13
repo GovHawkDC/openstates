@@ -542,7 +542,10 @@ class MABillScraper(Scraper):
         s = requests.Session()
         s.verify = False
         s.headers.update({"X-Requested-With": "XMLHttpRequest"})
-        return s.get(url)
+        try:
+            return s.get(url)
+        except requests.exceptions.SSLError:
+            return s.get(url)
 
     def replace_non_digits(self, str):
         return re.sub(r"[^\d]", "", str).strip()
