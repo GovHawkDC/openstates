@@ -58,7 +58,7 @@ class MABillScraper(Scraper):
     # os-update ma bills --scrape bill_no=H2
     # page_limit can be set to stop scraping after a certain number of pages (for each chamber)
     def scrape(
-        self, chamber=None, session=None, bill_no=None, sort=None, page_limit=None
+        self, chamber=None, session=None, bill_no=None, sort="latest", page_limit=None
     ):
         if not session:
             session = self.latest_session()
