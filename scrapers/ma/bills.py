@@ -76,16 +76,11 @@ class MABillScraper(Scraper):
             yield from self.scrape_bill(session, bill_no, single_bill_chamber)
             return
 
-        bill_nos = ['S2870','S2257','S2757','S2178','S2672', 'S2628']
-
-        for bill_no in bill_nos:
-            yield from self.scrape_bill(session, bill_no, "upper")
-
-        # if not chamber:
-        #     yield from self.scrape_chamber("lower", session, sort, page_limit)
-        #     yield from self.scrape_chamber("upper", session, sort, page_limit)
-        # else:
-        #     yield from self.scrape_chamber(chamber, session, sort, page_limit)
+        if not chamber:
+            yield from self.scrape_chamber("lower", session, sort, page_limit)
+            yield from self.scrape_chamber("upper", session, sort, page_limit)
+        else:
+            yield from self.scrape_chamber(chamber, session, sort, page_limit)
 
     def scrape_chamber(self, chamber, session, sort=None, page_limit=None):
         # for the chamber of the action
