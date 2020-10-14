@@ -1,16 +1,22 @@
 import datetime
-import xml.etree.ElementTree as ET 
+import pytz
 import re
+import xml.etree.ElementTree as ET 
 
 from openstates.scrape import Bill, Scraper, VoteEvent
 
 class USBillScraper(Scraper):
     # https://www.govinfo.gov/rss/billstatus-batch.xml
+    # https://github.com/usgpo/bill-status/blob/master/BILLSTATUS-XML_User_User-Guide.md
 
+    # good sample bill:
+    # https://www.govinfo.gov/bulkdata/BILLSTATUS/116/hr/BILLSTATUS-116hr8337.xml
 
     # custom namespace, see
     # https://docs.python.org/2/library/xml.etree.elementtree.html#parsing-xml-with-namespaces
     ns = {'us': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+
+    _TZ = pytz.timezone("US/Eastern")
 
     chambers = {'House': 'lower', 'Joint': 'joint', 'Senate': 'upper'}
 
@@ -70,7 +76,7 @@ class USBillScraper(Scraper):
             classification=classification,
         )
 
-        self.scrape_titles(bill, xml)
+        self.scrape_actions(bill, xml)
         self.scrape_titles(bill, xml)
         self.scrape_sponsors(bill, xml)
         self.scrape_cosponsors(bill, xml)
@@ -104,12 +110,52 @@ class USBillScraper(Scraper):
         last_name = self.get_xpath(row, 'lastName')
         return ' '.join(filter(None,[first_name, middle_name, last_name]))
 
-    def scrape_sponsors(self, bill, xml):
-        for row in xml.findall('bill/sponsors/item'):
-            if not row.findall('sponsorshipWithdrawnDate'):
-                bill.add_sponsorship(
-                    self.build_sponsor_name(row), classification="primary", primary=True, entity_type="person"
+    def classify_action(self, bill, action):
+        # https://github.com/usgpo/bill-status/blob/master/BILLSTATUS-XML_User_User-Guide.md
+        # see table 3, Action Code Element Possible Values
+        pass
+
+    def get_xpath(self, xml, xpath):
+        return xml.findall(xpath, self.ns)[0].text
+
+    def scrape_actions(self, bill, xml):
+        # list for deduping
+        actions = []
+        for row in xml.findall('bill/actions/item'):
+            action_text = self.get_xpath(row, 'text')
+            if action_text not in actions:
+                source = self.get_xpath(row, 'sourceSystem/name')
+                action_type = self.get_xpath(row, 'type')
+
+                actor = 'lower'
+                if 'Senate' in source:
+                    actor = 'upper'
+                elif 'House' in source:
+                    actor = 'lower'
+                elif action_type == 'BecameLaw' or action_type == 'President':
+                    actor = 'executive'
+
+                if row.findall('actionTime'):
+                    action_date = '{} {}'.format(
+                        self.get_xpath(row, 'actionDate'),
+                        self.get_xpath(row, 'actionTime')
+                    )
+                    action_date = datetime.datetime.strptime(action_date, '%Y-%m-%d %H:%M:%S')
+                else:
+                    action_date = datetime.datetime.strptime(
+                        self.get_xpath(row, 'actionDate'),
+                        '%Y-%m-%d'
+                    )
+                # chamber will be fun
+                action_date = self._TZ.localize(action_date)
+
+                bill.add_action(
+                    action_text,
+                    action_date,
+                    chamber=actor,
+                    classification=None
                 )
+                actions.append(action_text)
 
     def scrape_cosponsors(self, bill, xml):
         for row in xml.findall('bill/cosponsors/item'):
@@ -117,6 +163,17 @@ class USBillScraper(Scraper):
                 bill.add_sponsorship(
                     self.build_sponsor_name(row), classification="cosponsor", primary=False, entity_type="person"
                 )
+
+    def scrape_sponsors(self, bill, xml):
+        for row in xml.findall('bill/sponsors/item'):
+            if not row.findall('sponsorshipWithdrawnDate'):
+                bill.add_sponsorship(
+                    self.build_sponsor_name(row), classification="primary", primary=True, entity_type="person"
+                )
+
+    def scrape_subjects(self, bill, xml):
+        for row in xml.findall('bill/subjects/billSubjects/legislativeSubjects/item'):
+            bill.add_subject(self.get_xpath(row, 'name'))
 
     def scrape_titles(self, bill, xml):
         all_titles = set()
@@ -136,17 +193,14 @@ class USBillScraper(Scraper):
             version_title = self.get_xpath(row, 'type')
 
             for version in row.findall('formats/item'):
+                url = self.get_xpath(version, 'url')
                 bill.add_version_link(
                     note = version_title,
-                    url = self.get_xpath(version, 'url'),
+                    url = url,
                     media_type = 'text/xml'
                 )
-                # TODO: PDf
-
-    def classify_action(self, bill, action):
-        # https://github.com/usgpo/bill-status/blob/master/BILLSTATUS-XML_User_User-Guide.md
-        # see table 3, Action Code Element Possible Values
-        pass
-
-    def get_xpath(self, xml, xpath):
-        return xml.findall(xpath, self.ns)[0].text
+                bill.add_version_link(
+                    note = version_title,
+                    url = url.replace('xml', 'pdf'),
+                    media_type = 'application/pdf'
+                )
