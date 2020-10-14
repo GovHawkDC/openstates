@@ -5,7 +5,7 @@ from openstates.scrape import Jurisdiction, Organization
 from utils import url_xpath
 
 from .events import USEventScraper
-
+from .bills import USBillScraper
 
 class Us(Jurisdiction):
     division_id = "ocd-division/country:us"
@@ -14,6 +14,7 @@ class Us(Jurisdiction):
     url = "http://congress.gov/"
     scrapers = {
         "events": USEventScraper,
+        "bills": USBillScraper,
     }
     legislative_sessions = [
         {"classification": "primary",
