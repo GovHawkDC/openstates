@@ -5,12 +5,23 @@ import xml.etree.ElementTree as ET
 
 from openstates.scrape import Bill, Scraper, VoteEvent
 
+# TODO: Amendments
+# TODO: Votes
+# TODO: CBO docs
+# TODO: committeeReports
+# TODO: isByRequest
+# TODO: laws
+# TODO: relatedBills 
+# TODO: summaries
+
 class USBillScraper(Scraper):
     # https://www.govinfo.gov/rss/billstatus-batch.xml
     # https://github.com/usgpo/bill-status/blob/master/BILLSTATUS-XML_User_User-Guide.md
 
-    # good sample bill:
+    # good sample bills:
     # https://www.govinfo.gov/bulkdata/BILLSTATUS/116/hr/BILLSTATUS-116hr8337.xml
+    # vetoed:
+    # https://www.govinfo.gov/bulkdata/BILLSTATUS/116/sjres/BILLSTATUS-116sjres68.xml
 
     # custom namespace, see
     # https://docs.python.org/2/library/xml.etree.elementtree.html#parsing-xml-with-namespaces
@@ -118,7 +129,10 @@ class USBillScraper(Scraper):
         # https://github.com/openstates/openstates-core/blob/082210489693b31e6534bd8328bfb895427e9eed/openstates/data/common.py
         # for the OS codes
         codes = {
-            'E30000': 'executive-signature',
+            # note: E3000 can also mean vetoed, so catch executive signatures by the action text
+            # see https://www.govinfo.gov/bulkdata/BILLSTATUS/116/sjres/BILLSTATUS-116sjres68.xml
+            # 'E30000': 'executive-signature',
+            '31000': 'executive-veto',
             'E20000': 'executive-receipt',
             'E40000': 'became-law',
             'H11100': 'referral-committee',
@@ -149,6 +163,9 @@ class USBillScraper(Scraper):
         action_classifiers = [
             ("Read the second time", ["reading-2"]),
             ("Received in the Senate. Read the first time", ["introduction", "reading-1"]),
+            ("Signed by President", ['executive-signature']),
+            ("Vetoed by President", ['executive-veto']),
+            ("Failed of passage in Senate over veto by", ['veto-override-failure'])
         ]
         for regex, classification in action_classifiers:
             if re.match(regex, action):
@@ -159,6 +176,8 @@ class USBillScraper(Scraper):
         return xml.findall(xpath, self.ns)[0].text
 
     def scrape_actions(self, bill, xml):
+        # TODO: Skip all LOC actions? just some LOC actions?
+
         # list for deduping
         actions = []
         for row in xml.findall('bill/actions/item'):
@@ -202,6 +221,10 @@ class USBillScraper(Scraper):
                     classification=classification
                 )
                 actions.append(action_text)
+
+    def scrape_amendments(self, bill, xml):
+        for row in xml.findall('bill/amendments/amendment'):
+
 
     def scrape_cosponsors(self, bill, xml):
         all_sponsors = []
