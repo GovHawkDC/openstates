@@ -77,9 +77,10 @@ class USBillScraper(Scraper):
         )
 
         self.scrape_actions(bill, xml)
-        self.scrape_titles(bill, xml)
-        self.scrape_sponsors(bill, xml)
         self.scrape_cosponsors(bill, xml)
+        self.scrape_sponsors(bill, xml)
+        self.scrape_subjects(bill, xml)
+        self.scrape_titles(bill, xml)
         self.scrape_versions(bill, xml)
 
         # https://www.congress.gov/bill/116th-congress/house-bill/1
@@ -110,10 +111,49 @@ class USBillScraper(Scraper):
         last_name = self.get_xpath(row, 'lastName')
         return ' '.join(filter(None,[first_name, middle_name, last_name]))
 
-    def classify_action(self, bill, action):
+    def classify_action_by_code(self, action):
         # https://github.com/usgpo/bill-status/blob/master/BILLSTATUS-XML_User_User-Guide.md
         # see table 3, Action Code Element Possible Values
-        pass
+
+        # https://github.com/openstates/openstates-core/blob/082210489693b31e6534bd8328bfb895427e9eed/openstates/data/common.py
+        # for the OS codes
+        codes = {
+            'E30000': 'executive-signature',
+            'E20000': 'executive-receipt',
+            'E40000': 'became-law',
+            'H11100': 'referral-committee',
+            'H11200': 'referral-committee',
+            'H14000': 'receipt',
+            '1000': 'introduction',
+            '2000': 'referral-committee',
+            '8000': 'passage',
+            '10000': 'introduction',
+            '11000': 'referral-committee',
+            '14000': 'referral',
+            '17000': 'passage',
+            '28000': 'executive-receipt',
+            '36000': 'became-law',
+            # TODO: is this always passage or do we have to check the result?
+            # https://www.govinfo.gov/bulkdata/BILLSTATUS/116/hr/BILLSTATUS-116hr8337.xml
+            'H37300': 'passage',
+            'Intro-H': 'introduction',
+        }
+
+        if action == 'H37300':
+            print("37300!")
+            print(action)
+
+        return codes.get(action)
+
+    def classify_action_by_name(self, action):
+        action_classifiers = [
+            ("Read the second time", ["reading-2"]),
+            ("Received in the Senate. Read the first time", ["introduction", "reading-1"]),
+        ]
+        for regex, classification in action_classifiers:
+            if re.match(regex, action):
+                return classification
+        return None
 
     def get_xpath(self, xml, xpath):
         return xml.findall(xpath, self.ns)[0].text
@@ -135,6 +175,7 @@ class USBillScraper(Scraper):
                 elif action_type == 'BecameLaw' or action_type == 'President':
                     actor = 'executive'
 
+                # house actions give a time, senate just a date
                 if row.findall('actionTime'):
                     action_date = '{} {}'.format(
                         self.get_xpath(row, 'actionDate'),
@@ -146,30 +187,41 @@ class USBillScraper(Scraper):
                         self.get_xpath(row, 'actionDate'),
                         '%Y-%m-%d'
                     )
-                # chamber will be fun
                 action_date = self._TZ.localize(action_date)
+
+                classification = self.classify_action_by_code(self.get_xpath(row, 'actionCode'))
+
+                # senate actions dont have a code
+                if classification is None:
+                    classification = self.classify_action_by_name(action_text)
 
                 bill.add_action(
                     action_text,
                     action_date,
                     chamber=actor,
-                    classification=None
+                    classification=classification
                 )
                 actions.append(action_text)
 
     def scrape_cosponsors(self, bill, xml):
+        all_sponsors = []
         for row in xml.findall('bill/cosponsors/item'):
             if not row.findall('sponsorshipWithdrawnDate'):
                 bill.add_sponsorship(
                     self.build_sponsor_name(row), classification="cosponsor", primary=False, entity_type="person"
                 )
+                all_sponsors.append(self.get_xpath(row, 'bioguideId'))
+        bill.extras['cosponsor_bioguides'] = all_sponsors
 
     def scrape_sponsors(self, bill, xml):
+        all_sponsors = []
         for row in xml.findall('bill/sponsors/item'):
             if not row.findall('sponsorshipWithdrawnDate'):
                 bill.add_sponsorship(
                     self.build_sponsor_name(row), classification="primary", primary=True, entity_type="person"
                 )
+                all_sponsors.append(self.get_xpath(row, 'bioguideId'))
+        bill.extras['sponsor_bioguides'] = all_sponsors
 
     def scrape_subjects(self, bill, xml):
         for row in xml.findall('bill/subjects/billSubjects/legislativeSubjects/item'):
