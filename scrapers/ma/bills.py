@@ -106,6 +106,8 @@ class MABillScraper(Scraper):
         session_filter = self.session_filters[session]
         chamber_filter = self.chamber_filters[self.chamber_map[chamber]]
 
+        sort="latest"
+
         if sort is None:
             search_url = (
                 "https://malegislature.gov/Bills/Search?"
