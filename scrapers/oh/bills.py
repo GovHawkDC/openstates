@@ -4,6 +4,7 @@ import datetime
 from openstates.scrape import Scraper, Bill, VoteEvent
 from openstates.scrape.base import ScrapeError
 
+import urllib3
 import xlrd
 import scrapelib
 import lxml.html
@@ -42,6 +43,12 @@ class OHBillScraper(Scraper):
         "concur_622": "Concurred in Senate amendments",
         "amend_452": "Amended",
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Don't verify, their SSL cert is using a weird root
+        self.verify = False    
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def scrape(self, session=None, chambers=None):
         # Bills endpoint can sometimes take a very long time to load
@@ -165,6 +172,8 @@ class OHBillScraper(Scraper):
                     classification=classification,
                 )
                 bill.add_source(number_link.xpath("a/@href")[0])
+
+                self.get_witness_testimony(session, bill_id, bill)
 
                 # get bill from API
                 bill_api_url = (
@@ -400,6 +409,36 @@ class OHBillScraper(Scraper):
                 bill_dict[billno].append(item)
 
         return bill_dict
+
+
+    def get_witness_testimony(self, session, bill_id, bill):
+        # Witness testimony is linked to the hearing in the API, but not the bills
+        # so unfortunately we need to grab it from the site.
+        # ex: https://www.legislature.ohio.gov/legislation/legislation-committee-documents?id=GA133-HB-63
+        bill_id = bill_id.replace(' ','-')
+
+        doc_url = 'https://www.legislature.ohio.gov/legislation/legislation-committee-documents?id=GA{}-{}'
+        doc_url = doc_url.format(session, bill_id)
+
+        page = lxml.html.fromstring(self.get(doc_url).content)
+
+        for row in page.xpath('//table[contains(@class, "committeeDocumentsTestimonyTable")]/tr[td]'):
+            witness = row.xpath('td[1]/text()')[0].strip()
+            org = row.xpath('td[2]/text()')[0].strip()
+            position = row.xpath('td[3]/text()')[0].strip()
+            url = row.xpath('td[4]/a/@href')[0]
+
+            # they are inconsistent with empty cell markers, but it's always 1 char long
+            if len(org) > 2:
+                witness = '{} ({})'.format(witness, org)
+
+            witness = 'Testimony - {} ({})'.format(witness, position)
+
+            bill.add_document_link(
+                note=witness,
+                url=url,
+            )
+
 
     def add_document(self, documents, bill_id, type_of_document, bill, base_url):
         try:
