@@ -1,10 +1,8 @@
-import re
-
 from openstates.scrape import Jurisdiction, Organization
 
-from utils import url_xpath
-
 from .events import USEventScraper
+from .bills import USBillScraper
+from .votes import USVoteScraper
 
 
 class Us(Jurisdiction):
@@ -14,6 +12,8 @@ class Us(Jurisdiction):
     url = "http://congress.gov/"
     scrapers = {
         "events": USEventScraper,
+        "bills": USBillScraper,
+        "votes": USVoteScraper,
     }
     legislative_sessions = [
         {"classification": "primary",
@@ -22,6 +22,12 @@ class Us(Jurisdiction):
          "start_date": "2019-01-03",
          "end_date": "2021-01-03"
          },
+        {"classification": "primary",
+         "identifier": "117",
+         "name": "117th Congress",
+         "start_date": "2021-01-03",
+         "end_date": "2023-01-02"
+         },         
     ]
     ignored_scraped_sessions = []
 
