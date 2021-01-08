@@ -5,13 +5,11 @@ from datetime import datetime
 import lxml.html
 from openstates.scrape import Scraper, Bill, VoteEvent
 from openstates.utils import convert_pdf
-import urllib3
 
 from .actions import Categorizer
 
 
 class MABillScraper(Scraper):
-    urllib3.disable_warnings()
     verify = False
 
     categorizer = Categorizer()
@@ -58,7 +56,7 @@ class MABillScraper(Scraper):
     # os-update ma bills --scrape bill_no=H2
     # page_limit can be set to stop scraping after a certain number of pages (for each chamber)
     def scrape(
-        self, chamber=None, session=None, bill_no=None, sort="latest", page_limit=None
+        self, chamber=None, session=None, bill_no=None, sort=None, page_limit=None
     ):
         if not session:
             session = self.latest_session()
@@ -105,8 +103,6 @@ class MABillScraper(Scraper):
     def list_bills(self, session, chamber, pageNumber, sort=None):
         session_filter = self.session_filters[session]
         chamber_filter = self.chamber_filters[self.chamber_map[chamber]]
-
-        sort="latest"
 
         if sort is None:
             search_url = (
@@ -259,22 +255,20 @@ class MABillScraper(Scraper):
 
         # yield back votes and bill
         # XXX  yield from
-        self.scrape_actions(bill, bill_url, session)
+        # DISABLED 2021-01-08 pending site HTML change
+        # self.scrape_actions(bill, bill_url, session)
         yield bill
 
     def scrape_cosponsors(self, bill, bill_url):
         # https://malegislature.gov/Bills/189/S1194/CoSponsor
         cosponsor_url = "{}/CoSponsor".format(bill_url)
-        try:
-            html = self.get_as_ajax(cosponsor_url).text
-        except requests.exceptions.SSLError:
-            return
+        html = self.get_as_ajax(cosponsor_url).text
         page = lxml.html.fromstring(html)
         cosponsor_rows = page.xpath("//tbody/tr")
         for row in cosponsor_rows:
             # careful, not everyone is a linked representative
             # https://malegislature.gov/Bills/189/S740/CoSponsor
-            cosponsor_name = row.xpath("string(td[1])")
+            cosponsor_name = row.xpath("string(td[1])").strip()
             # cosponsor_district = ''
             # # if row.xpath('td[2]/text()'):
             #     cosponsor_district = row.xpath('td[2]/text()')[0]
@@ -544,10 +538,7 @@ class MABillScraper(Scraper):
         s = requests.Session()
         s.verify = False
         s.headers.update({"X-Requested-With": "XMLHttpRequest"})
-        try:
-            return s.get(url)
-        except requests.exceptions.SSLError:
-            return s.get(url)
+        return s.get(url)
 
     def replace_non_digits(self, str):
         return re.sub(r"[^\d]", "", str).strip()
