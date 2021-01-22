@@ -2,7 +2,7 @@ from utils import url_xpath, State
 from .people import DEPersonScraper
 from .bills import DEBillScraper
 
-# from .events import DEEventScraper
+from .events import DEEventScraper
 # from .committees import DECommitteeScraper
 
 
@@ -10,7 +10,7 @@ class Delaware(State):
     scrapers = {
         "people": DEPersonScraper,
         "bills": DEBillScraper,
-        # 'events': DEEventScraper,
+        'events': DEEventScraper,
         # 'committees': DECommitteeScraper,
     }
     legislative_sessions = [
@@ -99,8 +99,7 @@ class Delaware(State):
             "end_date": "2022-05-06",
         },
     ]
-    ignored_scraped_sessions = [
-    ]
+    ignored_scraped_sessions = []
 
     def get_session_list(self):
         url = "https://legis.delaware.gov/"
