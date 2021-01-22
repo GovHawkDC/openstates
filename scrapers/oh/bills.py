@@ -345,7 +345,7 @@ class OHBillScraper(Scraper):
 
                 if "disapprove" in bill_version:
                     disapprove_url = base_url + bill_version["disapprove"][0]["link"]
-                    disapprove_json = self.get(disapprove_url).json()
+                    disapprove_json = self.get(disapprove_url, verify=False).json()
                     if len(disapprove_json["items"]) > 0:
                         raise AssertionError(
                             "Whoa, a disapprove! We've never"
