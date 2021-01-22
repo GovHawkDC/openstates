@@ -3,13 +3,16 @@
 import json
 import requests
 
-from .people import SDLegislatorScraper
 from .bills import SDBillScraper
+from .events import SDEventScraper
 from utils import State
 
 
 class SouthDakota(State):
-    scrapers = {"people": SDLegislatorScraper, "bills": SDBillScraper}
+    scrapers = {
+        "bills": SDBillScraper,
+        "events": SDEventScraper,
+    }
     legislative_sessions = [
         {
             "_scraped_name": "2009",
