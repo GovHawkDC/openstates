@@ -358,7 +358,7 @@ class HIBillScraper(Scraper):
         if not session:
             session = self.latest_session()
             self.info("no session specified, using %s", session)
-        bill_types = ["bill", "cr", "r", "gm"]
+        bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
         for chamber in chambers:
             # only scrape GMs once
