@@ -53,7 +53,6 @@ class IABillScraper(Scraper):
         page.make_links_absolute(url)
 
         for row in page.xpath('//table[contains(@class, "sortable")]/tr[td]'):
-            filing_date = row.xpath('td[1]/text()')[0].strip()
             title = row.xpath('td[2]/a/text()')[0].strip()
             url = row.xpath('td[2]/a/@href')[0]
 
@@ -67,9 +66,23 @@ class IABillScraper(Scraper):
                 classification='proposed bill',
             )
 
-            if (row.xpath('td[3][a]')):
-                document = row.xpath('td[3]/a/@href')[0]
-                document_title = row.xpath('td[2]/a/text()')[0].strip()
+            if (row.xpath('td[3]/a')):
+                document_url = row.xpath('td[3]/a/@href')[0]
+                if '.docx' in document_url:
+                    media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                elif '.pdf' in document_url:
+                    media_type = 'application/pdf'
+                bill.add_document_link(
+                    note="Backround Statement",
+                    url=document_url,
+                    media_type=media_type
+                )
+
+            bill.add_version_link(
+                note="Prefiled",
+                url=url,
+                media_type="application/pdf"
+            )
 
             bill.add_source(url)
 
@@ -78,7 +91,6 @@ class IABillScraper(Scraper):
     def extract_doc_id(self, title):
         doc_id = re.findall(r'\((\d{4}\w{2})\)', title)
         return doc_id[0]
-
 
     def scrape_subjects(self, bill, bill_number, session, req):
 
