@@ -1,16 +1,14 @@
 from utils import State
-from .people import OKPersonScraper
 from .bills import OKBillScraper
 
 # from .committees import OKCommitteeScraper
-# from .events import OKEventScraper
+from .events import OKEventScraper
 
 
 class Oklahoma(State):
     scrapers = {
-        "people": OKPersonScraper,
         # 'committees': OKCommitteeScraper,
-        # 'events': OKEventScraper,
+        'events': OKEventScraper,
         "bills": OKBillScraper,
     }
     # Sessions are named on OK's website as "{odd year} regular session" until the even year,
