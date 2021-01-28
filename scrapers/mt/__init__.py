@@ -1,15 +1,14 @@
 from utils import url_xpath, State
-from .people import MTPersonScraper
 from .bills import MTBillScraper
-
+from .events import MTEventScraper
 # from .committees import MTCommitteeScraper
 
 
 class Montana(State):
     scrapers = {
-        "people": MTPersonScraper,
         # 'committees': MTCommitteeScraper,
         "bills": MTBillScraper,
+        "events": MTEventScraper,
     }
     legislative_sessions = [
         {
