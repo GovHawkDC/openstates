@@ -167,12 +167,6 @@ class ARBillScraper(Scraper):
         bill.add_source(url)
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
-        for link in page.xpath("//a[contains(@href, 'Amendments')]"):
-            num = link.xpath("string(../../td[2])")
-            name = "Amendment %s" % num
-            bill.add_version_link(
-                name, link.attrib["href"], media_type="application/pdf"
-            )
 
         other_primary_sponsors_path = page.xpath(
             "//div[text()[contains(.,'Other Primary Sponsor:')]]/../div[2]/a"
@@ -204,6 +198,76 @@ class ARBillScraper(Scraper):
         except IndexError:
             # No cosponsor link is OK
             pass
+
+        amendment_path = page.xpath(
+            "//h3[text()[contains(.,'Amendments')]]/../../.."
+            "/div/div/div[contains(@class, 'row tableRow')"
+            " and descendant::div[contains(span, 'Amendment Number:')]]"
+        )
+        for row in amendment_path:
+            div = list(row)
+            amendment_number = (
+                div[1].text_content().replace("Amendment Number:", "").strip()
+            )
+            for a in div[4]:
+                amendment_url = a.attrib["href"].strip()
+            amendment_date = div[3].text_content().strip()
+            date = TIMEZONE.localize(
+                datetime.datetime.strptime(amendment_date, "%m/%d/%Y %I:%M:%S %p")
+            )
+            date = "{:%Y-%m-%d}".format(date)
+            bill.add_version_link(
+                note="Amendment " + amendment_number,
+                url=amendment_url,
+                classification="amendment",
+                date=date,
+                media_type="application/pdf",
+            )
+
+        FI_path = page.xpath(
+            "//h3[text()[contains(.,'DFA Fiscal Impacts')"
+            " or contains(.,'BLR Fiscal Impacts')"
+            " or contains(.,'Other Fiscal Impacts')]]"
+            "/../../../div/div[contains(@class, 'row tableRow')]"
+        )
+        for row in FI_path:
+            div = list(row)
+            FI_number = div[0].text_content().replace("FI Number:", "").strip()
+            for a in div[3]:
+                FI_url = a.attrib["href"].strip()
+            FI_date = div[2].text_content().replace("Date Issued:", "").strip()
+            date = TIMEZONE.localize(datetime.datetime.strptime(FI_date, "%m/%d/%Y"))
+            date = "{:%Y-%m-%d}".format(date)
+            bill.add_document_link(
+                note=FI_number,
+                url=FI_url,
+                classification="fiscal-note",
+                date=date,
+                media_type="application/pdf",
+            )
+
+        study_path = page.xpath(
+            "//h3[text()[contains(.,'Actuarial Cost Studies')]]"
+            "/../../../div/following::div[contains(@class, 'row tableRow')"
+            " and descendant::div[contains(span, 'Study Number')]]"
+        )
+        for row in study_path:
+            div = list(row)
+            study_number = div[0].text_content().replace("Study Number:", "").strip()
+            for a in div[2]:
+                study_url = a.attrib["href"].strip()
+            study_date = div[1].text_content().replace("Date Issued:", "").strip()
+            date = TIMEZONE.localize(
+                datetime.datetime.strptime(study_date, "%m/%d/%Y %I:%M:%S %p")
+            )
+            date = "{:%Y-%m-%d}".format(date)
+            bill.add_document_link(
+                note=study_number,
+                url=study_url,
+                classification="fiscal-note",
+                date=date,
+                media_type="application/pdf",
+            )
 
         for link in page.xpath(
             "//table[@class=\"screenreader\"]//a[contains(@href, '/Bills/Votes?id=')]"
