@@ -1,11 +1,10 @@
 from utils import url_xpath, State
 
 from .bills import MNBillScraper
-from .people import MNPersonScraper
 from .vote_events import MNVoteScraper
 
 # from .committees import MNCommitteeScraper
-# from .events import MNEventScraper
+from .events import MNEventScraper
 
 """
 Minnesota legislative data can be found at the Office of the Revisor
@@ -23,9 +22,8 @@ class Minnesota(State):
     scrapers = {
         "bills": MNBillScraper,
         # "committees": MNCommitteeScraper,
-        "people": MNPersonScraper,
         "votes": MNVoteScraper,
-        # "events": MNEventScraper,
+        "events": MNEventScraper,
     }
     legislative_sessions = [
         {
