@@ -219,7 +219,6 @@ class ARBillScraper(Scraper):
             bill.add_version_link(
                 note="Amendment " + amendment_number,
                 url=amendment_url,
-                classification="amendment",
                 date=date,
                 media_type="application/pdf",
             )
