@@ -219,6 +219,7 @@ class ARBillScraper(Scraper):
             bill.add_version_link(
                 note="Amendment " + amendment_number,
                 url=amendment_url,
+                classification="amendment",
                 date=date,
                 media_type="application/pdf",
             )
@@ -240,6 +241,7 @@ class ARBillScraper(Scraper):
             bill.add_document_link(
                 note=FI_number,
                 url=FI_url,
+                classification="fiscal-note",
                 date=date,
                 media_type="application/pdf",
             )
@@ -262,6 +264,7 @@ class ARBillScraper(Scraper):
             bill.add_document_link(
                 note=study_number,
                 url=study_url,
+                classification="fiscal-note",
                 date=date,
                 media_type="application/pdf",
             )
