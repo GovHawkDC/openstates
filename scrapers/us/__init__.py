@@ -44,4 +44,4 @@ class Us(Jurisdiction):
         yield lower
 
     def get_session_list(self):
-        return ["116"]
+        return ["116", "117"]
