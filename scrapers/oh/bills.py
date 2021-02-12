@@ -9,11 +9,13 @@ import scrapelib
 import lxml.html
 import pytz
 import re
-
+import urllib3
 
 class OHBillScraper(Scraper):
     _tz = pytz.timezone("US/Eastern")
-
+    raise_errors = False
+    verify = False
+    
     # Vote Motion Dictionary was created by comparing vote codes to
     # the actions tables via dates and chambers. If it made sense, the
     # vote code was added to the below dictionary.
@@ -46,6 +48,7 @@ class OHBillScraper(Scraper):
     def scrape(self, session=None, chambers=None):
         # Bills endpoint can sometimes take a very long time to load
         self.timeout = 300
+        urllib3.disable_warnings()
 
         if not session:
             session = self.latest_session()
