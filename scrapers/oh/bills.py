@@ -10,6 +10,7 @@ import lxml.html
 import pytz
 import re
 import urllib3
+import ssl
 
 class OHBillScraper(Scraper):
     _tz = pytz.timezone("US/Eastern")
@@ -49,6 +50,7 @@ class OHBillScraper(Scraper):
         # Bills endpoint can sometimes take a very long time to load
         self.timeout = 300
         urllib3.disable_warnings()
+        ssl._create_default_https_context = ssl._create_unverified_context
 
         if not session:
             session = self.latest_session()
