@@ -305,7 +305,7 @@ class OHBillScraper(Scraper):
                 vote_url += bill_version["cmtevotes"][0]["link"]
                 try:
                     vote_doc = self.get(vote_url)
-                except scrapelib.HTTPError:
+                except (scrapelib.HTTPError, ssl.SSLCertVerificationError, urllib3.exceptions.MaxRetryError):
                     self.warning("Vote page not loading; skipping: {}".format(vote_url))
                     yield bill
                     continue
