@@ -1,6 +1,7 @@
 # encoding=utf-8
 import logging
 from .bills import FlBillScraper
+from .people import FlPersonScraper
 
 # from .committees import FlCommitteeScraper
 # from .events import FlEventScraper
@@ -12,6 +13,7 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 class Florida(State):
     scrapers = {
         "bills": FlBillScraper,
+        "people": FlPersonScraper,
         # "committees": FlCommitteeScraper,
         # "events": FlEventScraper,
     }
