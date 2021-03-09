@@ -177,7 +177,7 @@ class SDBillScraper(Scraper, LXMLMixin):
                 action_text == "Do Pass"
                 or action_text == "Tabled"
                 or action["ShowCommitteeName"]
-            ):
+            ) and (action["ActionCommittee"] is not None):
                 full_action.insert(0, f'{action["ActionCommittee"]["Name"]}')
 
             if action["ShowPassed"] or action["ShowFailed"]:
@@ -273,9 +273,10 @@ class SDBillScraper(Scraper, LXMLMixin):
         elif "Senate" in location:
             chamber = "upper"
         elif "Joint" in location:
-            chamber = "joint"
+            chamber = "legislature"
         else:
-            raise ScrapeError("Bad chamber: %s" % location)
+            self.warning("Bad Vote chamber: '%s', skipping" % location)
+            return
 
         motion = page["actionLog"]["StatusText"]
         if motion:
