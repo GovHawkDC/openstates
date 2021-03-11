@@ -11,7 +11,7 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 
 from .actions import Categorizer
 
-BLACKLISTED_BILL_IDS = {"128": ("SP 601", "SP 602"), "129": ()}
+BLACKLISTED_BILL_IDS = {"128": ("SP 601", "SP 602"), "129": (), "130": ()}
 
 
 class MEBillScraper(Scraper):
@@ -49,6 +49,7 @@ class MEBillScraper(Scraper):
         r = request_session.post(url=search_url, data=form_data)
         r.raise_for_status()
 
+        self.seen = set()
         yield from self._recursively_process_bills(
             request_session=request_session, chamber=chamber, session=session
         )
@@ -66,7 +67,6 @@ class MEBillScraper(Scraper):
         r.raise_for_status()
 
         bills = lxml.html.fromstring(r.text).xpath("//tr/td/b/a")
-        seen = set()
         if bills:
             for bill in bills:
                 bill_id_slug = bill.xpath("./@href")[0]
@@ -76,14 +76,18 @@ class MEBillScraper(Scraper):
                     bill_id_slug
                 )
                 bill_id = bill.text[:2] + " " + bill.text[2:]
+                bill_id = re.sub(r"\s+", " ", bill_id).strip()
 
-                if session in BLACKLISTED_BILL_IDS and bill_id in BLACKLISTED_BILL_IDS[session]:
+                if (
+                    session in BLACKLISTED_BILL_IDS
+                    and bill_id in BLACKLISTED_BILL_IDS[session]
+                ):
                     continue
 
                 # avoid duplicates
-                if bill_id in seen:
+                if bill_id in self.seen:
                     continue
-                seen.add(bill_id)
+                self.seen.add(bill_id)
 
                 bill = Bill(
                     identifier=bill_id,
