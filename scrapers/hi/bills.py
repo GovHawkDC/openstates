@@ -193,8 +193,15 @@ class HIBillScraper(Scraper):
 
                 # some bills (and GMs) swap the order or double-link to the same format
                 # so detect the type, and ignore dupes
-                bill.add_version_link(name, http_link, media_type=self.classify_media(http_link))
-                bill.add_version_link(name, pdf_link, media_type=self.classify_media(pdf_link), on_duplicate='ignore')
+                bill.add_version_link(
+                    name, http_link, media_type=self.classify_media(http_link)
+                )
+                bill.add_version_link(
+                    name,
+                    pdf_link,
+                    media_type=self.classify_media(pdf_link),
+                    on_duplicate="ignore",
+                )
 
     def classify_media(self, url):
         media_type = None
@@ -304,11 +311,11 @@ class HIBillScraper(Scraper):
                 sponsor = sponsor.replace(
                     " (Introduced by request of another party)", ""
                 )
-            if sponsor is not "":
+            if sponsor != "":
                 b.add_sponsorship(sponsor, "primary", "person", True)
 
         if "gm" in bill_id.lower():
-            b.add_sponsorship('governor', 'primary', 'person', True)
+            b.add_sponsorship("governor", "primary", "person", True)
 
         self.parse_bill_versions_table(b, versions)
         self.parse_testimony(b, bill_page)
@@ -365,4 +372,11 @@ class HIBillScraper(Scraper):
             if chamber == "upper":
                 bill_types.append("gm")
             for typ in bill_types:
+                # TODO: Remove this - disable scraping HR's for now 
+                # due to broken list page. Restore when
+                # https://www.capitol.hawaii.gov/report.aspx?type=HR&year=2021
+                # is loading again
+                if chamber == "lower" and typ == "r":
+                    self.warning("Skipping HR due to a state website bug.")
+                    continue
                 yield from self.scrape_type(chamber, session, typ)
