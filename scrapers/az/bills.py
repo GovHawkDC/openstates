@@ -277,7 +277,9 @@ class AZBillScraper(Scraper):
                     result=(
                         "pass"
                         if action["UnanimouslyAdopted"]
-                        or action["Ayes"] > action["Nays"]
+                        or (action["Ayes"] is not None and 
+                            action["Nays"] is not None and 
+                            action["Ayes"] > action["Nays"])
                         else "fail"
                     ),
                     start_date=action_date.strftime("%Y-%m-%d"),
