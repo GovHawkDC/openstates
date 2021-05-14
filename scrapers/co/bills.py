@@ -390,6 +390,11 @@ class COBillScraper(Scraper, LXMLMixin):
                 "//tr/td[preceding-sibling::td/descendant::"
                 "font[contains(text(),'17C')]]/font/text()"
             )
+
+            if not yes_no_counts:
+                self.info("Missing yes no count")
+                return
+
             yes_count = int(yes_no_counts[0])
             no_count = int(yes_no_counts[2])
             exc_count = int(other_counts[2])
@@ -412,7 +417,7 @@ class COBillScraper(Scraper, LXMLMixin):
                 bill=bill,
                 classification="passage",
             )
-            vote.pupa_id = vote_url
+            vote.dedupe_key = vote_url
             vote.set_count("yes", yes_count)
             vote.set_count("no", no_count)
             vote.set_count("excused", exc_count)
