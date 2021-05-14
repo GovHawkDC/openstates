@@ -392,7 +392,6 @@ class COBillScraper(Scraper, LXMLMixin):
             )
 
             if not yes_no_counts:
-                self.info("Missing yes no count")
                 return
 
             yes_count = int(yes_no_counts[0])
@@ -417,7 +416,7 @@ class COBillScraper(Scraper, LXMLMixin):
                 bill=bill,
                 classification="passage",
             )
-            vote.dedupe_key = vote_url
+            vote.pupa_id = vote_url
             vote.set_count("yes", yes_count)
             vote.set_count("no", no_count)
             vote.set_count("excused", exc_count)
