@@ -1,6 +1,7 @@
 import re
 import pytz
 import datetime
+import dateutil.parser
 import lxml.html
 from openstates.scrape import Scraper, Event
 from utils import LXMLMixin
@@ -56,16 +57,14 @@ class LAEventScraper(Scraper, LXMLMixin):
             when = datetime.datetime.strptime(date, "%B %d, %Y")
         else:
             all_day = False
-            when = datetime.datetime.strptime(
-                f"{date} {time}".strip(), "%B %d, %Y %I:%M %p"
-            )
+            when = dateutil.parser.parse(f"{date} {time}".strip())
 
         # when = self._tz.localize(when)
 
         description = "Meeting on %s of the %s" % (date, title)
         chambers = {"house": "lower", "senate": "upper", "joint": "legislature"}
 
-        for chamber_ in chambers.keys():
+        for chamber_ in chambers:
             if chamber_ in title.lower():
                 break
         else:
