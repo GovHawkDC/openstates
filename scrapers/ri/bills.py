@@ -12,7 +12,7 @@ bill_subjects = None
 # What a silly low number. This is just putting more load on the
 # server, not even helping with that. Sheesh.
 MAXQUERY = 250
-RI_URL_BASE = "http://webserver.rilin.state.ri.us"
+RI_URL_BASE = "https://webserver.rilegislature.gov"
 
 
 def bill_start_numbers(session):
@@ -27,7 +27,7 @@ def get_postable_subjects():
     global subjects
     if subjects is None:
         subs = url_xpath(
-            "http://status.rilin.state.ri.us/",
+            "https://status.rilegislature.gov/",
             "//select[@id='rilinContent_cbCategory']",
         )[0].xpath("./*")
         subjects = {o.text: o.attrib["value"] for o in subs}
@@ -55,7 +55,7 @@ def get_default_headers(page):
     return headers
 
 
-SEARCH_URL = "http://status.rilin.state.ri.us/"
+SEARCH_URL = "https://status.rilegislature.gov/"
 
 BILL_NAME_TRANSLATIONS = {
     "House Bill No.": "HB",
@@ -193,7 +193,7 @@ class RIBillScraper(Scraper):
         name = name.lower()
         self.info(name)
 
-        things = ["resolution", "joint resolution" "memorial", "memorandum", "bill"]
+        things = ["resolution", "joint resolution", "memorial", "memorandum", "bill"]
 
         for t in things:
             if t in name:
@@ -347,7 +347,7 @@ class RIBillScraper(Scraper):
                     v.set_count("no", int(count["NAYS"]))
                     v.set_count("other", int(count["NOT VOTING"]))
                     v.add_source(vote["source"])
-                    v.pupa_id = vote["source"]
+                    v.dedupe_key = vote["source"]
 
                     for vt in vote["votes"]:
                         key = {"Y": "yes", "N": "no"}.get(vt["vote"], "other")
