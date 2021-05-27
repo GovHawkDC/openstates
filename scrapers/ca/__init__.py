@@ -2,8 +2,7 @@ import re
 from utils import url_xpath, State
 from .bills import CABillScraper
 from .people import CAPersonScraper
-
-# from .events import CAEventScraper
+from .events import CAEventScraper
 # from .committees import CACommitteeScraper
 
 
@@ -13,7 +12,7 @@ settings = dict(SCRAPELIB_RPM=30)
 class California(State):
     scrapers = {
         "bills": CABillScraper,
-        # 'events': CAEventScraper,
+        'events': CAEventScraper,
         "people": CAPersonScraper,
         # 'committees': CACommitteeScraper,
     }
