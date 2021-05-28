@@ -9,7 +9,7 @@ from OpenSSL.SSL import SysCallError
 class BadAPIResponse(Exception):
     """
     Raised if the service returns a service code higher than 400,
-    other than 429. Makes the response object avaible as exc.resp.
+    other than 429. Makes the response object available as exc.resp.
     """
 
     def __init__(self, resp, *args):
@@ -62,6 +62,12 @@ class OpenLegislationAPIClient(object):
         committee_history=(
             "committees/{session_year}/{chamber}/{committee_name}/history"
             "?limit={limit}&offset={offset}&full={full}&order={sort_order}"
+        ),
+        meetings=(
+            "agendas/meetings/{start}/{end}?"
+        ),
+        meeting=(
+            "agendas/{year}/{agenda_id}/{committee}?"
         ),
         members=(
             "members/{session_year}?limit={limit}&offset={offset}&full={full}"
