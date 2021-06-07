@@ -43,6 +43,7 @@ class WVBillScraper(Scraper):
         "20181S": "1x",
         "20182S": "2x",
         "20191S": "1x",
+        "20211S": "1x"
     }
 
     bill_types = {
@@ -343,7 +344,7 @@ class WVBillScraper(Scraper):
             vote.set_count("no", no_count)
             vote.set_count("other", other_count)
             vote.add_source(url)
-            vote.pupa_id = url
+            vote.dedupe_key = url
 
             for key, values in votes.items():
                 for value in values:
@@ -374,7 +375,7 @@ class WVBillScraper(Scraper):
             bill=bill,
         )
         vote.add_source(url)
-        vote.pupa_id = url
+        vote.dedupe_key = url
 
         text = convert_pdf(filename, "text").decode("utf-8")
         os.remove(filename)
@@ -384,7 +385,7 @@ class WVBillScraper(Scraper):
             return
 
         data = re.split(r"(Yea|Nay|Absent)s?:", text)[::-1]
-        data = filter(None, data)
+        data = list(filter(None, data))
         keymap = dict(yea="yes", nay="no")
         actual_vote = collections.defaultdict(int)
         vote_count = {"yes": 0, "no": 0, "other": 0}
