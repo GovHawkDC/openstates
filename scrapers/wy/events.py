@@ -57,7 +57,7 @@ class WYEventScraper(Scraper):
 
                     for doc in row["meetingDocuments"]:
                         event.add_document(
-                            doc["title"], f"{self.base_url}{doc['documentUrl']}"
+                            doc["title"], f"{self.base_url}{doc['documentUrl']}", on_duplicate="ignore"
                         )
 
                     for item in row["meetingAgendas"]:
@@ -90,11 +90,11 @@ class WYEventScraper(Scraper):
             agenda.add_person(name)
 
         for doc in item["meetingDocuments"]:
-            event.add_document(doc["title"], f"{self.base_url}{doc['documentUrl']}")
+            event.add_document(doc["title"], f"{self.base_url}{doc['documentUrl']}", on_duplicate="ignore")
 
         for doc in item["budgetMeetingDocuments"]:
             event.add_document(
-                doc["displayTitle"], f"{self.base_url}{doc['documentUrl']}"
+                doc["displayTitle"], f"{self.base_url}{doc['documentUrl']}", on_duplicate="ignore"
             )
 
         for sub_item in item["subAgendaItems"]:
