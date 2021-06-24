@@ -15,26 +15,39 @@ class USVoteScraper(Scraper):
         "Nay": "no",
         "Not Voting": "not voting",
         "Present": "other",
+        "Not Guilty": "no",
+        "Guilty": "yes",
     }
 
     senate_statuses = {
         "Agreed to": "pass",
+        "Amendment Agreed to": "pass",
+        "Amendment Rejected": "fail",
         "Bill Passed": "pass",
-        "Confirmed": "pass",
-        "Rejected": "fail",
-        "Passed": "pass",
-        "Nomination Confirmed": "pass",
         "Cloture Motion Agreed to": "pass",
         "Cloture Motion Rejected": "fail",
         "Cloture on the Motion to Proceed Rejected": "fail",
-        "Amendment Rejected": "fail",
+        "Cloture on the Motion to Proceed Agreed to": "pass",
+        "Concurrent Resolution Agreed to": "pass",
+        "Confirmed": "pass",
         "Decision of Chair Sustained": "pass",
+        "Guilty": "pass",
+        "Joint Resolution Passed": "pass",
+        "Nomination Confirmed": "pass",
+        "Not Guilty": "fail",
+        "Passed": "pass",
         "Motion Agreed to": "pass",
+        "Motion for Attendance Agreed to": "pass",
+        "Motion Rejected": "fail",
+        "Motion to Adjourn Rejected": "fail",
+        "Motion to Discharge Agreed to": "pass",
         "Motion to Table Failed": "fail",
         "Motion to Table Agreed to": "pass",
         "Motion to Table Motion to Recommit Agreed to": "pass",
         "Motion to Proceed Agreed to": "pass",
         "Motion to Proceed Rejected": "fail",
+        "Resolution Agreed to": "pass",
+        "Rejected": "fail",
     }
 
     vote_classifiers = (
@@ -94,7 +107,7 @@ class USVoteScraper(Scraper):
 
         for row in page.xpath("//table/tr"):
             # header or special message
-            if not row.xpath("td[1]/a"):
+            if not row.xpath("td[1]/a") or not row.xpath("td[3]/font/a"):
                 continue
 
             vote_url = row.xpath("td[1]/a/@href")[0]
@@ -199,6 +212,10 @@ class USVoteScraper(Scraper):
             vote_date = row.xpath("vote_date/text()")[0]
             vote_date = "{}-{}".format(vote_date, year)
             vote_date = datetime.datetime.strptime(vote_date, "%d-%b-%Y")
+
+            issue = row.xpath("issue/text()")[0].lower()
+            if issue == "n/a":
+                continue
 
             if vote_date < start:
                 self.info("No more votes found before start date.")
