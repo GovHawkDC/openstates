@@ -266,8 +266,8 @@ class CTBillScraper(Scraper):
                         " AND Office of Fiscal Analysis %s" % (match.group(1))
                     )
 
-                if re.match(r"^ADOPTED, (HOUSE|SENATE)", action) or re.match(
-                    r"^(HOUSE|SENATE) PASSED", action
+                if re.match(r"^ADOPTED, (HOUSE|SENATE|SEN\.?)", action) or re.match(
+                    r"^(HOUSE|SENATE|SEN\.?) PASSED", action
                 ):
                     act_type.append("passage")
 
@@ -277,7 +277,6 @@ class CTBillScraper(Scraper):
 
                 if re.match(r"SIGNED BY GOVERNOR", action):
                     act_type.append("executive-signature")
-
 
                 if re.match(r"^LINE ITEM VETOED", action):
                     act_type.append("executive-veto-line-item")
