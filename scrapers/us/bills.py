@@ -296,6 +296,7 @@ class USBillScraper(Scraper):
             rules_url = "https://rules.house.gov/bill/{}/{}".format(session, bill_id.replace(' ', '-'))
             try:
                 page = lxml.html.fromstring(self.get(rules_url).content)
+                page.make_links_absolute(rules_url)
                 for row in page.xpath('//article[contains(@class, "field-name-field-amendment-table")]/div/div/table/tr'):
                     if row.xpath('td[3]/a'):
                         amdt_num = row.xpath('td[1]/text()')[0].strip()
