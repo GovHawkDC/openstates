@@ -271,6 +271,10 @@ class AZBillScraper(Scraper):
             for action in actions:
                 if action["Action"] == "No Action":
                     continue
+
+                if action["ReportDate"] is None:
+                    continue
+
                 action_date = datetime.datetime.strptime(
                     action["ReportDate"], "%Y-%m-%dT%H:%M:%S"
                 )
