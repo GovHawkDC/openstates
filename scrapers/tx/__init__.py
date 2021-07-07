@@ -1,20 +1,18 @@
 from utils import url_xpath, State
 from .bills import TXBillScraper
 from .events import TXEventScraper
-from .people import TXPersonScraper
 
-# from .votes import TXVoteScraper
+from .votes import TXVoteScraper
 
 # from .committees import TXCommitteeScraper
 
 
 class Texas(State):
     scrapers = {
-        "people": TXPersonScraper,
         # 'committees': TXCommitteeScraper,
         "bills": TXBillScraper,
         # Re-enable vote scraper when adding next regular session
-        # "votes": TXVoteScraper,
+        "votes": TXVoteScraper,
         "events": TXEventScraper,
     }
     legislative_sessions = [
@@ -121,6 +119,14 @@ class Texas(State):
             "identifier": "87",
             "name": "87th Legislature (2021)",
             "start_date": "2021-01-12",
+        },
+        {
+            "_scraped_name": "87(1) - 2021",
+            "classification": "special",
+            "end_date": "2021-07-16",
+            "identifier": "871",
+            "name": "87th Legislature, 1st Called Session (2021)",
+            "start_date": "2021-07-08",
         },
         # TODO: Re-enable vote scraper when adding next regular session
     ]

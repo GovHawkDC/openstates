@@ -60,7 +60,7 @@ class TXBillScraper(Scraper, LXMLMixin):
     )
 
     def _get_ftp_files(self, dir_):
-        """ Recursively traverse an FTP directory, returning all files """
+        """Recursively traverse an FTP directory, returning all files"""
         for i in range(3):
             try:
                 ftp = ftplib.FTP(self._FTP_ROOT)
@@ -163,6 +163,11 @@ class TXBillScraper(Scraper, LXMLMixin):
 
         bill.add_source(history_url)
 
+        bill_id_for_url = bill_id.replace(" ", "")
+        bill.add_source(
+            f"https://capitol.texas.gov/BillLookup/History.aspx?LegSess={session}&Bill={bill_id_for_url}"
+        )
+
         for subject in root.iterfind("subjects/subject"):
             bill.add_subject(subject.text.strip())
 
@@ -188,7 +193,9 @@ class TXBillScraper(Scraper, LXMLMixin):
                 media_type="text/html",
             )
 
-        for fiscal_note in root.iterfind("billtext/docTypes/fiscalNote/versions/version"):
+        for fiscal_note in root.iterfind(
+            "billtext/docTypes/fiscalNote/versions/version"
+        ):
             if not fiscal_note:
                 continue
 
