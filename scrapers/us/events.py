@@ -144,7 +144,11 @@ class USEventScraper(Scraper, LXMLMixin):
                 self.info("Fetching {} via POST".format(row.get("href")))
                 xml = self.asp_post(row.get("href"), page, params)
 
-                xml = lxml.etree.fromstring(xml)
+                try:
+                    xml = lxml.etree.fromstring(xml)
+                except Exception as e:
+                    self.warning(f"Bad XML reference {row.get('href')}, skipping")
+                    continue
 
                 yield from self.house_meeting(xml, row.get("href"))
 
