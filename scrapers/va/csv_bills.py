@@ -213,23 +213,42 @@ class VaCSVBillScraper(Scraper):
             "G": "executive",
             "C": "legislature",
         }
+
+        # pull the current session's details to tell if it's a special
+        session_details = next(
+            each
+            for each in self.jurisdiction.legislative_sessions
+            if each["identifier"] == session
+        )
+
+        is_special = False
+        if (
+            "classification" in session_details
+            and session_details["classification"] == "special"
+        ):
+            is_special = True
+
         session_id = SESSION_SITE_IDS[session]
         self._url_base += session_id + "/"
         bill_url_base = "https://lis.virginia.gov/cgi-bin/"
 
-        self.load_members()
-        self.load_sponsors()
-        self.load_fiscal_notes()
-        self.load_summaries()
+        if not is_special:
+            self.load_members()
+            self.load_sponsors()
+            self.load_fiscal_notes()
+            self.load_summaries()
         # in 2021 VA held a special to avoid a crossover deadline
         # it carried over all the regular bills, so rather
         # than duping them in a new session, just scrape the 2021S1 data
         if session == "2021":
             self._url_base = self._url_base.replace("211", "212")
+            session_id = "212"
         self.load_history()
         self.load_votes()
         self.load_bills()
-        self.load_amendments()
+
+        if not is_special:
+            self.load_amendments()
 
         for bill in self._bills:
             bill = self._bills[bill][0]
@@ -379,6 +398,7 @@ class VaCSVBillScraper(Scraper):
                         bill_url_base
                         + f"legp604.exe?{session_id}+ful+{version['doc_abbr']}"
                     )
+
                     version_date = datetime.datetime.strptime(
                         version["doc_date"], "%m/%d/%y"
                     ).date()
