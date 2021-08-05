@@ -67,7 +67,7 @@ class ORBillScraper(Scraper):
                 title=measure["RelatingTo"],
                 classification=self.bill_types[measure["MeasurePrefix"][1:]],
             )
-            if 'MeasureSummary' in measure:
+            if "MeasureSummary" in measure:
                 bill.add_abstract(measure["MeasureSummary"].strip(), note="summary")
 
             if measure["RelatingTo"] is None:
@@ -96,7 +96,7 @@ class ORBillScraper(Scraper):
                     )
 
             bill.add_source(
-                "https://olis.leg.state.or.us/liz/{session}/Measures/Overview/{bid}".format(
+                "https://olis.oregonlegislature.gov/liz/{session}/Measures/Overview/{bid}".format(
                     session=session_key, bid=bid.replace(" ", "")
                 )
             )
