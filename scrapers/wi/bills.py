@@ -47,7 +47,7 @@ class WIBillScraper(Scraper):
     def scrape_subjects(self, year, site_id):
         last_url = None
         next_url = (
-            "http://docs.legis.wisconsin.gov/%s/related/subject_index/index/" % year
+            "https://docs.legis.wisconsin.gov/%s/related/subject_index/index/" % year
         )
         last_subject = None
 
@@ -112,7 +112,7 @@ class WIBillScraper(Scraper):
         types = ("bill", "joint_resolution", "resolution")
 
         for type in types:
-            url = "http://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (
+            url = "https://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (
                 year,
                 site_id,
                 chamber_slug,

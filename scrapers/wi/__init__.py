@@ -200,9 +200,9 @@ class Wisconsin(State):
     ]
 
     def get_session_list(self):
-        # sessions = url_xpath(
-        #     "http://docs.legis.wisconsin.gov/search",
-        #     "//select[@name='sessionNumber']/option/text()",
-        # )
-        # return [session.strip(" -") for session in sessions]
-        return ["2021 Regular Session"]
+        sessions = url_xpath(
+            "https://docs.legis.wisconsin.gov/search",
+            "//select[@name='sessionNumber']/option/text()",
+        )
+        return [session.strip(" -") for session in sessions]
+
