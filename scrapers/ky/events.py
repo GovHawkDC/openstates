@@ -33,11 +33,17 @@ class KYEventScraper(Scraper):
             )
 
             time = time_row.text_content().split(",")[0].strip()
+            time = time.replace("Noon", "PM")
             location = time_row.text_content().split(",")[1].strip()
 
             when = f"{date} {time}"
             when = dateutil.parser.parse(when)
             when = self._tz.localize(when)
+
+            if not time_row.xpath(
+                'following-sibling::div[contains(@class,"CommitteeName")][1]/a'
+            ):
+                continue
 
             com_name = (
                 time_row.xpath(
