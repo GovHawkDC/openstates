@@ -67,6 +67,7 @@ class NYEventScraper(Scraper):
         com_name = re.sub(r"\(.*\)","", meta[0])
         com_name = f"Assembly {com_name}"
 
+        meta[1] = meta[1].replace("OFF THE FLOOR,", "")
         when = dateutil.parser.parse(meta[1])
         when = self._tz.localize(when)
         location = meta[2]
