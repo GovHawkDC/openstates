@@ -32,9 +32,18 @@ class KYEventScraper(Scraper):
                 .strip()
             )
 
-            time = time_row.text_content().split(",")[0].strip()
-            time = time.replace("Noon", "PM")
-            location = time_row.text_content().split(",")[1].strip()
+            status = "tentative"
+
+            if time_row.xpath('div[contains(@class,"Cancelled")]'):
+                status = "cancelled"
+
+            row_text = time_row.text_content()
+            row_text = row_text.replace("Noon", "PM")
+            # upon recess (of House|Senate)
+            row_text = re.sub("Upon Recess(\sof\s)?(House|Senate)?", "", row_text)
+            parts = re.split(',|AM|PM', row_text)
+            time = parts[0].strip()
+            location = " ".join(x.replace(u'\xa0','').strip() for x in parts[1:])
 
             when = f"{date} {time}"
             when = dateutil.parser.parse(when)
@@ -58,6 +67,7 @@ class KYEventScraper(Scraper):
                 start_date=when,
                 classification="committee-meeting",
                 location_name=location,
+                status=status,
             )
 
             agenda_row = time_row.xpath(
