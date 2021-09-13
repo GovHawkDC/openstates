@@ -387,7 +387,15 @@ class OHBillScraper(Scraper):
             "sort=LegislationNumber&dir=asc&statusCode&generalAssemblies={}"
             "&legislationTypes=HR,HB,SR,SB,HCR,SCR,HJR,SJR".format(start, session)
         )
-        doc = self.get(bill_url, verify=False)
+
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Content-Type": "application/json; charset=utf-8",
+            "Host": "www.legislature.ohio.gov",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
+        }
+
+        doc = self.get(bill_url, verify=False, headers=headers)
         doc = lxml.html.fromstring(doc.text)
         doc.make_links_absolute(bill_url)
 
