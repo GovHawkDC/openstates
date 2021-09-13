@@ -25,11 +25,36 @@ class NEBillScraper(Scraper, LXMLMixin):
                 ),
                 None,
             )
-        start_year = datetime.strptime(session["start_date"], "%Y-%m-%d").year
-        end_year = datetime.strptime(session["end_date"], "%Y-%m-%d").year
-        yield from self.scrape_year(session["identifier"], start_year)
-        if start_year != end_year:
-            yield from self.scrape_year(session["identifier"], end_year)
+
+        if session["classification"] == "special":
+            yield from self.scrape_special(session["identifier"], session["start_date"])
+        else:
+            start_year = datetime.strptime(session["start_date"], "%Y-%m-%d").year
+            end_year = datetime.strptime(session["end_date"], "%Y-%m-%d").year
+            yield from self.scrape_year(session["identifier"], start_year)
+            if start_year != end_year:
+                yield from self.scrape_year(session["identifier"], end_year)
+
+    # NE Specials are lumped in with regular data, just duped bill numbers.
+    # Scrape by intro date, instead of by year.
+    def scrape_special(self, session, start_date):
+        main_url = (
+            "https://nebraskalegislature.gov/bills/search_by_date.php?"
+            "SessionDay={}".format(start_date)
+        )
+        page = self.lxmlize(main_url)
+
+        document_links = self.get_nodes(
+            page,
+            '//div[@class="main-content"]//div[@class="table-responsive"]//'
+            'table[@class="table"]/tbody/tr/td[1]/a',
+        )
+
+        for document_link in document_links:
+            # bill_number = document_link.text
+            bill_link = document_link.attrib["href"]
+
+            yield from self.bill_info(bill_link, session, main_url)
 
     def scrape_year(self, session, year):
 
@@ -233,7 +258,7 @@ class NEBillScraper(Scraper, LXMLMixin):
             vote.set_count("abstain", present_count)
 
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(vote_url).query)
-            vote.pupa_id = query_params["KeyID"][0]
+            vote.dedupe_key = query_params["KeyID"][0]
             vote.add_source(vote_url)
             for chunk in range(0, len(cells), 2):
                 name = cells[chunk].text
