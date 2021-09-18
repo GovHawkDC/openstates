@@ -168,6 +168,7 @@ class Oregon(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2021 1st Special Session",
         "2021-2022 Interim",
         "Mock Session 2020",
         "Today",
