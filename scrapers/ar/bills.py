@@ -320,8 +320,11 @@ class ARBillScraper(Scraper):
             passed = yes_count > no_count + not_voting_count + other_count
             vote_type = []
             vote_type.append("passage")
-            if "override" and "veto" in motion.casefold():
-                vote_type.append("veto-override")
+            # if "override" and "veto" in motion.casefold():
+            #     if passed:
+            #         vote_type.append("veto-override-passage")
+            #     else:
+            #         vote_type.append("veto-override-failure") 
             vote = VoteEvent(
                 start_date=date,
                 motion_text=motion,
