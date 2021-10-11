@@ -1,15 +1,10 @@
 from utils import State
-from .people import WVPersonScraper
 from .bills import WVBillScraper
 from .events import WVEventScraper
-
-# from .committees import WVCommitteeScraper
 
 
 class WestVirginia(State):
     scrapers = {
-        "people": WVPersonScraper,
-        # 'committees': WVCommitteeScraper,
         "bills": WVBillScraper,
         "events": WVEventScraper,
     }
@@ -163,8 +158,16 @@ class WestVirginia(State):
             "classification": "primary",
             "identifier": "20212S",
             "name": "2021 Second Special Session",
-            "start_date": "2021-06-07",
-            "end_date": "2021-06-11",
+            "start_date": "2021-06-24",
+            "end_date": "2021-06-25",
+        },
+        {
+            "_scraped_name": "2021",
+            "classification": "primary",
+            "identifier": "20213S",
+            "name": "2021 Third Special Session",
+            "start_date": "2021-06-24",
+            "end_date": "2021-06-25",
         },
     ]
     ignored_scraped_sessions = [

@@ -45,6 +45,7 @@ class WVBillScraper(Scraper):
         "20191S": "1x",
         "20211S": "1x",
         "20212S": "2x",
+        "20213S": "3x",
     }
 
     bill_types = {
@@ -345,6 +346,7 @@ class WVBillScraper(Scraper):
             vote.set_count("no", no_count)
             vote.set_count("other", other_count)
             vote.add_source(url)
+            vote.dedupe_key = url
 
             for key, values in votes.items():
                 for value in values:
@@ -375,6 +377,7 @@ class WVBillScraper(Scraper):
             bill=bill,
         )
         vote.add_source(url)
+        vote.dedupe_key = url
 
         text = convert_pdf(filename, "text").decode("utf-8")
         os.remove(filename)
