@@ -286,7 +286,7 @@ class ALBillScraper(Scraper):
             version_url_base = (
                 "http://alisondb.legislature.state.al.us/ALISON/"
                 "SearchableInstruments/{0}/PrintFiles/{1}-".format(session, bill_id)
-
+            )
             versions = bill_doc.xpath(
                 '//table[@class="box_versions"]/tr/td[2]/font/text()'
             )
