@@ -317,7 +317,7 @@ class OKBillScraper(Scraper):
             vote.set_count("yes", counts["yes"])
             vote.set_count("no", counts["no"])
             vote.set_count("other", counts["other"])
-            vote.dedupe_key = url + "#" + rcs
+            # vote.dedupe_key = url + "#" + rcs
 
             vote.add_source(url)
 
