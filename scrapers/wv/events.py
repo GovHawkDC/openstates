@@ -127,6 +127,7 @@ class WVEventScraper(Scraper, LXMLMixin):
         when = re.sub(r'Time Announced(.*)', '', when, flags=re.IGNORECASE)
         when = re.sub(r'TB(.*)', '', when, flags=re.IGNORECASE)
         when = re.sub(r'\*', '', when, flags=re.IGNORECASE)
+        when = re.sub(r",?\s+following\s+floor\s+session", "", when, flags=re.IGNORECASE)
         when = re.sub(r'\d+ minutes following the evening floor session(.*)', '', when, flags=re.IGNORECASE)
         when = re.sub(r'ONE HOUR BEFORE SENATE FLOOR SESSION(.*)', '', when, flags=re.IGNORECASE)
         when = when.replace('22021', '2021')
