@@ -167,7 +167,7 @@ class Alabama(State):
         },
     ]
     ignored_scraped_sessions = [
-        "First Special Session 2021",
+        "Second Special Session 2021",
         "Regular Session 1998",
         "Organizational Session 1999",
         "Regular Session 1999",
