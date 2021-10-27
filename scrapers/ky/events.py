@@ -3,6 +3,7 @@ import os
 import re
 import json
 import lxml
+import functools
 
 import pytz
 
@@ -80,6 +81,59 @@ class KYEventScraper(Scraper):
             for bill_link in agenda_row.xpath('.//a[contains(@href,"/record/")]'):
                 agenda.add_bill(bill_link.text_content().strip())
 
+            event.add_participant(com_name,note="host",type="committee")
+
+            com_page_link = time_row.xpath(
+                'following-sibling::div[contains(@class,"CommitteeName")][1]/a/@href'
+            )[0]
+
+            print(self.scrape_com_docs(com_page_link))
+
             event.add_source(url)
 
             yield event
+
+    @functools.lru_cache(maxsize=None)
+    def scrape_com_docs(self, url):
+        print(f"SCD {url}")
+        page = self.get(url).content
+        page = lxml.html.fromstring(page)
+
+        docs = {}
+
+        mats_link = page.xpath('//a[contains(text(), "Meeting Materials")]/@href')[0]
+        docs['mats'] = self.scrape_meeting_mats(mats_link)
+
+        minutes_link = page.xpath('//a[contains(text(), "Minutes")]/@href')[0]
+        docs['minutes'] = self.scrape_minutes(minutes_link)
+
+        return docs
+    
+    def scrape_meeting_mats(self, url):
+        page = self.get(url).content
+        page = lxml.html.fromstring(page)
+        page.make_links_absolute(url)
+
+        docs = {}
+        for header in page.xpath('//div[h2[contains(text(), "Meeting Materials")]]/div[1]/h3'):
+            date_text = header.text_content().strip()
+
+            if 'Other Meeting' in date_text:
+                continue
+
+            when = dateutil.parser.parse(date_text)
+
+            lookup_date = when.strftime("%Y-%m-%d")
+
+            if lookup_date not in docs:
+                docs[lookup_date] = []
+
+            for doc_link in header.xpath('following::ul[1]/li/a'):
+                docs[lookup_date].append({'url': doc_link.xpath('@href')[0], 'text': doc_link.text_content().strip()})
+
+        return docs
+
+    def scrape_minutes(self, url):
+        page = self.get(url).content
+        page = lxml.html.fromstring(page)
+        return {}
