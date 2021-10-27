@@ -87,7 +87,16 @@ class KYEventScraper(Scraper):
                 'following-sibling::div[contains(@class,"CommitteeName")][1]/a/@href'
             )[0]
 
-            print(self.scrape_com_docs(com_page_link))
+            docs = self.scrape_com_docs(com_page_link)
+            lookup_date = when.strftime("%Y-%m-%d")
+
+            if lookup_date in docs['mats']:
+                for mat in docs['mats'][lookup_date]: 
+                    event.add_document(mat['text'], mat['url'], on_duplicate="ignore")
+
+            if lookup_date in docs['minutes']:
+                for mat in docs['minutes'][lookup_date]: 
+                    event.add_document(mat['text'], mat['url'], on_duplicate="ignore")
 
             event.add_source(url)
 
@@ -95,7 +104,6 @@ class KYEventScraper(Scraper):
 
     @functools.lru_cache(maxsize=None)
     def scrape_com_docs(self, url):
-        print(f"SCD {url}")
         page = self.get(url).content
         page = lxml.html.fromstring(page)
 
@@ -136,4 +144,16 @@ class KYEventScraper(Scraper):
     def scrape_minutes(self, url):
         page = self.get(url).content
         page = lxml.html.fromstring(page)
-        return {}
+        page.make_links_absolute(url)
+
+        docs = {}
+        for link in page.xpath('//a[contains(@href, "/minutes/")]'):
+            when = dateutil.parser.parse(link.text_content())
+            lookup_date = when.strftime("%Y-%m-%d")
+
+            docs[lookup_date] = {
+                'url': link.xpath('@href')[0],
+                'text': 'Minutes'
+            }
+
+        return docs
