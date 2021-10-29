@@ -165,9 +165,16 @@ class Alabama(State):
             "start_date": "2021-09-27",
             "end_date": "2021-10-01",
         },
+        {
+            "_scraped_name": "Second Special Session 2021",
+            "classification": "special",
+            "identifier": "2021s2",
+            "name": "Second Special Session 2021",
+            "start_date": "2021-10-28",
+            "end_date": "2021-10-31",
+        },        
     ]
     ignored_scraped_sessions = [
-        "Second Special Session 2021",
         "Regular Session 1998",
         "Organizational Session 1999",
         "Regular Session 1999",

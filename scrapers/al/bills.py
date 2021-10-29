@@ -282,6 +282,7 @@ class ALBillScraper(Scraper):
                 title = "[No title given by state]"
             bill.title = title
             session = "2021FS" if self.session == "2021s1" else self.session
+            session = "2021SS" if self.session == "2021s2" else session
 
             version_url_base = (
                 "http://alisondb.legislature.state.al.us/ALISON/"
