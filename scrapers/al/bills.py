@@ -114,6 +114,7 @@ class ALBillScraper(Scraper):
 
         for _retry in range(self.retry_attempts):
             html = self.get(url=url).text
+            # print(html)
 
             doc = lxml.html.fromstring(html)
 
@@ -161,6 +162,55 @@ class ALBillScraper(Scraper):
 
         self._set_session(session)
 
+        # Acquire and process a list of all resolutions
+        RESOLUTION_TYPE_URL = (
+            "http://alisondb.legislature.state.al.us/Alison/"
+            "SESSResosBySelectedStatus.aspx?BODYID=1755"
+        )
+        RESOLUTION_LIST_URL = (
+            "http://alisondb.legislature.state.al.us/Alison/"
+            "SESSResosList.aspx?STATUSCODES=Had%20First%20Reading"
+            "%20House%20of%20Origin&BODY=999999"
+        )
+
+        resText = self.get(url=RESOLUTION_TYPE_URL).text
+
+        # set the chamber to both
+        doc = lxml.html.fromstring(resText)
+        (viewstate,) = doc.xpath('//input[@id="__VIEWSTATE"]/@value')
+        (viewstategenerator,) = doc.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')
+
+        form = {
+            "__EVENTTARGET": "",
+            "__EVENTARGUMENT": "",
+            "__VIEWSTATE": viewstate,
+            "__VIEWSTATEGENERATOR": viewstategenerator,
+            "ctl00$ContentPlaceHolder1$btnBoth": "House and Senate",
+            "ctl00$ScriptManager1": " ctl00$UpdatePanel1|ctl00$ContentPlaceHolder1$btnBoth"
+        }
+
+        resText = self.post(url=RESOLUTION_TYPE_URL, data=form, allow_redirects=True).text
+
+        # set the status to had a first reading
+        doc = lxml.html.fromstring(resText)
+
+        (viewstate,) = doc.xpath('//input[@id="__VIEWSTATE"]/@value')
+        (viewstategenerator,) = doc.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')
+
+        form = {
+            "__EVENTTARGET": "ctl00$ContentPlaceHolder1$gvStatus$ctl02$ctl00",
+            "__EVENTARGUMENT": "Select$0",
+            "__VIEWSTATE": viewstate,
+            "__VIEWSTATEGENERATOR": viewstategenerator,
+            "ctl00$ScriptManager1": "tctl00$UpdatePanel1|ctl00$"
+            "MainDefaultContent$gvStatus$ctl02$ctl00",
+        }
+
+        res = self.post(url=RESOLUTION_TYPE_URL, data=form, allow_redirects=True)
+        yield from self.scrape_bill_list(RESOLUTION_LIST_URL)
+
+        self._set_session(session)
+
         # Acquire and process a list of all bills
         BILL_TYPE_URL = (
             "http://alisondb.legislature.state.al.us/Alison/"
@@ -187,38 +237,6 @@ class ALBillScraper(Scraper):
 
         yield from self.scrape_bill_list(BILL_LIST_URL)
 
-        self._set_session(session)
-
-        # Acquire and process a list of all resolutions
-        RESOLUTION_TYPE_URL = (
-            "http://alisondb.legislature.state.al.us/Alison/"
-            "SESSResosBySelectedStatus.aspx?BODYID=1755"
-        )
-        RESOLUTION_LIST_URL = (
-            "http://alisondb.legislature.state.al.us/Alison/"
-            "SESSResosList.aspx?STATUSCODES=Had%20First%20Reading"
-            "%20House%20of%20Origin&BODY=999999"
-        )
-
-        resText = self.get(url=RESOLUTION_TYPE_URL).text
-
-        doc = lxml.html.fromstring(resText)
-
-        (viewstate,) = doc.xpath('//input[@id="__VIEWSTATE"]/@value')
-        (viewstategenerator,) = doc.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')
-
-        form = {
-            "__EVENTTARGET": "ctl00$ContentPlaceHolder1$gvStatus$ctl02$ctl00",
-            "__EVENTARGUMENT": "Select$0",
-            "__VIEWSTATE": viewstate,
-            "__VIEWSTATEGENERATOR": viewstategenerator,
-            "ctl00$ScriptManager1": "tctl00$UpdatePanel1|ctl00$"
-            "MainDefaultContent$gvStatus$ctl02$ctl00",
-        }
-
-        self.post(url=RESOLUTION_TYPE_URL, data=form, allow_redirects=True)
-
-        yield from self.scrape_bill_list(RESOLUTION_LIST_URL)
 
     def scrape_bill_list(self, url):
         bill_list = self._get_bill_list(url)
