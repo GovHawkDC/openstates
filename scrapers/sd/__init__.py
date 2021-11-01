@@ -134,7 +134,7 @@ class SouthDakota(State):
             "end_date": "2021-03-29",
         },
     ]
-    ignored_scraped_sessions = []
+    ignored_scraped_sessions = ["2022"]
 
     def get_session_list(self):
         api_url = "https://sdlegislature.gov/api/Sessions/"
