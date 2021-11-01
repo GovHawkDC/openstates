@@ -62,7 +62,6 @@ class NCEventScraper(Scraper, LXMLMixin):
                 where = where.replace("STREAM", "")
 
                 when = f"{date} {time}"
-                print(when)
                 try:
                     when = dateutil.parser.parse(when)
                     # occasionally they'd do 9am-1pm which confuses the TZ detection
