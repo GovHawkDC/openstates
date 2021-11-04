@@ -25,7 +25,7 @@ from .util import get_client, get_url, backoff, SESSION_SITE_IDS
 
 
 member_cache = {}
-SOURCE_URL = "http://www.legis.ga.gov/Legislation/en-US/display/{session}/{bid}"
+SOURCE_URL = "http://www.legis.ga.gov/legislation/{bid}"
 
 vote_name_pattern = re.compile(r"(.*), (\d+(?:ST|ND|RD|TH))", re.IGNORECASE)
 
@@ -160,6 +160,9 @@ class GABillScraper(Scraper):
             bill_id = "%s %s" % (bill_prefix, instrument["Number"])
             if instrument["Suffix"]:
                 bill_id += instrument["Suffix"]
+
+            # special session bills get a suffix that doesn't show up in the site 
+            bill_id = bill_id.replace("EX","")
 
             title = instrument["Caption"]
             description = instrument["Summary"]
