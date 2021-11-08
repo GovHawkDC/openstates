@@ -6,7 +6,7 @@ from openstates.scrape.base import ScrapeError
 
 from utils import LXMLMixin
 
-SESSION_IDS = {"2021": "44", "2020": "43"}
+SESSION_IDS = {"2021": "44", "2020": "43", "2021s": "65"}
 
 
 class SDBillScraper(Scraper, LXMLMixin):

@@ -133,8 +133,15 @@ class SouthDakota(State):
             "start_date": "2021-01-12",
             "end_date": "2021-03-29",
         },
+        {
+            "_scraped_name": "2021s",
+            "identifier": "2021s",
+            "name": "2021 Special Session",
+            "start_date": "2021-11-08",
+            "end_date": "2021-11-12",
+        },
     ]
-    ignored_scraped_sessions = ["2022"]
+    ignored_scraped_sessions = ["2022","2021r"]
 
     def get_session_list(self):
         api_url = "https://sdlegislature.gov/api/Sessions/"
