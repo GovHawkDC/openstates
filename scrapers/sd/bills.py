@@ -6,7 +6,7 @@ from openstates.scrape.base import ScrapeError
 
 from utils import LXMLMixin
 
-SESSION_IDS = {"2021": "44", "2020": "43", "2021r": "65"}
+SESSION_IDS = {"2021": "44", "2020": "43", "2021r": "65", "2021i": "66"}
 
 
 class SDBillScraper(Scraper, LXMLMixin):
@@ -126,6 +126,8 @@ class SDBillScraper(Scraper, LXMLMixin):
 
         actions_url = f"https://sdlegislature.gov/api/Bills/ActionLog/{api_id}"
         yield from self.scrape_action(bill, actions_url, chamber)
+
+        bill.add_source(f"https://sdlegislature.gov/Session/Bill/{api_id}")
 
         yield bill
 
