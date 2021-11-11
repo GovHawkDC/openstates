@@ -32,7 +32,7 @@ class MEBillScraper(Scraper):
     def scrape_chamber(self, chamber, session):
         # Create a Bill for each Paper of the chamber's session
         request_session = requests.Session()
-        search_url = "http://legislature.maine.gov/LawMakerWeb/doadvancedsearch.asp"
+        search_url = "https://legislature.maine.gov/LawMakerWeb/doadvancedsearch.asp"
         session_number = str(int(session) - 116)
         paper_type = "HP" if chamber == "lower" else "SP"
         form_data = {
@@ -65,7 +65,7 @@ class MEBillScraper(Scraper):
         Bill object for every Paper from the given chamber
         """
 
-        url = "http://legislature.maine.gov/LawMakerWeb/searchresults.asp"
+        url = "https://legislature.maine.gov/LawMakerWeb/searchresults.asp"
         r = request_session.get(url, params={"StartWith": first_item})
         r.raise_for_status()
 
