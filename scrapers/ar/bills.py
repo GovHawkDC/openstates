@@ -88,6 +88,8 @@ class ARBillScraper(Scraper):
             )
             bill.add_version_link(bill_id, version_url, media_type="application/pdf")
 
+            print(bill)
+
             yield from self.scrape_bill_page(bill)
 
             self.bills[bill_id] = bill
@@ -108,7 +110,7 @@ class ARBillScraper(Scraper):
             actor = {"H": "lower", "S": "upper"}[row[7].upper()]
 
             date = TIMEZONE.localize(
-                datetime.datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S.%f")
+                datetime.datetime.strptime(row[5], "%Y-%m-%d %H:%M:%S.%f").replace(microsecond=0)
             )
 
             action = row[6]
