@@ -88,8 +88,6 @@ class ARBillScraper(Scraper):
             )
             bill.add_version_link(bill_id, version_url, media_type="application/pdf")
 
-            print(bill)
-
             yield from self.scrape_bill_page(bill)
 
             self.bills[bill_id] = bill
