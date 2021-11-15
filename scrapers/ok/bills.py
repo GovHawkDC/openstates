@@ -30,6 +30,7 @@ class OKBillScraper(Scraper):
         "2020SS1": "201X",
         "2021": "2100",
         "2022": "2200",
+        "2021SS1": "211X"
     }
 
     def scrape(self, chamber=None, session=None, only_bills=None):
