@@ -5,6 +5,7 @@ from .vote_events import MNVoteScraper
 
 # from .committees import MNCommitteeScraper
 from .events import MNEventScraper
+from .townhalls import MNTownHallScraper
 
 """
 Minnesota legislative data can be found at the Office of the Revisor
@@ -24,6 +25,7 @@ class Minnesota(State):
         # "committees": MNCommitteeScraper,
         "votes": MNVoteScraper,
         "events": MNEventScraper,
+        "townhalls": MNTownHallScraper,
     }
     legislative_sessions = [
         {
