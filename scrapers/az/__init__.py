@@ -265,10 +265,17 @@ class Arizona(State):
             "start_date": "2021-06-14",
             "end_date": "2021-06-18",
         },
-        
+        {
+            "_scraped_name": "2022 - Fifty-fifth Legislature - Second Regular Session",
+            "classification": "special",
+            "identifier": "55th-2nd-regular",
+            "name": "Fifty-fifth Legislature - Second Regular Session",
+            "start_date": "2022-01-10",
+            # TODO: real end date
+            "end_date": "2022-04-23",
+        },        
     ]
     ignored_scraped_sessions = [
-        "2022 - Fifty-fifth Legislature - Second Regular Session",
         "2008 - Forty-eighth Legislature - Second Regular Session",
         "2007 - Forty-eighth Legislature - First Regular Session",
         "2006 - Forty-seventh Legislature - First Special Session",
