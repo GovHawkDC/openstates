@@ -268,6 +268,7 @@ class Arizona(State):
         
     ]
     ignored_scraped_sessions = [
+        "2022 - Fifty-fifth Legislature - Second Regular Session",
         "2008 - Forty-eighth Legislature - Second Regular Session",
         "2007 - Forty-eighth Legislature - First Regular Session",
         "2006 - Forty-seventh Legislature - First Special Session",
