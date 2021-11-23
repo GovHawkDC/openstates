@@ -88,13 +88,21 @@ class Vermont(State):
             "start_date": "2021-01-06",
             "end_date": "2021-05-15",
         },
+        {
+            "_scraped_name": "2021 Special Session",
+            "classification": "special",
+            "identifier": "2021S1",
+            "name": "2021 Special Session",
+            "start_date": "2021-11-22",
+            "end_date": "2021-11-26",
+        },
     ]
     ignored_scraped_sessions = [
         "2020 Training Session",
         "2009 Special Session",
     ]
 
-    site_ids = {"2018ss1": "2018.1"}
+    site_ids = {"2018ss1": "2018.1", "2021S1": "2021.1"}
 
     # 2021 TODO: is this function still correct?
     def get_year_slug(self, session):
