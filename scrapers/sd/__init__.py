@@ -146,7 +146,7 @@ class SouthDakota(State):
             "name": "2021 Second Special Session",
             "start_date": "2021-11-08",
             "end_date": "2021-11-12",
-        },        
+        },
     ]
     ignored_scraped_sessions = ["2022"]
 
