@@ -71,15 +71,16 @@ class KYEventScraper(Scraper):
                 status=status,
             )
 
-            agenda_row = time_row.xpath(
-                'following-sibling::div[contains(@class,"Agenda")][1]'
-            )[0]
-            agenda_text = agenda_row.text_content().strip()
+            if time_row.xpath('following-sibling::div[contains(@class,"Agenda")][1]'):
+                agenda_row = time_row.xpath(
+                    'following-sibling::div[contains(@class,"Agenda")][1]'
+                )[0]
+                agenda_text = agenda_row.text_content().strip()
 
-            agenda = event.add_agenda_item(agenda_text)
+                agenda = event.add_agenda_item(agenda_text)
 
-            for bill_link in agenda_row.xpath('.//a[contains(@href,"/record/")]'):
-                agenda.add_bill(bill_link.text_content().strip())
+                for bill_link in agenda_row.xpath('.//a[contains(@href,"/record/")]'):
+                    agenda.add_bill(bill_link.text_content().strip())
 
             event.add_participant(com_name,note="host",type="committee")
 
