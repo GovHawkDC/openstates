@@ -75,7 +75,14 @@ class Missouri(State):
             # TODO: real end date when session is over
             "end_date": "2021-06-25",
         },
-        
+        {
+            "_scraped_name": "2022 Regular Session",
+            "classification": "primary",
+            "identifier": "2022",
+            "name": "2022 Regular Session",
+            "start_date": "2022-01-05",
+            "end_date": "2022-05-20",
+        },        
     ]
     ignored_scraped_sessions = [
         "2021 Regular Session",
