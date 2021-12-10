@@ -61,14 +61,14 @@ class WYBillScraper(Scraper, LXMLMixin):
         if session_details["classification"] == "special":
             self.is_special = True
             bill_json_url = (
-                "http://wyoleg.gov/LsoService/api/BillInformation?"
+                "https://wyoleg.gov/LsoService/api/BillInformation?"
                 "$filter=Year%20eq%20{}%20and%20SpecialSessionValue%20ne%20null&$orderby=BillNum".format(
                     session[0:4]
                 )
             )
         else:
             bill_json_url = (
-                "http://wyoleg.gov/LsoService/api/BillInformation?"
+                "https://wyoleg.gov/LsoService/api/BillInformation?"
                 "$filter=Year%20eq%20{}&$orderby=BillNum".format(session)
             )
 
@@ -83,13 +83,13 @@ class WYBillScraper(Scraper, LXMLMixin):
         chamber_map = {"House": "lower", "Senate": "upper", "LSO": "executive"}
         # Sample with all keys: https://gist.github.com/showerst/d6cd03eff3e8b12ab01dbb219876db45
         bill_json_url = (
-            "http://wyoleg.gov/LsoService/api/BillInformation/{}/"
+            "https://wyoleg.gov/LsoService/api/BillInformation/{}/"
             "{}?calendarDate=".format(session, bill_num)
         )
 
         if self.is_special:
             bill_json_url = (
-                "http://wyoleg.gov/LsoService/api/BillInformation/{}/"
+                "https://wyoleg.gov/LsoService/api/BillInformation/{}/"
                 "{}?specialSessionValue=1&calendarDate=".format(session[0:4], bill_num)
             )
 
@@ -111,12 +111,12 @@ class WYBillScraper(Scraper, LXMLMixin):
 
         bill.add_title(bill_json["billTitle"])
 
-        source_url = "http://lso.wyoleg.gov/Legislation/{}/{}".format(
+        source_url = "https://wyoleg.gov/Legislation/{}/{}".format(
             session, bill_json["bill"]
         )
 
         if self.is_special:
-            source_url = "http://lso.wyoleg.gov/Legislation/{}/{}?specialSessionValue=1".format(
+            source_url = "https://wyoleg.gov/Legislation/{}/{}?specialSessionValue=1".format(
                 session[0:4], bill_json["bill"]
             )
 
@@ -139,7 +139,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             action.extras = {"billInformationID": action_json["billInformationID"]}
 
         if bill_json["introduced"]:
-            url = "http://wyoleg.gov/{}".format(bill_json["introduced"])
+            url = "https://wyoleg.gov/{}".format(bill_json["introduced"])
 
             bill.add_version_link(
                 note="Introduced",
@@ -148,7 +148,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             )
 
         if bill_json["enrolledAct"]:
-            url = "http://wyoleg.gov/{}".format(bill_json["enrolledAct"])
+            url = "https://wyoleg.gov/{}".format(bill_json["enrolledAct"])
 
             bill.add_version_link(
                 note="Enrolled",
@@ -157,7 +157,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             )
 
         if bill_json["fiscalNote"]:
-            url = "http://wyoleg.gov/{}".format(bill_json["fiscalNote"])
+            url = "https://wyoleg.gov/{}".format(bill_json["fiscalNote"])
 
             bill.add_document_link(
                 note="Fiscal Note",
@@ -166,7 +166,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             )
 
         if bill_json["digest"]:
-            url = "http://wyoleg.gov/{}".format(bill_json["digest"])
+            url = "https://wyoleg.gov/{}".format(bill_json["digest"])
 
             bill.add_document_link(
                 note="Bill Digest",
@@ -176,7 +176,7 @@ class WYBillScraper(Scraper, LXMLMixin):
 
         if bill_json["vetoes"]:
             for veto in bill_json["vetoes"]:
-                url = "http://wyoleg.gov/{}".format(veto["vetoLinkPath"])
+                url = "https://wyoleg.gov/{}".format(veto["vetoLinkPath"])
                 bill.add_version_link(
                     note=veto["vetoLinkText"],
                     url=url,
@@ -187,7 +187,7 @@ class WYBillScraper(Scraper, LXMLMixin):
             # http://wyoleg.gov/2018/Amends/SF0050H2001.pdf
             # TODO: There are no special session amendments yet,
             # but check this url format for specials
-            url = "http://wyoleg.gov/{}/Amends/{}.pdf".format(
+            url = "https://wyoleg.gov/{}/Amends/{}.pdf".format(
                 session[0:4], amendment["amendmentNumber"]
             )
 
