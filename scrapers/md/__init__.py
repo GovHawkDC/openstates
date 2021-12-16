@@ -174,6 +174,14 @@ class Maryland(State):
             "start_date": "2021-12-06",
             "end_date": "2021-12-12",
         },
+        {
+            "_scraped_name": "2022 Regular Session",
+            "classification": "primary",
+            "identifier": "2022",
+            "name": "2022 Regular Session",
+            "start_date": "2022-01-12",
+            "end_date": "2022-04-11",
+        },
     ]
     ignored_scraped_sessions = [
         "2021 Special Session",
