@@ -360,7 +360,7 @@ class INBillScraper(Scraper):
         }
 
         api_base_url = "https://api.iga.in.gov"
-        proxy = {"url": "https://govhawk-in-proxy.herokuapp.com/"}
+        proxy = {"url": "https://govhawk-in-proxy.herokuapp.com"}
 
         # ah, indiana. it's really, really hard to find
         # pdfs in their web interface. Super easy with
