@@ -12,6 +12,7 @@ from openstates.utils import convert_pdf
 
 from .apiclient import ApiClient
 
+SCRAPE_WEB_VERSIONS = "INDIANA_SCRAPE_WEB_VERSIONS" in os.environ
 
 class INBillScraper(Scraper):
     jurisdiction = "in"
@@ -163,11 +164,11 @@ class INBillScraper(Scraper):
     def deal_with_version(self, version, bill, bill_id, chamber, session, proxy):
         # documents
         docs = OrderedDict()
-        docs["Committee Amendment"] = version["cmte_amendments"]
-        docs["Floor Amendment"] = version["floor_amendments"]
-        docs["Amendment"] = version["amendments"]
-        docs["Fiscal Note"] = version["fiscal-notes"]
-        docs["Committee Report"] = version["committee-reports"]
+        docs["Committee Amendment"] = version.get("cmte_amendments", [])
+        docs["Floor Amendment"] = version.get("floor_amendments", [])
+        docs["Amendment"] = version.get("amendments", [])
+        docs["Fiscal Note"] = version.get("fiscal-notes", [])
+        docs["Committee Report"] = version.get("committee-reports", [])
 
         # sometimes amendments appear in multiple places
         # cmte_amendment vs amendment
@@ -236,10 +237,6 @@ class INBillScraper(Scraper):
             bill.add_version_link(
                 note=name, url=link, media_type="application/pdf", date=update_date
             )
-
-        # votes
-        votes = version["rollcalls"]
-        yield from self._process_votes(votes, bill_id, chamber, session, proxy)
 
     def scrape_web_versions(self, session, bill, bill_id):
         # found via web inspector of the requests to
@@ -510,6 +507,9 @@ class INBillScraper(Scraper):
                 if "signed by the governor" in d:
                     action_type.append("executive-signature")
 
+                if "vetoed by the governor" in d:
+                    action_type.append("executive-veto")
+
                 if len(action_type) == 0:
                     # calling it other and moving on with a warning
                     self.logger.warning(
@@ -526,7 +526,7 @@ class INBillScraper(Scraper):
                 if committee:
                     a.add_related_entity(committee, entity_type="organization")
 
-            self.scrape_web_versions(session, bill, bill_id)
+            # self.scrape_web_versions(session, bill, bill_id)
 
             # subjects
             subjects = [s["entry"] for s in bill_json["latestVersion"]["subjects"]]
@@ -537,24 +537,31 @@ class INBillScraper(Scraper):
             if bill_json["latestVersion"]["digest"]:
                 bill.add_abstract(bill_json["latestVersion"]["digest"], note="Digest")
 
-            
-            # Leaving this code in, beacuse if they fix the API we may want it for votes
-            # - TS 2021-03-16
 
-            # versions and votes
-            # for version in bill_json["versions"][::-1]:
-            #     try:
-            #         version_json = client.get(
-            #             "bill_version",
-            #             session=session,
-            #             bill_id=version["billName"],
-            #             version_id=version["printVersionName"],
-            #         )
-            #     except scrapelib.HTTPError:
-            #         self.logger.warning("Bill version does not seem to exist.")
-            #         continue
+            # put this behind a flag 2021-03-18 (openstates/issues#291)
+            if not SCRAPE_WEB_VERSIONS:
+                # votes
+                yield from self._process_votes(
+                    bill_json["latestVersion"]["rollcalls"],
+                    disp_bill_id,
+                    original_chamber,
+                    session,
+                    proxy
+                )
+                # versions
+                self.deal_with_version(
+                    bill_json["latestVersion"], bill, bill_id, original_chamber, session, proxy
+                )
+                for version in bill_json["versions"][::-1]:
+                    self.deal_with_version(
+                        version,
+                        bill,
+                        bill_id,
+                        original_chamber,
+                        session,
+                        proxy
+                    )
+            else:
+                self.scrape_web_versions(session, bill, bill_id)
 
-            #     yield from self.deal_with_version(
-            #         version_json, bill, bill_id, original_chamber, session, proxy
-            #     )
             yield bill
