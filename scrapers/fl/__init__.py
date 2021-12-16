@@ -146,18 +146,18 @@ class Florida(State):
             "end_date": "2021-05-21",
         },
         {
-            "name": "2022 Regular Session",
-            "identifier": "2022",
-            "classification": "primary",
-            "start_date": "2022-03-02",
-            "end_date": "2022-05-01",
-        },
-        {
             "name": "2021 Special Session B",
             "identifier": "2021B",
             "classification": "primary",
             "start_date": "2021-05-12",
             "end_date": "2021-05-21",
+        },
+        {
+            "name": "2022 Regular Session",
+            "identifier": "2022",
+            "classification": "primary",
+            "start_date": "2022-03-02",
+            "end_date": "2022-05-01",
         },
     ]
     ignored_scraped_sessions = [
