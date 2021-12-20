@@ -33,8 +33,12 @@ class OHEventScraper(Scraper):
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
+        ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
+        headers = {
+            'User-Agent': ua
+        }
         url = f"{self.base_url}calendar-data?start={start}&end={end}"
-        data = json.loads(self.get(url).content)
+        data = json.loads(self.get(url,headers=headers).content)
 
         for item in data:
             name = item['title'].replace('Committee','').strip()
