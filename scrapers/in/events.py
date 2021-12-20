@@ -1,4 +1,5 @@
 import pytz
+import cloudscraper
 import datetime
 import dateutil.parser
 import lxml
@@ -12,12 +13,13 @@ class INEventScraper(Scraper):
     _tz = pytz.timezone("America/Indianapolis")
     # avoid cloudflare blocks for no UA
     cf_headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
     }
+    scraper = cloudscraper.create_scraper() 
 
     def scrape(self):
         list_url = "http://iga.in.gov/legislative/2021/committees/standing"
-        page = requests.get(list_url, headers=self.cf_headers).content
+        page = self.scraper.get(list_url).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(list_url)
 
@@ -25,7 +27,7 @@ class INEventScraper(Scraper):
             yield from self.scrape_committee_page(com_row)
 
     def scrape_committee_page(self, url):
-        page = self.get(url, headers=self.cf_headers).content
+        page = self.scraper.get(url, headers=self.cf_headers).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
         com = page.xpath('//div[contains(@class, "pull-left span8")]/h1/text()')[
