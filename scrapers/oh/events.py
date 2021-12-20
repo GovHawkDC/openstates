@@ -33,7 +33,7 @@ class OHEventScraper(Scraper):
         start = start.strftime("%Y-%m-%d")
         end = end.strftime("%Y-%m-%d")
 
-        url = f"{self.base_url}/calendar-data?start={start}&end={end}"
+        url = f"{self.base_url}calendar-data?start={start}&end={end}"
         data = json.loads(self.get(url).content)
 
         for item in data:
