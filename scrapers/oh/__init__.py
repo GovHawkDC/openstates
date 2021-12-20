@@ -65,12 +65,13 @@ class Ohio(State):
     ignored_scraped_sessions = []
 
     def get_session_list(self):
-        sessions = url_xpath(
-            "https://www.legislature.ohio.gov/legislation/search"
-            "?generalAssemblies=133&pageSize=10&start=1&isInitial=true",
-            '//div[@id="generalAssemblyValues"]//'
-            'div[contains(@class, "optionLabel")]/text()',
-            user_agent="Govhawk.com",
-        )
-        # Archive does not include current session
-        return sessions
+        # sessions = url_xpath(
+        #     "https://www.legislature.ohio.gov/legislation/search"
+        #     "?generalAssemblies=133&pageSize=10&start=1&isInitial=true",
+        #     '//div[@id="generalAssemblyValues"]//'
+        #     'div[contains(@class, "optionLabel")]/text()',
+        #     user_agent="Govhawk.com",
+        # )
+        # # Archive does not include current session
+        # return sessions
+        return ["134"]
