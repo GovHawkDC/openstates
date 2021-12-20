@@ -10,6 +10,7 @@ class FlEventScraper(Scraper):
     tz = pytz.timezone("US/Eastern")
 
     session_ids = {
+        "2022": "93",
         "2021A": "92",
         "2021": "90",
         "2020": "89",
@@ -126,7 +127,7 @@ class FlEventScraper(Scraper):
 
     def scrape_upper_events(self, session):
         list_url = "https://www.flsenate.gov/Committees"
-        page = self.get(list_url).content
+        page = self.get(list_url, verify=False).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(list_url)
 
@@ -138,7 +139,7 @@ class FlEventScraper(Scraper):
 
     def scrape_upper_com(self, url, com, session):
         url = f"{url}{session}"
-        page = self.get(url).content
+        page = self.get(url, verify=False).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
