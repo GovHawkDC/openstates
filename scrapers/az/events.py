@@ -19,6 +19,8 @@ class AZEventScraper(Scraper):
     address = "1700 W. Washington St., Phoenix, Arizona"
 
     def scrape(self, chamber=None):
+        yield from self.scrape_web()
+
         if chamber:
             if chamber == "other":
                 return
@@ -28,6 +30,50 @@ class AZEventScraper(Scraper):
             chambers = ["upper", "lower"]
             for chamber in chambers:
                 yield from self.scrape_chamber(chamber)
+
+    def scrape_web(self, start=None, end=None):
+        body_api_url = "https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayAgendaData.php?body={body}&start=2021-11-28&end=2022-01-09"
+        for body in ['H','S','I']:
+            yield from self.scrape_web_json(body_api_url.format(body=body))
+
+        web_api_url = 'https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayCapEvtData.php?start=2021-11-28&end=2022-01-09'
+        yield from self.scrape_web_json(web_api_url)
+    
+    def scrape_web_json(self, url):
+        web_events = self.get(url).json()
+
+        for web_event in web_events:
+            event_start = dateutil.parser.parse(web_event["start"])
+            event_start = self._tz.localize(event_start)
+            event_end = dateutil.parser.parse(web_event["end"])
+            event_end = self._tz.localize(event_end)
+            
+            event_desc = ""
+
+            if "longtitle" in web_event and web_event["longtitle"] != "":
+                event_title = web_event["longtitle"]
+            else:
+                event_title = web_event["title"]
+
+            event_loc = web_event["body"]
+            if event_loc in ["H", "S", "I"]:
+                event_loc = "1700 W. Washington St., Phoenix, Arizona, 85007"
+
+            event = Event(
+                name=event_title,
+                location_name=event_loc,
+                start_date=event_start,
+                end_date=event_end,
+                description=event_desc,
+            )
+
+            if "PDFFile" in web_event:
+                pdf_url = f"https://www.azleg.gov{web_event['PDFFile']}"
+                event.add_document("Agenda", pdf_url, media_type="application/pdf")
+
+            event.add_source("https://www.azleg.gov/Alis-Today/")
+
+            yield event
 
     def scrape_chamber(self, chamber):
         session = self.latest_session()
