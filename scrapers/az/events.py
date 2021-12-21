@@ -1,5 +1,6 @@
 import re
 import pytz
+import datetime
 import dateutil.parser
 
 from openstates.scrape import Event, Scraper
@@ -8,6 +9,8 @@ from . import session_metadata
 
 class AZEventScraper(Scraper):
     """
+    AZ has a web calendar with some events, and an API with others.
+
     Note that in AZ, if you GET any of these api urls in your browser, they'll return XML
     but they return JSON for raw GET requests from curl/python requests
     """
@@ -18,8 +21,10 @@ class AZEventScraper(Scraper):
 
     address = "1700 W. Washington St., Phoenix, Arizona"
 
-    def scrape(self, chamber=None):
-        yield from self.scrape_web()
+    date_format = "%Y-%m-%d"
+
+    def scrape(self, chamber=None, start=None, end=None):
+        yield from self.scrape_web(start, end)
 
         if chamber:
             if chamber == "other":
@@ -31,14 +36,33 @@ class AZEventScraper(Scraper):
             for chamber in chambers:
                 yield from self.scrape_chamber(chamber)
 
-    def scrape_web(self, start=None, end=None):
-        body_api_url = "https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayAgendaData.php?body={body}&start=2021-11-28&end=2022-01-09"
-        for body in ['H','S','I']:
-            yield from self.scrape_web_json(body_api_url.format(body=body))
+    def scrape_web(self, start_date=None, end_date=None):
+        if start_date is None:
+            start_date = datetime.datetime.now().strftime(self.date_format)
 
-        web_api_url = 'https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayCapEvtData.php?start=2021-11-28&end=2022-01-09'
-        yield from self.scrape_web_json(web_api_url)
-    
+        # default to 90 days if no end
+        if end_date is None:
+            dtdelta = datetime.timedelta(days=60)
+            end_date = datetime.datetime.now() + dtdelta
+            end_date = end_date.strftime(self.date_format)
+
+        body_api_url = (
+            "https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayAgendaData.php"
+            "?body={body}&start={start}&end={end}"
+        )
+        for body in ["H", "S", "I"]:
+            yield from self.scrape_web_json(
+                body_api_url.format(body=body, start=start_date, end=end_date)
+            )
+
+        web_api_url = (
+            "https://www.azleg.gov/azlegwp/wp-content/themes/azleg/alistodayCapEvtData.php"
+            "?start={start}&end={end}"
+        )
+        yield from self.scrape_web_json(
+            web_api_url.format(start=start_date, end=end_date)
+        )
+
     def scrape_web_json(self, url):
         web_events = self.get(url).json()
 
@@ -47,7 +71,7 @@ class AZEventScraper(Scraper):
             event_start = self._tz.localize(event_start)
             event_end = dateutil.parser.parse(web_event["end"])
             event_end = self._tz.localize(event_end)
-            
+
             event_desc = ""
 
             if "longtitle" in web_event and web_event["longtitle"] != "":
@@ -58,6 +82,9 @@ class AZEventScraper(Scraper):
             event_loc = web_event["body"]
             if event_loc in ["H", "S", "I"]:
                 event_loc = "1700 W. Washington St., Phoenix, Arizona, 85007"
+
+            if not event_loc:
+                event_loc = "See Agenda"
 
             event = Event(
                 name=event_title,
@@ -94,8 +121,12 @@ class AZEventScraper(Scraper):
             if com["LegislativeBody"] != chamber_abbr:
                 continue
 
-            #  https://apps.azleg.gov/api/Agenda/?showPassed=true&sessionId=123&isInterimAgenda=false&body=S&includeItems=false&committeeId=1960
-            events_url = "https://apps.azleg.gov/api/Agenda/?includeItems=true&showPassed=true&sessionId={}&isInterimAgenda=false&body={}&committeeId={}"
+            #  https://apps.azleg.gov/api/Agenda/?showPassed=true&sessionId=123
+            #  &isInterimAgenda=false&body=S&includeItems=false&committeeId=1960
+            events_url = (
+                "https://apps.azleg.gov/api/Agenda/?includeItems=true&showPassed=true"
+                "&sessionId={}&isInterimAgenda=false&body={}&committeeId={}"
+            )
             events_url = events_url.format(session_id, chamber_abbr, com["CommitteeId"])
             events_list = self.get(events_url).json()
 
@@ -113,17 +144,17 @@ class AZEventScraper(Scraper):
                 # fix for dateutil parser confusion
                 row["Time"] = row["Time"].replace("A.M.", "AM").replace("P.M.", "PM")
 
-                if 'upon rec' not in row['Time'].lower():
+                if "upon rec" not in row["Time"].lower():
                     time = re.findall(r"(\d+:\d+\s+[A|P]M)", row["Time"])
                     if len(time) == 0:
                         self.warning(f"Unable to get time for {row['Time']} on {title}")
-                        time = '00:00:00'
+                        time = "00:00:00"
                     else:
                         time = time[0]
 
                     time = time.replace(r"\s+", " ")
                 else:
-                    time = ''
+                    time = ""
 
                 when = dateutil.parser.parse(f"{row['Date']} {time}")
                 when = self._tz.localize(when)
