@@ -299,9 +299,16 @@ class Utah(State):
             # TODO: Proper end date after session
             "end_date": "2020-11-12",
         },
+        {
+            "_scraped_name": "2022 General Session",
+            "classification": "primary",
+            "identifier": "2022",
+            "name": "2022 General Session",
+            "start_date": "2022-01-18",
+            "end_date": "2022-03-04",
+        }
     ]
     ignored_scraped_sessions = [
-        "2022 General Session",
         "2013 1st House Session",
         "2011 Veto Override Session",
         "2010 2nd Special Session",
