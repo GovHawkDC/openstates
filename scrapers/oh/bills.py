@@ -370,11 +370,11 @@ class OHBillScraper(Scraper):
                 yield bill
 
     def pages(self, base_url, first_page):
-        page = self.get(first_page)
+        page = self.get(first_page, verify=False)
         page = page.json()
         yield page
         while "nextLink" in page:
-            page = self.get(base_url + page["nextLink"])
+            page = self.get(base_url + page["nextLink"], verify=False)
             page = page.json()
             yield page
 
