@@ -232,11 +232,13 @@ class VaCSVBillScraper(Scraper):
         self._url_base += session_id + "/"
         bill_url_base = "https://lis.virginia.gov/cgi-bin/"
 
-        if not is_special:
-            self.load_members()
-            self.load_sponsors()
-            self.load_fiscal_notes()
-            self.load_summaries()
+        # following lines commented out ts 2021-01-05
+        # if not is_special:
+        #     self.load_members()
+        #     self.load_sponsors()
+        #     self.load_fiscal_notes()
+        #     self.load_summaries()
+
         # in 2021 VA held a special to avoid a crossover deadline
         # it carried over all the regular bills, so rather
         # than duping them in a new session, just scrape the 2021S1 data
