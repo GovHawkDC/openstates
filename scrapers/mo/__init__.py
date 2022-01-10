@@ -125,6 +125,7 @@ class Missouri(State):
         return url_xpath(
             "https://www.house.mo.gov/billcentral.aspx?year=2019&code=S1&q=&id=",
             '//select[@id="SearchSession"]/option/text()',
+            verify=False
         )
 
 
