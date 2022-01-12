@@ -31,7 +31,7 @@ _categorizer_rules = (
     Rule(r"refused to concur in Assembly amendments", "amendment-failure"),
     Rule(r"Failed passage in committee", "committee-failure"),
     Rule(
-        r"do pass as amended and re-refer", ["commitee-passage", "referral-committee"]
+        r"do pass as amended and re-refer", ["committee-passage", "referral-committee"]
     ),
     Rule(
         r"From committee: Filed with the Chief Clerk pursuant to Joint Rule 56.",
