@@ -11,7 +11,7 @@ from utils import LXMLMixin
 
 from .actions import Categorizer
 
-CO_URL_BASE = "http://leg.colorado.gov"
+CO_URL_BASE = "https://leg.colorado.gov"
 
 # from select#edit-field-sessions on
 # https://leg.colorado.gov/bill-search
@@ -24,6 +24,7 @@ SESSION_DATA_ID = {
     "2020A": "64656",
     "2020B": "66691",
     "2021A": "66816",
+    "2022A": "75371",
 }
 
 BAD_URLS = [
@@ -76,7 +77,7 @@ class COBillScraper(Scraper, LXMLMixin):
     def scrape_bill_list(self, session, chamber, pageNumber):
         chamber_code_map = {"lower": 1, "upper": 2}
 
-        ajax_url = "http://leg.colorado.gov/views/ajax"
+        ajax_url = "https://leg.colorado.gov/views/ajax"
 
         form = {
             "field_chamber": chamber_code_map[chamber],
