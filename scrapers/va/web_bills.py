@@ -118,9 +118,6 @@ class VaWebBillScraper(Scraper):
         for row in page.xpath('//h4[contains(text(), "FULL TEXT")]/following-sibling::ul[contains(@class,"linkSect")][1]/li'):
             version_name = row.xpath('a[1]/text()')[0]
             version_name = version_name.replace('\u00a0', '')
-            pdf_url = row.xpath('a[2]/@href')[0]
-
-            print(version_name, pdf_url)
 
             version_date = re.findall(r"\d+/\d+/\d+", version_name)[1]
             version_date = dateutil.parser.parse(version_date)
@@ -128,17 +125,37 @@ class VaWebBillScraper(Scraper):
 
             bill.add_version_link(
                 version_name,
-                pdf_url,
+                row.xpath('a[1]/@href')[0],
                 date=version_date.strftime("%Y-%m-%d"),
-                media_type="application/pdf",
+                media_type="text/html",
                 on_duplicate="ignore"
             )
+
+            if row.xpath('a[2]/@href'):
+                pdf_url = row.xpath('a[2]/@href')[0]
+
+                bill.add_version_link(
+                    version_name,
+                    pdf_url,
+                    date=version_date.strftime("%Y-%m-%d"),
+                    media_type="application/pdf",
+                    on_duplicate="ignore"
+                )
 
             if (row.xpath('//b[contains(text(),"impact statement")]')):
                 pass
 
         for row in page.xpath('//h4[contains(text(), "HISTORY")]/following-sibling::ul[contains(@class,"linkSect")][1]/li'):
             bill = self.parse_action(bill, row.xpath('string(.)'))
+
+        for row in page.xpath('//p[@class="sectMarg"]/a[1]'):
+            sponsor = row.xpath("text()")[0].strip()
+            bill.add_sponsorship(
+                sponsor,
+                classification="primary",
+                entity_type="person",
+                primary=True,
+            )
 
         yield bill
 
