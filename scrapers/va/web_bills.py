@@ -1,9 +1,7 @@
-import os
-import csv
 import re
 import pytz
 import lxml
-import datetime
+import dateutil.parser
 from openstates.scrape import Scraper, Bill, VoteEvent
 from collections import defaultdict
 
@@ -117,18 +115,21 @@ class VaWebBillScraper(Scraper):
 
         bill.add_source(url)
 
-        for row in page.xpath('//ul[contains(@class,"linkSect")]/li'):
+        for row in page.xpath('//h4[contains(text(), "FULL TEXT")]/following-sibling::ul[contains(@class,"linkSect")][1]/li'):
             version_name = row.xpath('a[1]/text()')[0]
+            version_name = version_name.replace('\u00a0', '')
             pdf_url = row.xpath('a[2]/@href')[0]
 
             print(version_name, pdf_url)
 
             version_date = re.findall(r"\d+/\d+/\d+", version_name)[1]
+            version_date = dateutil.parser.parse(version_date)
+            version_date = tz.localize(version_date)
 
             bill.add_version_link(
                 version_name,
                 pdf_url,
-                date=version_date,
+                date=version_date.strftime("%Y-%m-%d"),
                 media_type="application/pdf",
                 on_duplicate="ignore"
             )
@@ -136,7 +137,36 @@ class VaWebBillScraper(Scraper):
             if (row.xpath('//b[contains(text(),"impact statement")]')):
                 pass
 
+        for row in page.xpath('//h4[contains(text(), "HISTORY")]/following-sibling::ul[contains(@class,"linkSect")][1]/li'):
+            bill = self.parse_action(bill, row.xpath('string(.)'))
+
         yield bill
+
+    def parse_action(self, bill, action):
+        chambers = {
+            "House": "lower",
+            "Senate": "upper",
+        }
+
+        action_regex = r"(?P<date>\d+/\d+/\d+)\s+(?P<actor>House|Senate):*\s+(?P<action>.*)"
+
+        matches = re.findall(action_regex, action)
+        print(matches)
+        action_date, actor, action_text = matches[0]
+        print(action_date, actor, action_text)
+
+        actor = chambers[actor]
+        action_date = dateutil.parser.parse(action_date)
+        action_date = tz.localize(action_date)
+
+        bill.add_action(
+            action_text,
+            action_date,
+            chamber=actor
+        )
+
+        return bill
+
             # bill_url = bill_url_base + f"legp604.exe?{session_id}+sum+{bill_id}"
             # b.add_source(bill_url)
 
