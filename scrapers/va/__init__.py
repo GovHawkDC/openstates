@@ -2,6 +2,7 @@ import logging
 from utils import url_xpath
 from openstates.scrape import State
 from .csv_bills import VaCSVBillScraper
+from .web_bills import VaWebBillScraper
 from .events import VaEventScraper
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -14,6 +15,7 @@ class Virginia(State):
     scrapers = {
         "events": VaEventScraper,
         "bills": VaCSVBillScraper,
+        "webbills": VaWebBillScraper,
     }
     legislative_sessions = [
         {
