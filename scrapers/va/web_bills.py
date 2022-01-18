@@ -97,7 +97,6 @@ class VaWebBillScraper(Scraper):
         description = page.xpath('string(//h4[contains(text(), "SUMMARY AS")]/following-sibling::p)')
         # description = description.replace("\n", " ")
         # print(" ".join(description.split("\n")))
-        print(description)
         chamber_types = {
             "H": "lower",
             "S": "upper",
@@ -108,18 +107,22 @@ class VaWebBillScraper(Scraper):
         bill = Bill(
             bill_id,
             session,
-            description,
+            title=bill_title,
             chamber=chamber,
             classification=bill_type,
         )
+
+        if len(description.strip()) > 0:
+            bill.add_abstract(description, "summary")
 
         bill.add_source(url)
 
         for row in page.xpath('//h4[contains(text(), "FULL TEXT")]/following-sibling::ul[contains(@class,"linkSect")][1]/li'):
             version_name = row.xpath('a[1]/text()')[0]
             version_name = version_name.replace('\u00a0', '')
-
-            version_date = re.findall(r"\d+/\d+/\d+", version_name)[1]
+            print(version_name)
+            print(re.findall(r"\d+/\d+/\d+", version_name))
+            version_date = re.findall(r"\d+/\d+/\d+", version_name)[0]
             version_date = dateutil.parser.parse(version_date)
             version_date = tz.localize(version_date)
 
