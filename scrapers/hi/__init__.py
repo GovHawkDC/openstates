@@ -114,4 +114,8 @@ class Hawaii(State):
             "https://capitol.hawaii.gov/archives/main.aspx",
             "//div[@class='roundedrect gradientgray shadow archiveyears']/a/text()",
         )
+        try:
+            sessions.remove("Archives Main")
+        except ValueError:
+            pass
         return sessions
