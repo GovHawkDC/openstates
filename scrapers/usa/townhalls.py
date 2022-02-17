@@ -26,7 +26,7 @@ class USTownHallScraper(Scraper, LXMLMixin):
 
             address = " ".join([meet['address1'],meet['address2'], meet['city'], meet['state'], meet['zip']])
             
-            event = Event(start_date=when, name=what, location_name=address)
+            event = Event(start_date=when, name=what, location_name=address, classification="town-hall")
 
             event.add_source(meet['linkToInfo'])
             yield event
