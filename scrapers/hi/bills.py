@@ -273,7 +273,7 @@ class HIBillScraper(Scraper):
 
         meta = self.parse_bill_metainf_table(metainf_table)
 
-        subs = [s.strip() for s in meta["Report Title"].split(";")]
+        subs = [s.strip() for s in re.split(r";|,", meta["Report Title"])]
         if "" in subs:
             subs.remove("")
         b = Bill(
@@ -333,6 +333,10 @@ class HIBillScraper(Scraper):
             "//input[@id='ctl00_ContentPlaceHolderCol1_ImageButtonPDF']"
         ):
             self.parse_bill_header_versions(b, bill_id, session, bill_page)
+
+        current_referral = meta["Current Referral"].strip()
+        if current_referral:
+            b.extras["current_referral"] = current_referral
 
         yield from self.parse_bill_actions_table(
             b, action_table, bill_id, session, url, chamber
