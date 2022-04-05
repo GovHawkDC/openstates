@@ -215,7 +215,6 @@ class VaCSVBillScraper(Scraper):
         self.warning("Total Sponsors Loaded: " + str(len(self._summaries)))
 
     def scrape(self, session=None):
-        print("Start scrape")
         if not session:
             session = self.jurisdiction.legislative_sessions[-1]["identifier"]
             self.info("no session specified, using %s", session)

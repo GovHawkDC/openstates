@@ -4,7 +4,7 @@ from openstates.scrape import State
 from .csv_bills import VaCSVBillScraper
 from .events import VaEventScraper
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+# logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
 settings = {"SCRAPELIB_RPM": 40}
@@ -232,9 +232,7 @@ class Virginia(State):
     ]
 
     def get_session_list(self):
-        print("Fetching session list")
-        # sessions = url_xpath(
-        #     "https://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
-        # )
-        # return [s.strip() for s in sessions if "Session" in s]
-        return ["2022 Special Session I"]
+        sessions = url_xpath(
+            "https://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
+        )
+        return [s.strip() for s in sessions if "Session" in s]
