@@ -232,7 +232,7 @@ class Virginia(State):
     ]
 
     def get_session_list(self):
-        # print("Fetching session list")
+        print("Fetching session list")
         # sessions = url_xpath(
         #     "https://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
         # )
