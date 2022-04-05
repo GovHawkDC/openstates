@@ -232,8 +232,9 @@ class Virginia(State):
     ]
 
     def get_session_list(self):
-        print("Fetching session list")
-        sessions = url_xpath(
-            "https://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
-        )
-        return [s.strip() for s in sessions if "Session" in s]
+        # print("Fetching session list")
+        # sessions = url_xpath(
+        #     "https://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
+        # )
+        # return [s.strip() for s in sessions if "Session" in s]
+        return ["2022 Special Session I"]
