@@ -259,7 +259,11 @@ python-versions = "*"
 
 [[package]]
 name = "django"
+<<<<<<< HEAD
 version = "3.2.11"
+=======
+version = "3.2.13"
+>>>>>>> upstream/main
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
