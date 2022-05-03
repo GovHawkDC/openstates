@@ -1,5 +1,6 @@
 import json
 import datetime
+import re
 
 from lxml import html
 from openstates.scrape import Scraper, Bill, VoteEvent
@@ -87,6 +88,13 @@ class AZBillScraper(Scraper):
                     url = "https://apps.azleg.gov{}".format(url)
 
                 if type_ in version_types:
+                    if media_type == "text/html":
+                        pdf_url = re.sub("(.docx)?.htm(l)?$", ".pdf", url.lower())
+                        bill.add_version_link(
+                            note=doc["DocumentName"],
+                            url=pdf_url,
+                            media_type="application/pdf",
+                        )
                     bill.add_version_link(
                         note=doc["DocumentName"], url=url, media_type=media_type
                     )
