@@ -9,6 +9,8 @@ class FlEventScraper(Scraper):
     tz = pytz.timezone("US/Eastern")
 
     session_ids = {
+        "2022D": "96",
+        "2022C": "95",
         "2022": "93",
         "2021A": "92",
         "2021": "90",
