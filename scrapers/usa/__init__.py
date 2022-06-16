@@ -1,7 +1,6 @@
 from openstates.scrape import State
 from .events import USEventScraper
 from .bills import USBillScraper
-from .townhalls import USTownHallScraper
 from .votes import USVoteScraper
 
 
@@ -9,7 +8,6 @@ class UnitedStates(State):
     scrapers = {
         "events": USEventScraper,
         "bills": USBillScraper,
-        "townhalls": USTownHallScraper,
         "votes": USVoteScraper,
     }
     legislative_sessions = [
@@ -60,4 +58,4 @@ class UnitedStates(State):
     ignored_scraped_sessions = []
 
     def get_session_list(self):
-        return ["115","117"]
+        return ["117"]
