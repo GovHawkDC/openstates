@@ -121,8 +121,17 @@ class Indiana(State):
             "end_date": "2022-03-14",
             "active": True,
         },
+        # {
+        #     "_scraped_name": "First Special Session 122nd General Assembly (2022)",
+        #     "classification": "primary",
+        #     "identifier": "2022S1",
+        #     "name": "2022 Special Session",
+        #     "start_date": "2021-01-11",
+        #     "end_date": "2021-04-29",
+        # },
     ]
     ignored_scraped_sessions = [
+        "First Special Session 122nd General Assembly (2022)",
         "2012 Regular Session",
         "2011 Regular Session",
         "2010 Regular Session",
@@ -144,14 +153,13 @@ class Indiana(State):
     ]
 
     def get_session_list(self):
-        # apikey = os.environ["INDIANA_API_KEY"]
-        # useragent = os.getenv("USER_AGENT", "openstates")
-        # headers = {
-        #     "Authorization": apikey,
-        #     "Accept": "application/json",
-        #     "User-Agent": useragent,
-        # }
-        # resp = requests.get("https://api.iga.in.gov/sessions", headers=headers)
-        # resp.raise_for_status()
-        # return [session["name"] for session in resp.json()["items"]]
-        return ["Second Regular Session 122nd General Assembly (2022)"]
+        apikey = os.environ["INDIANA_API_KEY"]
+        useragent = os.getenv("USER_AGENT", "openstates")
+        headers = {
+            "Authorization": apikey,
+            "Accept": "application/json",
+            "User-Agent": useragent,
+        }
+        resp = requests.get("https://api.iga.in.gov/sessions", headers=headers)
+        resp.raise_for_status()
+        return [session["name"] for session in resp.json()["items"]]
