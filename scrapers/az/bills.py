@@ -284,6 +284,13 @@ class AZBillScraper(Scraper):
                     continue
                 if action["ReportDate"] is None:
                     continue
+
+                if "UnanimouslyAdopted" not in action and (
+                    "Ayes" not in action or "Nays" not in action
+                ):
+                    self.warning(f"Action {action['Action']} missing counts, skipping")
+                    continue
+
                 cleaned_date = action["ReportDate"].split(".")[0]
                 action_date = datetime.datetime.strptime(
                     cleaned_date, "%Y-%m-%dT%H:%M:%S"
