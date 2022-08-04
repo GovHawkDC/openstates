@@ -135,8 +135,8 @@ class BillDetail(HtmlPage):
             self.process_amendments()
             self.process_summary()
         yield self.input  # the bill, now augmented
-        yield HouseSearchPage(self.input)
-        yield from self.process_votes()
+        # yield HouseSearchPage(self.input)
+        # yield from self.process_votes()
 
     def process_sponsors(self):
         sponsor = self.root.xpath(
