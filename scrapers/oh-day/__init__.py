@@ -8,12 +8,11 @@ from openstates.metadata.models import State as modelState, Chamber, simple_numb
 # from .bills import KYBillScraper
 from .events import DaytonEventScraper
 
-
 class Dayton(State):
     division_id = "ocd-division/country:us/state:oh/place:dayton"
     classification = "legislature"
     name = "Dayton"
-    legislature_name = "Dayton"
+    legislature_name = "City Commission"
     url = "https://www.daytonohio.gov/AgendaCenter/"
     scrapers = {
         "events": DaytonEventScraper,
@@ -28,7 +27,7 @@ class Dayton(State):
         capital_tz="America/Chicago",
         fips="48",
         unicameral=True,
-        legislature_name="Dayton City Council",
+        legislature_name="Dayton City Commission",
         legislature_organization_id="ocd-organization/8ab77a54-0646-413c-a63a-dc85154282b7",
         executive_name="Executive",
         executive_organization_id="ocd-organization/4c8c2a9c-f33c-476d-bf81-266eb72193f0",
