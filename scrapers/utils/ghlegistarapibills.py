@@ -2,29 +2,7 @@ from legistar.bills import LegistarBillScraper, LegistarAPIBillScraper
 from openstates.scrape import Scraper, Bill, VoteEvent
 import datetime
 
-## TODO:
-# Loop through the known API scrapers from the spreadsheet, and just build a list of every 
-# document type, vote type, and any other enumerations.
-
 class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
-    BASE_URL = 'http://webapi.legistar.com/v1/a2gov'
-    BASE_WEB_URL = "https://a2gov.legistar.com/"
-    TIMEZONE = "America/Detroit"
-
-    # pupa options are
-    # ['yes', 'no', 'absent', 'abstain', 'not voting', 'paired', 'excused', 'other']
-    VOTE_OPTIONS = {'yea' : 'yes',
-                    'rising vote' : 'yes',
-                    'nay' : 'no',
-                    'recused' : 'excused',
-                    'yes': 'yes',
-                    'no': 'no',
-                    'excused': 'excused',
-                    'abstain': 'abstain',
-                    'aye': 'yes',
-                    'present': 'present',
-                    'absent': 'absent',
-                    }
 
     def session(self, action_date) :
         return str(action_date.year)
@@ -118,9 +96,75 @@ class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
 
             yield bill_action, votes
 
+    def matters(self, since_datetime=None):
+        # scrape from oldest to newest. This makes resuming big
+        # scraping jobs easier because upon a scrape failure we can
+        # import everything scraped and then scrape everything newer
+        # then the last bill we scraped
+        params = {'$orderby': 'MatterLastModifiedUtc'}
+
+        if since_datetime:
+            since_iso = since_datetime.replace(microsecond=0).isoformat()
+
+            update_fields = ('MatterLastModifiedUtc',
+                             'MatterIntroDate',
+                             'MatterPassedDate',
+                             'MatterDate1',
+                             'MatterDate2',
+                             # 'MatterEXDate1', # can't use all 17 search
+                                                # terms, this one always
+                                                # seems to be not set
+                             'MatterEXDate2',
+                             'MatterEXDate3',
+                             'MatterEXDate4',
+                             'MatterEXDate5',
+                             'MatterEXDate6',
+                             'MatterEXDate7',
+                             'MatterEXDate8',
+                             'MatterEXDate9',
+                             'MatterEXDate10',
+                             'MatterEnactmentDate',
+                             'MatterAgendaDate')
+            
+            since_fmt = "{field} gt datetime'{since_datetime}'"
+            since_filter =\
+                ' or '.join(since_fmt.format(field=field,
+                                             since_datetime=since_iso)
+                            for field in update_fields)
+
+            ## HACK
+            ## For some reason the larger filter wasnt' working
+            ## but this slimmed down version does
+            since_filter = "MatterLastModifiedUtc gt datetime'2022-08-07T20:34:12'"
+
+            params['$filter'] = since_filter
+
+        matters_url = self.BASE_URL + '/matters'
+
+        for matter in self.pages(matters_url,
+                                 params=params,
+                                 item_key="MatterId"):
+            try:
+                legistar_url = self.legislation_detail_url(matter['MatterId'])
+
+            except scrapelib.HTTPError as e:
+                if e.response.status_code > 403:
+                    raise
+
+                url = matters_url + '/{}'.format(matter['MatterId'])
+                self.warning('Bill could not be found in web interface: {}'.format(url))
+                if not self.scrape_restricted:
+                    continue
+
+            else:
+                matter['legistar_url'] = legistar_url
+
+            yield matter
+
     def scrape(self, window=3) :
         n_days_ago = datetime.datetime.utcnow() - datetime.timedelta(float(window))
-        for matter in self.matters(n_days_ago) :
+        for matter in self.matters(n_days_ago):
+            self.info(n_days_ago)
             matter_id = matter['MatterId']
 
             date = matter['MatterIntroDate']
@@ -142,8 +186,8 @@ class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
             bill_session = self.session(self.toTime(date))
             # TODO: if it's not in .. maybe just throw a warning?
             # nice to blow up for now while deving
-            if matter['MatterTypeName'] in BILL_TYPES:
-                bill_type = BILL_TYPES[matter['MatterTypeName']]
+            if matter['MatterTypeName'] in self.BILL_TYPES:
+                bill_type = self.BILL_TYPES[matter['MatterTypeName']]
             else:
                 self.warning("Unknown bill type: {}".format(matter['MatterTypeName']))
                 bill_type = None
@@ -235,16 +279,16 @@ class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
             yield bill
                          
 
-BILL_TYPES = {'Ordinance' : 'ordinance',
-              'Resolution' : 'resolution',
-              'Order' : 'order',
-              'Claim' : 'claim',
-              'Oath of Office' : None,
-              'Communication' : None,
-              'Appointment' : 'appointment',
-              'Action Item': None,
-              'Report' : None,
-              'Ceremonial Item': None,
-              'Minutes': None,
-              'Board/Commission': None,
-              }
+# self.BILL_TYPES = {'Ordinance' : 'ordinance',
+#               'Resolution' : 'resolution',
+#               'Order' : 'order',
+#               'Claim' : 'claim',
+#               'Oath of Office' : None,
+#               'Communication' : None,
+#               'Appointment' : 'appointment',
+#               'Action Item': None,
+#               'Report' : None,
+#               'Ceremonial Item': None,
+#               'Minutes': None,
+#               'Board/Commission': None,
+#               }

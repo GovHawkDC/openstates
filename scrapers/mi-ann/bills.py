@@ -6,7 +6,7 @@ import pytz
 from openstates.scrape import Scraper, Event
 
 import datetime as dt
-from utils.ghlegistarapi import GHLegistarAPIBillScraper
+from utils.ghlegistarapibills import GHLegistarAPIBillScraper
 
 
 class A2BillScraper(GHLegistarAPIBillScraper, Scraper):
@@ -39,4 +39,6 @@ class A2BillScraper(GHLegistarAPIBillScraper, Scraper):
                 'Ceremonial Item': None,
                 'Minutes': None,
                 'Board/Commission': None,
+                'Resolution/Public Hearing': 'resolution',
+                'Public Hearing Only': None,
                 }
