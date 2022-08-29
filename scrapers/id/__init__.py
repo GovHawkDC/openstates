@@ -128,6 +128,7 @@ class Idaho(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2022 Extraordinary Session",
         "2021 Session",
         "2020 Session",
         "2010 Session",
