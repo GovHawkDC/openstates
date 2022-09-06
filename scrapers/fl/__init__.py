@@ -181,6 +181,7 @@ class Florida(State):
     ignored_scraped_sessions = [
         *(str(each) for each in range(1997, 2010)),
         "2023",
+        "2022 Org.",
         "2020 Org.",
         "2019 I",  # Empty, maybe informational session
         "2010",
