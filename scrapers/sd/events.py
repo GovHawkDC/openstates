@@ -153,7 +153,11 @@ class SDEventScraper(Scraper):
             other_docs = self.get(other_docs_url).json()
 
             for other_doc in other_docs:
+                if other_doc["DocumentDate"] is None:
+                    continue
+            
                 doc_date = dateutil.parser.parse(other_doc["DocumentDate"])
+
                 date_key = doc_date.date().strftime("%Y%m%d")
 
                 other_doc_url = f"https://mylrc.sdlegislature.gov/api/Documents/{other_doc['DocumentId']}.pdf"
