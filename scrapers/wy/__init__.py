@@ -128,6 +128,7 @@ class Wyoming(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2023",
         "2010",
         "2009",
         "2008",
