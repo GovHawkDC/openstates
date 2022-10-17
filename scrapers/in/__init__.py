@@ -132,6 +132,7 @@ class Indiana(State):
         },
     ]
     ignored_scraped_sessions = [
+        "First Regular Session 123rd General Assembly (2023)",
         "Special Session 122nd General Assembly (2022)",
         "First Special Session 122nd General Assembly (2022)",
         "2012 Regular Session",
