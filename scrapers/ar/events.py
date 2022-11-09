@@ -59,6 +59,10 @@ class AREventScraper(Scraper):
 
             location = row.xpath("div[2]/text()")[1].strip()
 
+            if location == "":
+                self.warning(f"Skipping {title} due to no location")
+                continue
+
             event = Event(
                 name=title,
                 start_date=when,
