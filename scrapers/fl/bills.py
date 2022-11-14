@@ -135,8 +135,8 @@ class BillDetail(HtmlPage):
             self.process_amendments()
             self.process_summary()
         yield self.input  # the bill, now augmented
-        # yield HouseSearchPage(self.input)
-        # yield from self.process_votes()
+        yield HouseSearchPage(self.input)
+        yield from self.process_votes()
 
     def process_sponsors(self):
         sponsor = self.root.xpath(
@@ -598,6 +598,7 @@ class HouseSearchPage(HtmlListPage):
         # Keep the digits and all following characters in the bill's ID
         bill_number = re.search(r"^\w+\s(\d+\w*)$", self.input.identifier).group(1)
         session_number = {
+            "2023": "99",
             "2022D": "96",
             "2022C": "95",
             "2022": "93",
