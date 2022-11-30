@@ -124,7 +124,7 @@ class LABillScraper(Scraper, LXMLMixin):
         seen_bill_urls = set()
         for chamber in chambers:
             for bill_abbreviation in self._bill_abbreviations[chamber]:
-                bill_list_url = "http://www.legis.la.gov/Legis/BillSearchListQ.aspx?s={}&r={}1*".format(
+                bill_list_url = "https://www.legis.la.gov/Legis/BillSearchListQ.aspx?s={}&r={}1*".format(
                     session_id, bill_abbreviation
                 )
                 bills_found = False
