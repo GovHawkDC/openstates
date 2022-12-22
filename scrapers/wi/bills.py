@@ -8,6 +8,7 @@ import scrapelib
 from openstates.scrape import Scraper, Bill, VoteEvent
 
 from .common import SESSION_TERMS, SESSION_SITE_IDS
+from .actions import Categorizer
 
 motion_classifiers = {
     "(Assembly|Senate)( substitute)? amendment": "amendment",
@@ -18,37 +19,19 @@ motion_classifiers = {
     "Adopted": "passage",
 }
 
-action_classifiers = {
-    "(Senate|Assembly)( substitute)? amendment .* offered": "amendment-introduction",
-    "(Senate|Assembly)( substitute)? amendment .* rejected": "amendment-failure",
-    "(Senate|Assembly)( substitute)? amendment .* adopted": "amendment-passage",
-    "(Senate|Assembly)( substitute)? amendment .* laid on table": "amendment-deferral",
-    "(Senate|Assembly)( substitute)? amendment .* withdrawn": "amendment-withdrawal",
-    "Report (adoption|introduction and adoption) of Senate( Substitute)? Amendment": "amendment-passage",
-    "Report (passage|concurrence).* recommended": "committee-passage-favorable",
-    "Report approved by the Governor with partial veto": "executive-veto-line-item",
-    "Report approved by the Governor on": "executive-signature",
-    "Report vetoed by the Governor": "executive-veto",
-    ".+ (withdrawn|added) as a co(author|sponsor)": None,
-    "R(ead (first time )?and r)?eferred to committee": "referral-committee",
-    "Read a third time and (passed|concurred)": "passage",
-    "Adopted": "passage",
-    "Presented to the Governor": "executive-receipt",
-    "Introduced by": "introduction",
-    "Read a second time": "reading-2",
-}
-
 TIMEZONE = pytz.timezone("US/Central")
 
 
 class WIBillScraper(Scraper):
     subjects = defaultdict(list)
+    categorizer = Categorizer()
 
     def scrape_subjects(self, year, site_id):
         last_url = None
         next_url = (
-            "http://docs.legis.wisconsin.gov/%s/related/subject_index/index/" % year
+            f"https://docs.legis.wisconsin.gov/{year}/related/subject_index/index"
         )
+
         last_subject = None
 
         # if you visit this page in your browser it is infinite-scrolled
@@ -108,7 +91,7 @@ class WIBillScraper(Scraper):
         types = ("bill", "joint_resolution", "resolution")
 
         for type in types:
-            url = "http://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (
+            url = "https://docs.legis.wisconsin.gov/%s/proposals/%s/%s/%s" % (
                 year,
                 site_id,
                 chamber_slug,
@@ -158,7 +141,7 @@ class WIBillScraper(Scraper):
 
     def scrape_bill_history(self, bill, url, chamber):
         seen_votes = set()
-        body = self.get(url, verify=False).text
+        body = self.get(url).text
         doc = lxml.html.fromstring(body)
         doc.make_links_absolute(url)
 
@@ -201,9 +184,7 @@ class WIBillScraper(Scraper):
                 "Record of Committee Proceedings",
             ):
                 extra_doc_url = a.get("href")
-                extra_doc = lxml.html.fromstring(
-                    self.get(extra_doc_url, verify=False).text
-                )
+                extra_doc = lxml.html.fromstring(self.get(extra_doc_url).text)
                 extra_doc.make_links_absolute(extra_doc_url)
                 for extra_a in extra_doc.xpath('//ul[@class="docLinks"]/li//a'):
                     if extra_a.text:
@@ -225,11 +206,8 @@ class WIBillScraper(Scraper):
                 self.parse_sponsors(bill, action, chamber)
 
             # classify actions
-            atype = None
-            for regex, type in action_classifiers.items():
-                if re.match(regex, action, re.IGNORECASE):
-                    atype = type
-                    break
+            attrs = self.categorizer.categorize(action)
+            atype = attrs["classification"]
 
             kwargs = {}
             if "referral-committee" in (atype or ""):
@@ -366,7 +344,7 @@ class WIBillScraper(Scraper):
 
     def add_senate_votes(self, vote, url):
         try:
-            html = self.get(url, verify=False).text
+            html = self.get(url).text
         except scrapelib.HTTPError:
             self.warning("No Senate Votes found for %s" % url)
             return
@@ -405,7 +383,7 @@ class WIBillScraper(Scraper):
 
     def add_house_votes(self, vote, url):
         try:
-            html = self.get(url, verify=False).content
+            html = self.get(url).content
         except scrapelib.HTTPError:
             self.warning("No House Votes found for %s" % url)
             return
