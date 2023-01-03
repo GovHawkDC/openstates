@@ -164,6 +164,15 @@ class Wisconsin(State):
             "end_date": "2021-02-21",
             "active": False,
         },
+        {
+            "_scraped_name": "2023 Regular Session",
+            "classification": "primary",
+            "identifier": "2023",
+            "name": "2023 Regular Session",
+            "start_date": "2023-01-03",
+            "end_date": "2024-05-25",
+            "active": True,
+        },
     ]
     ignored_scraped_sessions = [
         "January 2020 Special Session",
