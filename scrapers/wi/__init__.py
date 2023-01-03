@@ -153,7 +153,7 @@ class Wisconsin(State):
             "name": "2021 Regular Session",
             "start_date": "2021-01-04",
             "end_date": "2022-05-27",
-            "active": True,
+            "active": False,
         },
         {
             "_scraped_name": "January 2021 Special Session",
