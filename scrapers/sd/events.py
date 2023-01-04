@@ -155,8 +155,6 @@ class SDEventScraper(Scraper):
             for other_doc in other_docs:
                 if other_doc["DocumentDate"] is None:
                     continue
-            
-                doc_date = dateutil.parser.parse(other_doc["DocumentDate"])
 
                 date_key = doc_date.date().strftime("%Y%m%d")
 
