@@ -163,13 +163,14 @@ class Indiana(State):
     ]
 
     def get_session_list(self):
-        apikey = os.environ["INDIANA_API_KEY"]
-        useragent = os.getenv("USER_AGENT", "openstates")
-        headers = {
-            "Authorization": apikey,
-            "Accept": "application/json",
-            "User-Agent": useragent,
-        }
-        resp = requests.get("https://api.iga.in.gov/sessions", headers=headers)
-        resp.raise_for_status()
-        return [session["name"] for session in resp.json()["items"]]
+        # apikey = os.environ["INDIANA_API_KEY"]
+        # useragent = os.getenv("USER_AGENT", "openstates")
+        # headers = {
+        #     "Authorization": apikey,
+        #     "Accept": "application/json",
+        #     "User-Agent": useragent,
+        # }
+        # resp = requests.get("https://api.iga.in.gov/sessions", headers=headers)
+        # resp.raise_for_status()
+        # return [session["name"] for session in resp.json()["items"]]
+        return ["First Regular Session 123rd General Assembly (2023)"]
