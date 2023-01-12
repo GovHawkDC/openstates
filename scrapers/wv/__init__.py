@@ -235,4 +235,7 @@ class WestVirginia(State):
     def get_session_list(self):
         from utils import url_xpath
 
-        return ["2023"]
+        return url_xpath(
+            "http://www.legis.state.wv.us/Bill_Status/Bill_Status.cfm",
+            '//select[@name="year"]/option/text()',
+        )
