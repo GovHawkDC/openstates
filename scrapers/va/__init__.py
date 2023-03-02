@@ -4,7 +4,7 @@ from openstates.scrape import State
 from .csv_bills import VaCSVBillScraper
 from .events import VaEventScraper
 
-#logging.getLogger(__name__).addHandler(logging.NullHandler())
+# logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
 settings = {"SCRAPELIB_RPM": 40}
