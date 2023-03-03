@@ -132,7 +132,7 @@ rules = (
     Rule("Subst", "substitution"),
     Rule("substituted", "substitution"),
     Rule("Enrolled", "enrolled"),
-    Rule("Sponsor", "sponsorship"),
+    # Rule("Sponsor", "sponsorship"),
 )
 
 
