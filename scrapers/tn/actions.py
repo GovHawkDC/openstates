@@ -123,7 +123,7 @@ rules = (
     Rule("Transmitted to Governor for.* action.", "executive-receipt"),
     Rule("Signed by Governor, but item veto", "executive-veto-line-item"),
     Rule("Signed by Governor", "executive-signature"),
-    Rule("Signed by.* Speaker", "executive-signature"),
+    Rule("Signed by.* Speaker", "passage"),
     Rule("Withdrawn", "withdrawal"),
     Rule("tabled", "amendment-deferral"),
     Rule("widthrawn", "amendment-withdrawal"),
@@ -132,7 +132,7 @@ rules = (
     Rule("Subst", "substitution"),
     Rule("substituted", "substitution"),
     Rule("Enrolled", "enrolled"),
-    # Rule("Sponsor", "sponsorship"),
+    Rule("Sponsor", "sponsorship"),
 )
 
 
