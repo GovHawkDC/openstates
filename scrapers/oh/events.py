@@ -1,3 +1,4 @@
+import datetime
 import json
 import lxml
 import re
@@ -13,23 +14,46 @@ from dateutil.relativedelta import relativedelta
 import dateutil.parser
 import cloudscraper
 
+from spatula import PdfPage, URL
+
+
+class Agenda(PdfPage):
+    bill_re = re.compile(r"(\W|^)(SJR|HCR|HB|HR|SCR|SB|HJR|SR)\s{0,8}0*(\d+)")
+    am_sub_re = re.compile(r"Am(\.| ) ? Sub(\.| ) ?", flags=re.IGNORECASE)
+    enact_buget_re = re.compile(r"enact .*? budget", flags=re.IGNORECASE)
+
+    def process_page(self):
+        # Some bills have "Am. Sub. " before bill letter portion, remove it
+        self.text = self.am_sub_re.sub("", self.text)
+
+        # Some bills have "Enact .* budget" between "HB" and "123" portion, remove it
+        self.text = self.enact_buget_re.sub("", self.text)
+
+        # Multiple bill id formats are used: "S. B. No. 123", "H.B. 33", or "HB 234"
+        # After this step, all bill ids should be in the format "SB123", "HB33", or "HB234"
+        self.text = (
+            self.text.upper().replace("NO", "").replace(" ", "").replace(".", "")
+        )
+
+        bills = self.bill_re.findall(self.text)
+
+        # Store bill ids in a set to remove duplicates
+        formatted_bill_ids = set()
+        for _, alpha, num in bills:
+            # Format with space between letter and number portions
+            formatted_bill_ids.add(f"{alpha} {num}")
+
+        yield from formatted_bill_ids
+
 
 class OHEventScraper(Scraper):
     _tz = pytz.timezone("US/Eastern")
 
     base_url = "https://www.legislature.ohio.gov/schedules/"
-    api_base_url = "https://search-prod.lis.state.oh.us/"
-    session_id = ""
 
     scraper = cloudscraper.create_scraper()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
-    }
 
     def scrape(self, start=None, end=None):
-        # pull the newest session id from __init__.py
-        self.session_id = self.jurisdiction.legislative_sessions[-1]["identifier"]
-
         if start is None:
             start = dt.datetime.today()
         else:
@@ -45,7 +69,6 @@ class OHEventScraper(Scraper):
 
         url = f"{self.base_url}calendar-data?start={start}&end={end}"
         try:
-            self.info(f"Fetching {url}")
             data = json.loads(self.scraper.get(url).content)
         except Exception:
             raise EmptyScrape
@@ -84,12 +107,15 @@ class OHEventScraper(Scraper):
             if re.match(r"Room \d+", location, flags=re.IGNORECASE):
                 location = f"{location}, 1 Capitol Square, Columbus, OH 43215"
 
-            if re.match(r"^.*\shearing room", location, flags=re.IGNORECASE):
-                location = f"{location}, 1 Capitol Square, Columbus, OH 43215"
-
             event = Event(
                 name=name, start_date=when, location_name=location, status=status
             )
+
+            # Scrape bill ids from the agenda PDF
+            # The server only returns data if a user agent is supplied
+            headers = {"User-Agent": "curl/7.88.1"}
+            for bill_id in Agenda(source=URL(agenda_url, headers=headers)).do_scrape():
+                event.add_bill(bill_id)
 
             match_coordinates(event, {"1 Capitol Square": (39.96019, -82.99946)})
 
@@ -97,26 +123,6 @@ class OHEventScraper(Scraper):
             event.add_participant(com_name, type="committee", note="host")
             event.add_document("Agenda", agenda_url, media_type="application/pdf")
             event.add_source(url)
-
-            # API has more data on agenda and bills, ex:
-            # https://search-prod.lis.state.oh.us/solarapi/v1/general_assembly_135/notices/cmte_s_health_1/2023-03-01
-
-            com_id = re.search(r"\/([a-z_]+\d)", item["url"], flags=re.IGNORECASE)
-            if com_id:
-                com_id = com_id.group(1)
-                hearing_date = when.strftime("%Y-%m-%d")
-                api_url = f"{self.api_base_url}/solarapi/v1/general_assembly_{self.session_id}/notices/{com_id}/{hearing_date}?format=json"
-                self.info(f"Fetching {api_url}")
-                api_data = json.loads(self.scraper.get(api_url).content)
-                for row in api_data["agenda"]:
-                    item_text = f"{row['headline']} - {row['proposed_sponsor']}"
-                    agenda_item = event.add_agenda_item(item_text)
-                    if "billno" in row:
-                        agenda_item.add_bill(row["billno"])
-
-                # Note: there's an api element called 'testimonies' that appears to just be
-                # witness registration forms from the bill sponsors, so we're skipping those.
-
             event_count += 1
             yield event
         if event_count < 1:
