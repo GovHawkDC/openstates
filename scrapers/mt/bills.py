@@ -260,7 +260,8 @@ class MTBillScraper(Scraper, LXMLMixin):
         )
 
         self.add_actions(bill, page)
-        votes = self.add_votes(bill, page, url)
+        # votes = self.add_votes(bill, page, url)
+        votes = []
 
         tabledata = self._get_tabledata(page)
 
@@ -495,9 +496,9 @@ class MTBillScraper(Scraper, LXMLMixin):
                     )
 
                     # Update the vote object with voters..
-                    # vote = self._parse_votes(vote_url, vote, bill)
-                    # if vote:
-                    #     yield vote
+                    vote = self._parse_votes(vote_url, vote, bill)
+                    if vote:
+                        yield vote
 
     def _parse_votes(self, url, vote, bill):
         """Given a vote url and a vote object, extract the voters and
