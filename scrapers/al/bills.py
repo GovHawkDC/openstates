@@ -4,6 +4,7 @@ import lxml
 import re
 import datetime
 import dateutil
+import requests
 from openstates.scrape import Scraper, Bill, VoteEvent
 from openstates.exceptions import EmptyScrape
 from utils.media import get_media_type
@@ -154,7 +155,12 @@ class ALBillScraper(Scraper):
         url = link.xpath("@href")[0]
         act_number = link.xpath("text()")[0].replace("View Act", "").strip()
 
-        page = self.get(url).content
+        try:
+            page = self.get(url, timeout=120).content
+        except requests.exceptions.ConnectTimeout:
+            self.warning(f"SoS website {url} is currently unavailable, skipping")
+            return
+
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
