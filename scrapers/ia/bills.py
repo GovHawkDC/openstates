@@ -103,7 +103,7 @@ class IABillScraper(Scraper):
                 elif ".pdf" in document_url:
                     media_type = "application/pdf"
                 bill.add_document_link(
-                    note="Backround Statement", url=document_url, media_type=media_type
+                    note="Background Statement", url=document_url, media_type=media_type
                 )
 
             bill.add_version_link(
@@ -154,10 +154,8 @@ class IABillScraper(Scraper):
             f"https://www.legis.iowa.gov/legislation/billTracking/"
             f"billHistory?billName={bill_id}&ga={session_id}"
         )
-
-        try:
-            req = req_session.get(hist_url)
-        except requests.exceptions.ConnectionError:
+        req = req_session.get(hist_url)
+        if req.status_code == 500:
             self.warning("500 error on {}, skipping".format(hist_url))
             return
 
