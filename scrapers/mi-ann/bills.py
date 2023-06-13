@@ -25,6 +25,7 @@ class A2BillScraper(GHLegistarAPIBillScraper, Scraper):
                     'aye': 'yes',
                     'present': 'present',
                     'absent': 'absent',
+                    'non-voting': 'not voting',
                     }
 
     BILL_TYPES = {'Ordinance' : 'ordinance',

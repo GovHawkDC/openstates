@@ -54,12 +54,12 @@ class AnnArbor(State):
     )
     legislative_sessions = [
         {
-            "_scraped_name": "2022",
+            "_scraped_name": "2023",
             "classification": "primary",
-            "identifier": "2022",
-            "name": "2022 Session",
-            "start_date": "2022-01-01",
-            "end_date": "2022-12-31",
+            "identifier": "2023",
+            "name": "2023 Session",
+            "start_date": "2023-01-01",
+            "end_date": "2023-12-31",
             "active": True,
         },
     ]
