@@ -142,7 +142,9 @@ class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
             ## HACK
             ## For some reason the larger filter wasnt' working
             ## but this slimmed down version does
-            since_filter = "MatterLastModifiedUtc gt datetime'2022-08-07T20:34:12'"
+            # since_filter = "MatterLastModifiedUtc gt datetime'2022-08-07T20:34:12'"
+            since_filter = f"MatterLastModifiedUtc gt datetime'{since_iso}'"
+            self.info(f"Since filter {since_filter}")
 
             params["$filter"] = since_filter
 
