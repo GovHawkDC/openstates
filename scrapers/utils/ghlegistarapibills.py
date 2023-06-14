@@ -257,7 +257,9 @@ class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
                         if vote_value is None:
                             continue
                         raw_option = vote_value.lower()
-                        clean_option = self.VOTE_OPTIONS.get(raw_option, raw_option)
+                        if raw_option not in self.VOTE_OPTIONS:
+                            self.warning(f"{raw_option} missing from VOTE_OPTIONS")
+                        clean_option = self.VOTE_OPTIONS.get(raw_option, "other")
                         vote_event.vote(clean_option, vote["VotePersonName"].strip())
 
                     yield vote_event
