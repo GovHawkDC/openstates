@@ -154,6 +154,9 @@ class CurrentMeetings(HtmlPage):
                 date_only = date.split("[")[0]
                 date = f"{date_only}{agenda_start_time}"
 
+            # To prevent strptime() from failing due to extra whitespace
+            date = date.strip()
+
             date_and_time_match = self.time_in_date_re.search(date)
             if date_and_time_match:
                 date = datetime.datetime.strptime(date, "%B %d, %Y %I:%M %p")
