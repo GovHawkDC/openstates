@@ -7,7 +7,6 @@ from openstates.scrape import Scraper, Event
 from spatula import HtmlPage, PdfPage, URL, XPath, SelectorError
 import re
 
-
 bills_re = re.compile(
     r"(SJR|AR|AJR|IP|SCR|SB|ACR|SR|AB)\s{0,5}0*(\d+)", flags=re.IGNORECASE
 )
