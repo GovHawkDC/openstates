@@ -191,7 +191,10 @@ class USEventScraper(Scraper, LXMLMixin):
         if "witnesses" in page:
             for person in page["witnesses"]:
                 fullname = person["name"].replace("The Honorable", "").strip()
-                if person["position"].lower() != "member of congress":
+                if (
+                    "position" in person
+                    and person["position"].lower() != "member of congress"
+                ):
                     fullname = f"{person['name']}, {person['position']}"
                 if "organization" in person:
                     fullname = f"{fullname} - {person['organization']}"
@@ -205,11 +208,18 @@ class USEventScraper(Scraper, LXMLMixin):
                 # but it seems consistent
                 doc_name = f"{doc['documentType']} ({index})"
                 event.add_document(
-                    doc_name, doc["url"], media_type=get_media_type(doc["url"])
+                    doc_name,
+                    doc["url"],
+                    media_type=get_media_type(doc["url"]),
+                    on_duplicate="ignore",
                 )
 
         if "meetingDocuments" in page:
             for index, doc in enumerate(page["meetingDocuments"]):
+                if "url" not in doc:
+                    self.warning(doc)
+                    self.warning(f"No URL for document on {page['eventId']}, skipping")
+                    continue
 
                 if "name" in doc:
                     doc_name = doc["name"]
@@ -219,10 +229,12 @@ class USEventScraper(Scraper, LXMLMixin):
                 if doc["documentType"] == "Hearing: Transcript":
                     doc_name = f"Transcript: {doc_name}"
 
-                if doc["documentType"] == "Bills and Resolutions":
-                    event.add_document(
-                        doc_name, doc["url"], media_type=get_media_type(doc["url"])
-                    )
+                event.add_document(
+                    doc_name,
+                    doc["url"],
+                    media_type=get_media_type(doc["url"]),
+                    on_duplicate="ignore",
+                )
 
         if "relatedItems" in page and "bills" in page["relatedItems"]:
             for bill in page["relatedItems"]["bills"]:
