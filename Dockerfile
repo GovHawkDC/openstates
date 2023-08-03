@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 LABEL maintainer="James Turk <dev@jamesturk.net>"
 
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONIOENCODING='utf-8' LANG='C.UTF-8'
