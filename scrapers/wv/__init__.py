@@ -231,8 +231,8 @@ class WestVirginia(State):
             "classification": "special",
             "identifier": "20231S",
             "name": "2023 First Special Session",
-            "start_date": "2023-01-11",
-            "end_date": "2023-03-11",
+            "start_date": "2023-08-06",
+            "end_date": "2023-08-11",
             "active": True,
         },
     ]
