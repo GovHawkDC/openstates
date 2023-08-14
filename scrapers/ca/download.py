@@ -18,6 +18,8 @@ from datetime import datetime
 from os.path import join, split
 from functools import partial
 from collections import namedtuple
+import urllib3
+from urllib3.util.ssl_ import create_urllib3_context
 
 import requests
 import MySQLdb
@@ -44,6 +46,9 @@ logger = logging.getLogger("openstates.ca-update")
 # ---------------------------------------------------------------------------
 # Miscellaneous db admin commands.
 
+ctx = create_urllib3_context()
+ctx.load_default_certs()
+ctx.options |= 0x4  # ssl.OP_LEGACY_SERVER_CONNECT
 
 def clean_text(s):
     # replace smart quote characters
@@ -261,17 +266,21 @@ def db_create():
 
 def get_contents():
     resp = {}
-    html = requests.get(BASE_URL, verify=False).text
-    doc = lxml.html.fromstring(html)
-    # doc.make_links_absolute(BASE_URL)
-    rows = doc.xpath("//table/tr")
-    for row in rows[2:]:
-        date = row.xpath("string(td[3])").strip()
-        if date:
-            date = datetime.strptime(date, "%d-%b-%Y %H:%M")
-            filename = row.xpath("string(td[2]/a[1]/@href)")
-            resp[filename] = date
-    return resp
+
+    with urllib3.PoolManager(ssl_context=ctx) as http:
+        r = http.request("GET", BASE_URL, verify=False)
+        html = r.data
+        # html = requests.get(BASE_URL, verify=False).text
+        doc = lxml.html.fromstring(html)
+        # doc.make_links_absolute(BASE_URL)
+        rows = doc.xpath("//table/tr")
+        for row in rows[2:]:
+            date = row.xpath("string(td[3])").strip()
+            if date:
+                date = datetime.strptime(date, "%d-%b-%Y %H:%M")
+                filename = row.xpath("string(td[2]/a[1]/@href)")
+                resp[filename] = date
+        return resp
 
 
 def _check_call(*args):
