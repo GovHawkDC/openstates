@@ -268,7 +268,7 @@ def get_contents():
     resp = {}
 
     with urllib3.PoolManager(ssl_context=ctx) as http:
-        r = http.request("GET", BASE_URL, verify=False)
+        r = http.request("GET", BASE_URL)
         html = r.data
         # html = requests.get(BASE_URL, verify=False).text
         doc = lxml.html.fromstring(html)
