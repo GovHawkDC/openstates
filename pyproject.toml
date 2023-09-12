@@ -21,6 +21,7 @@ cloudscraper = "^1.2.58"
 paramiko = "^2.9.2"
 cryptography = "^37.0.2"
 openstates = "^6.17"
+demjson3 = "^3.0.6"
 
 [tool.poetry.extras]
 california = ["mysqlclient", "SQLAlchemy"]
