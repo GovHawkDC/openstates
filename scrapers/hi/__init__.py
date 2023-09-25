@@ -123,9 +123,8 @@ class Hawaii(State):
         response = scraper.get(
             "https://www.capitol.hawaii.gov/session/archives/main.aspx"
         ).content
-        print(response)
         page = lxml.html.fromstring(response)
         # doesn't include current session, we need to change it
         sessions = page.xpath("//*[@id='MainContent_yearList']/option/text()")
-        print(sessions)
+        sessions.append("2023")
         return sessions

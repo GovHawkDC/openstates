@@ -1,25 +1,27 @@
-from utils import LXMLMixin
 import datetime as dt
 from openstates.scrape import Scraper, Event
 from openstates.exceptions import EmptyScrape
 from .utils import get_short_codes
 from requests import HTTPError
 import pytz
+import cloudscraper
+import lxml
 
 
 URL = "https://capitol.hawaii.gov/upcominghearings.aspx"
 
 TIMEZONE = pytz.timezone("Pacific/Honolulu")
+scraper = None
 
-
-class HIEventScraper(Scraper, LXMLMixin):
+class HIEventScraper(Scraper):
     seen_hearings = []
     chambers = {"lower": "House", "upper": "Senate", "joint": "Joint"}
 
     def get_related_bills(self, href):
         ret = []
         try:
-            page = self.lxmlize(href)
+            self.info(f"GET {href}")
+            page = lxml.html.fromstring(self.scraper.get(href).content)
         except HTTPError:
             return ret
 
@@ -44,14 +46,17 @@ class HIEventScraper(Scraper, LXMLMixin):
         return ret
 
     def scrape(self):
-
-        get_short_codes(self)
-        page = self.lxmlize(URL)
+        self.scraper = cloudscraper.create_scraper()
+        get_short_codes(self, self.scraper)
+        
+        self.info(f"GET {URL}")
+        page = self.scraper.get(URL).content
+        page = lxml.html.fromstring(page)
 
         if page.xpath("//td[contains(string(.),'No Hearings')]"):
             raise EmptyScrape
 
-        table = page.xpath("//table[@id='ctl00_MainContent_GridView1']")[0]
+        table = page.xpath("//table[@id='MainContent_GridView1']")[0]
 
         events = set()
         for event in table.xpath(".//tr")[1:]:
