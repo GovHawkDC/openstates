@@ -5,10 +5,12 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer, find_committee
 from .utils import get_short_codes
 from urllib import parse as urlparse
+import cloudscraper
 
 HI_URL_BASE = "https://capitol.hawaii.gov"
 SHORT_CODES = "%s/legislature/committees.aspx?chamber=all" % (HI_URL_BASE)
 repeated_action = ["Excused: none", "Representative(s) Eli"]
+scraper = None
 
 
 def create_bill_report_url(chamber, year, bill_type):
@@ -235,7 +237,7 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def scrape_bill(self, session, chamber, bill_type, url):
-        bill_html = self.get(url).text
+        bill_html = self.scraper.get(url).text
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
@@ -383,7 +385,7 @@ class HIBillScraper(Scraper):
             "gm": "proclamation",
         }[billtype]
 
-        list_html = self.get(report_page_url).text
+        list_html = self.scraper.get(report_page_url).text
         list_page = lxml.html.fromstring(list_html)
         for bill_url in list_page.xpath("//a[@class='report']"):
             bill_url = bill_url.attrib["href"].replace("www.", "")
@@ -392,7 +394,8 @@ class HIBillScraper(Scraper):
             yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
 
     def scrape(self, chamber=None, session=None):
-        get_short_codes(self)
+        self.scraper = cloudscraper.create_scraper()
+        get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
         for chamber in chambers:

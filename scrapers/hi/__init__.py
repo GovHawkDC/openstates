@@ -1,7 +1,8 @@
-from utils import url_xpath
 from openstates.scrape import State
 from .events import HIEventScraper
 from .bills import HIBillScraper
+import lxml
+import cloudscraper
 
 settings = dict(SCRAPELIB_TIMEOUT=300)
 
@@ -117,9 +118,14 @@ class Hawaii(State):
     ]
 
     def get_session_list(self):
+
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(
+            "https://www.capitol.hawaii.gov/session/archives/main.aspx"
+        ).content
+        print(response)
+        page = lxml.html.fromstring(response)
         # doesn't include current session, we need to change it
-        sessions = url_xpath(
-            "https://www.capitol.hawaii.gov/session/archives/main.aspx",
-            "//*[@id='ctl00_MainContent_yearList']/option/text()",
-        )
+        sessions = page.xpath("//*[@id='MainContent_yearList']/option/text()")
+        print(sessions)
         return sessions
