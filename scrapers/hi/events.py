@@ -13,6 +13,7 @@ URL = "https://capitol.hawaii.gov/upcominghearings.aspx"
 TIMEZONE = pytz.timezone("Pacific/Honolulu")
 scraper = None
 
+
 class HIEventScraper(Scraper):
     seen_hearings = []
     chambers = {"lower": "House", "upper": "Senate", "joint": "Joint"}
@@ -48,7 +49,7 @@ class HIEventScraper(Scraper):
     def scrape(self):
         self.scraper = cloudscraper.create_scraper()
         get_short_codes(self, self.scraper)
-        
+
         self.info(f"GET {URL}")
         page = self.scraper.get(URL).content
         page = lxml.html.fromstring(page)
