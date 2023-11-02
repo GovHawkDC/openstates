@@ -1,6 +1,7 @@
 from legistar.bills import LegistarBillScraper, LegistarAPIBillScraper
 from openstates.scrape import Scraper, Bill, VoteEvent
 import datetime
+import scrapelib
 
 
 class GHLegistarAPIBillScraper(LegistarAPIBillScraper, Scraper):
