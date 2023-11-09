@@ -1,6 +1,6 @@
 # Open States Scrapers
 
-This repository contains the code responsible for scraping bills & votes for Open States.
+This repository contains the code responsible for scraping bills & votes for Open States. 
 
 ## Links
 
