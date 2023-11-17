@@ -197,7 +197,7 @@ class Virginia(State):
             "name": "2023 Regular Session",
             "start_date": "2023-01-11",
             "end_date": "2023-03-11",
-            "active": True,
+            "active": False,
         },
         {
             "_scraped_name": "2023 Special Session I",
@@ -210,6 +210,7 @@ class Virginia(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2024",
         "2021 Special Session I",
         "2015 Special Session I",
         "2015 Session",
