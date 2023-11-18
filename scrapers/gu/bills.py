@@ -108,17 +108,17 @@ class GUBillScraper(Scraper):
             bill_obj.add_source(url=bill_link, note="Bill Introduced")
             details = self._get_bill_details(bill_link)
             if details.get("IntroducedDate", None):
-                bill_obj.add_action("Introduced", details["IntroducedDate"])
+                bill_obj.add_action("Introduced", details["IntroducedDate"], chamber="legislature")
             if details.get("ReferredDate", None):
                 if details["Committee"]:
                     bill_obj.add_action(
                         "Referred To Committee",
                         details["ReferredDate"],
-                        organization=details["Committee"],
+                        chamber="legislature"
                     )
                 else:
                     bill_obj.add_action(
-                        "Referred To Committee", details["ReferredDate"]
+                        "Referred To Committee", details["ReferredDate"], chamber="legislature"
                     )
 
             yield bill_obj
@@ -163,17 +163,17 @@ class GUBillScraper(Scraper):
             # status PDF has introduced/passed/etc. dates
             details = self._get_bill_details(status)
             if details.get("IntroducedDate", None):
-                bill_obj.add_action("Introduced", details["IntroducedDate"])
+                bill_obj.add_action("Introduced", details["IntroducedDate"], chamber="legislature")
             if details.get("ReferredDate", None):
                 if details["Committee"]:
                     bill_obj.add_action(
                         "Referred To Committee",
                         details["ReferredDate"],
-                        organization=details["Committee"],
+                        chamber="legislature"
                     )
                 else:
                     bill_obj.add_action(
-                        "Referred To Committee", details["ReferredDate"]
+                        "Referred To Committee", details["ReferredDate"], chamber="legislature"
                     )
             yield bill_obj
 
@@ -215,7 +215,7 @@ class GUBillScraper(Scraper):
                 result_date = self._tz.localize(dateutil.parser.parse(result_data[1]))
 
         if result and result_date:
-            bill_obj.add_action(result, result_date)
+            bill_obj.add_action(result, result_date, chamber="legislature")
 
         bill_obj.add_sponsorship(
             name=sponsors[0],
@@ -239,9 +239,9 @@ class GUBillScraper(Scraper):
 
         details = self._get_resolution_details(bill_link)
         if details.get("IntroducedDate", None):
-            bill_obj.add_action("Introduced", details["IntroducedDate"])
+            bill_obj.add_action("Introduced", details["IntroducedDate"], chamber="legislature")
         if details.get("PresentationDate", None):
-            bill_obj.add_action("Presented", details["PresentationDate"])
+            bill_obj.add_action("Presented", details["PresentationDate"], chamber="legislature")
         yield bill_obj
 
     def scrape(self, session):
