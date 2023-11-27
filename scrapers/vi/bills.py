@@ -198,6 +198,13 @@ class VIBillScraper(Scraper, LXMLMixin):
         self.parse_date_actions(bill, bill_page)
         self.parse_actions(bill, bill_page)
 
+        v_url =f"https://billtracking.legvi.org:8082/preview/Bill%2F{bill_no}"
+        bill.add_version_link(
+            bill_no,
+            v_url,
+            media_type="application/pdf",
+        )
+
         yield bill
 
     def parse_versions(self, bill, bill_page, bill_no):
