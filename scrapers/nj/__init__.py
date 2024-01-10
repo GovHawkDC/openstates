@@ -73,6 +73,7 @@ class NewJersey(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2024-2025 Session",
         "2006-2007 Session",
         "2004-2005 Session",
         "2002-2003 Session",
