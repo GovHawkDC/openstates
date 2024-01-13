@@ -4,8 +4,10 @@ HI_URL_BASE = "https://capitol.hawaii.gov"
 SHORT_CODES = "%s/legislature/committees.aspx?chamber=all" % (HI_URL_BASE)
 
 
-def get_short_codes(scraper):
-    list_html = scraper.get(SHORT_CODES).text
+def get_short_codes(scraper, session):
+    params = {"premium_proxy": "true", "proxy_country": "us"}
+    scraper.info(f"Fetching short code dictionary {SHORT_CODES}")
+    list_html = session.get(SHORT_CODES, params=params).text
     list_page = lxml.html.fromstring(list_html)
     rows = list_page.xpath("//*[@id='ctl00_MainContent_GridView1']//tr")
     scraper.short_ids = {"CONF": {"chamber": "joint", "name": "Conference Committee"}}

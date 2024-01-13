@@ -5,6 +5,16 @@ from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer, find_committee
 from .utils import get_short_codes
 from urllib import parse as urlparse
+import os
+from zenrows import ZenRowsClient
+
+# HI currently has cloudflare turned up,
+# so all normal requests fail.
+# We're currently using zenrows.com as a paid proxy.
+
+# TODO: can we use
+# https://www.capitol.hawaii.gov/sessions/session2024/rss/
+# to find bills that have changed since start_date?
 
 HI_URL_BASE = "https://capitol.hawaii.gov"
 SHORT_CODES = "%s/legislature/committees.aspx?chamber=all" % (HI_URL_BASE)
@@ -22,7 +32,7 @@ def create_bill_report_url(chamber, year, bill_type):
 
     return (
         HI_URL_BASE
-        + "/advreports/advreport.aspx?report=deadline&rpt_type=&measuretype="
+        + "/advreports/advreport.aspx?report=deadline&active=true&rpt_type=&measuretype="
         + bill_slug[bill_type]
         + "&year="
         + year
@@ -42,6 +52,9 @@ def split_specific_votes(voters):
 
 class HIBillScraper(Scraper):
     categorizer = Categorizer()
+
+    scraper = None
+    request_params = {"premium_proxy": "true", "proxy_country": "us"}
 
     def parse_bill_metainf_table(self, metainf_table):
         def _sponsor_interceptor(line):
@@ -235,7 +248,8 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def scrape_bill(self, session, chamber, bill_type, url):
-        bill_html = self.get(url).text
+        self.info(f"GET {url}")
+        bill_html = self.scraper.get(url, params=self.request_params).text
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
@@ -245,9 +259,14 @@ class HIBillScraper(Scraper):
             "//*[@id='ctl00_MainContent_UpdatePanel2']/div/div/div"
         )
 
-        metainf_table = bill_page.xpath(
-            '//div[contains(@id, "itemPlaceholder")]//table[1]'
-        )[0]
+        try:
+            metainf_table = bill_page.xpath(
+                '//div[contains(@id, "itemPlaceholder")]//table[1]'
+            )[0]
+        except IndexError:
+            self.error(bill_html)
+            return
+
         action_table = bill_page.xpath(
             '//div[contains(@id, "UpdatePanel1")]//table[1]'
         )[0]
@@ -382,8 +401,9 @@ class HIBillScraper(Scraper):
             "r": "resolution",
             "gm": "proclamation",
         }[billtype]
+        self.info(f"GET {report_page_url}")
+        list_html = self.scraper.get(report_page_url, params=self.request_params).text
 
-        list_html = self.get(report_page_url).text
         list_page = lxml.html.fromstring(list_html)
         for bill_url in list_page.xpath("//a[@class='report']"):
             bill_url = bill_url.attrib["href"].replace("www.", "")
@@ -392,7 +412,8 @@ class HIBillScraper(Scraper):
             yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
 
     def scrape(self, chamber=None, session=None):
-        get_short_codes(self)
+        self.scraper = ZenRowsClient(os.environ.get("ZENROWS_API_KEY"))
+        get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
         for chamber in chambers:
