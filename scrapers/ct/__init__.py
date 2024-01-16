@@ -109,6 +109,7 @@ class Connecticut(State):
         },
     ]
     ignored_scraped_sessions = [
+        "2024",
         "1991",
         "1992",
         "1993",
