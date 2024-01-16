@@ -1,6 +1,7 @@
 import datetime as dt
 import lxml.html
 import re
+import ssl
 from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer, find_committee
 from .utils import get_short_codes
@@ -390,6 +391,15 @@ class HIBillScraper(Scraper):
             yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
 
     def scrape(self, chamber=None, session=None):
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context
+        except AttributeError:
+            # Legacy Python that doesn't verify HTTPS certificates by default
+            pass
+        else:
+            # Handle target environment that doesn't support HTTPS verification
+            ssl._create_default_https_context = _create_unverified_https_context
+
         get_short_codes(self)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
