@@ -4,14 +4,11 @@ from openstates.exceptions import EmptyScrape
 from .utils import get_short_codes
 from requests import HTTPError
 import pytz
-import cloudscraper
 import lxml
-
 
 URL = "https://capitol.hawaii.gov/upcominghearings.aspx"
 
 TIMEZONE = pytz.timezone("Pacific/Honolulu")
-scraper = None
 
 
 class HIEventScraper(Scraper):
@@ -22,7 +19,7 @@ class HIEventScraper(Scraper):
         ret = []
         try:
             self.info(f"GET {href}")
-            page = lxml.html.fromstring(self.scraper.get(href).content)
+            page = lxml.html.fromstring(self.get(href, verify=False).content)
         except HTTPError:
             return ret
 
@@ -47,11 +44,10 @@ class HIEventScraper(Scraper):
         return ret
 
     def scrape(self):
-        self.scraper = cloudscraper.create_scraper()
-        get_short_codes(self, self.scraper)
 
+        get_short_codes(self)
         self.info(f"GET {URL}")
-        page = self.scraper.get(URL).content
+        page = self.get(URL, verify=False).content
         page = lxml.html.fromstring(page)
 
         if page.xpath("//td[contains(string(.),'No Hearings')]"):

@@ -1,8 +1,8 @@
+import lxml.html
+import requests
 from openstates.scrape import State
 from .events import HIEventScraper
 from .bills import HIBillScraper
-import lxml
-import cloudscraper
 
 settings = dict(SCRAPELIB_TIMEOUT=300)
 
@@ -98,6 +98,14 @@ class Hawaii(State):
             "name": "2023 Regular Session",
             "start_date": "2023-01-18",
             "end_date": "2023-05-04",
+            "active": False,
+        },
+        {
+            "_scraped_name": "2024",
+            "identifier": "2024",
+            "name": "2024 Regular Session",
+            "start_date": "2024-01-17",
+            "end_date": "2024-05-02",
             "active": True,
         },
     ]
@@ -118,13 +126,11 @@ class Hawaii(State):
     ]
 
     def get_session_list(self):
-
-        scraper = cloudscraper.create_scraper()
-        response = scraper.get(
-            "https://www.capitol.hawaii.gov/session/archives/main.aspx"
+        response = requests.get(
+            "https://www.capitol.hawaii.gov/session/archives/main.aspx", verify=False
         ).content
         page = lxml.html.fromstring(response)
-        # doesn't include current session, we need to change it
-        sessions = page.xpath("//*[@id='MainContent_yearList']/option/text()")
-        sessions.append("2023")
+        # page doesn't include current session, we need to add it
+        sessions = page.xpath("//*[@name='ctl00$MainContent$yearList']/option/text()")
+        sessions.append("2024")
         return sessions
