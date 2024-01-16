@@ -5,21 +5,29 @@ from .utils import get_short_codes
 from requests import HTTPError
 import pytz
 import lxml
+import os
+from zenrows import ZenRowsClient
+
 
 URL = "https://capitol.hawaii.gov/upcominghearings.aspx"
 
 TIMEZONE = pytz.timezone("Pacific/Honolulu")
+scraper = None
 
 
 class HIEventScraper(Scraper):
     seen_hearings = []
     chambers = {"lower": "House", "upper": "Senate", "joint": "Joint"}
 
+    request_params = {"premium_proxy": "true", "proxy_country": "us"}
+
     def get_related_bills(self, href):
         ret = []
         try:
             self.info(f"GET {href}")
-            page = lxml.html.fromstring(self.get(href, verify=False).content)
+            page = lxml.html.fromstring(
+                self.scraper.get(href, params=self.request_params).content
+            )
         except HTTPError:
             return ret
 
@@ -44,10 +52,12 @@ class HIEventScraper(Scraper):
         return ret
 
     def scrape(self):
+        self.scraper = ZenRowsClient(os.environ.get("ZENROWS_API_KEY"))
 
-        get_short_codes(self)
+        get_short_codes(self, self.scraper)
+
         self.info(f"GET {URL}")
-        page = self.get(URL, verify=False).content
+        page = self.scraper.get(URL, params=self.request_params).content
         page = lxml.html.fromstring(page)
 
         if page.xpath("//td[contains(string(.),'No Hearings')]"):
@@ -125,4 +135,10 @@ class HIEventScraper(Scraper):
                 a = event.add_agenda_item(description=bill["descr"].strip())
                 bill["bill_id"] = bill["bill_id"].split(",")[0]
                 a.add_bill(bill["bill_id"], note=bill["type"])
+
+            if tds[5].xpath(".//a"):
+                video_url = tds[5].xpath(".//a/@href")[0]
+                self.info(video_url)
+                event.add_media_link("Hearing Stream", video_url, "text/html")
+
             yield event
