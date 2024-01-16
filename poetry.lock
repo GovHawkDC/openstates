@@ -1715,13 +1715,13 @@ XlsxWriter = ">=0.5.7"
 
 [[package]]
 name = "pytz"
-version = "2020.5"
+version = "2019.3"
 description = "World timezone definitions, modern and historical"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytz-2020.5-py2.py3-none-any.whl", hash = "sha256:16962c5fb8db4a8f63a26646d8886e9d769b6c511543557bc84e9569fb9a9cb4"},
-    {file = "pytz-2020.5.tar.gz", hash = "sha256:180befebb1927b16f6b57101720075a984c019ac16b1b7575673bea42c6c3da5"},
+    {file = "pytz-2019.3-py2.py3-none-any.whl", hash = "sha256:1c557d7d0e871de1f5ccd5833f60fb2550652da6be2693c1e02300743d21500d"},
+    {file = "pytz-2019.3.tar.gz", hash = "sha256:b02c06db6cf09c12dd25137e563b31700d3b80fcc4ad23abb7a315f2789819be"},
 ]
 
 [[package]]
@@ -2236,4 +2236,4 @@ california = ["SQLAlchemy", "mysqlclient"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "357241d708a3b6acea72a921da96379660cd0b2dfe456e5a3d7dbb66ca42c94c"
+content-hash = "cc46d8e260fa647cafb3a868b0dc5e3f94c60207c96c8bd29b19489f0ab50b6a"
