@@ -295,7 +295,7 @@ class HIBillScraper(Scraper):
         companion = meta["Companion"].strip()
         if companion:
             companion_url = bill_page.xpath(
-                "//span[@id='ctl00_MainContent_ListView1_ctrl0_companionLabel']/a/@href"
+                "//span[@id='MainContent_ListView1_companionLabel_0']/a/@href"
             )[0]
             # a companion's session year is the last 4 chars of the link
             # this will match the _scraped_name of a session in __init__.py
