@@ -30,9 +30,10 @@ def create_bill_report_url(chamber, year, bill_type):
         "gm": "gm",
     }
 
+    # &active=true ?
     return (
         HI_URL_BASE
-        + "/advreports/advreport.aspx?report=deadline&active=true&rpt_type=&measuretype="
+        + "/advreports/advreport.aspx?report=deadline&rpt_type=&measuretype="
         + bill_slug[bill_type]
         + "&year="
         + year
@@ -404,7 +405,7 @@ class HIBillScraper(Scraper):
             report_page_url, params=self.request_params, verify=False
         ).text
 
-        self.info(list_html)
+        self.debug(list_html)
 
         list_page = lxml.html.fromstring(list_html)
         for bill_url in list_page.xpath("//a[@class='report']"):
