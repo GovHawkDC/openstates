@@ -408,7 +408,7 @@ class HIBillScraper(Scraper):
         self.debug(list_html)
 
         list_page = lxml.html.fromstring(list_html)
-        for bill_url in list_page.xpath("//a[@class='report']"):
+        for bill_url in list_page.xpath("//a[@class='report']")[::-1]:
             bill_url = bill_url.attrib["href"].replace("www.", "")
             if not bill_url.startswith("http"):
                 bill_url = f"{HI_URL_BASE}{bill_url}"
