@@ -6,6 +6,7 @@ from .actions import Categorizer, find_committee
 from .utils import get_short_codes
 from urllib import parse as urlparse
 import os
+import pytz
 from zenrows import ZenRowsClient
 
 # HI currently has cloudflare turned up,
@@ -415,11 +416,12 @@ class HIBillScraper(Scraper):
             yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
 
     def scrape(self, chamber=None, session=None):
+        tz = pytz.timezone("US/Hawaii")
         self.scraper = ZenRowsClient(os.environ.get("ZENROWS_API_KEY"))
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now().strftime("%-m/%-d/%Y")
+        day = dt.datetime.now(tz).strftime("%-m/%-d/%Y")
         # TODO: Turn this into an option somehow
         yield from self.scrape_daily(session, day)
         # for chamber in chambers:
