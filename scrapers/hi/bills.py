@@ -419,12 +419,29 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        for chamber in chambers:
-            # only scrape GMs once
-            if chamber == "upper":
-                bill_types.append("gm")
-            for typ in bill_types:
-                yield from self.scrape_type(chamber, session, typ)
+        day = dt.datetime.now().strftime("%-m/%-d/%Y")
+        # TODO: Turn this into an option somehow
+        yield from self.scrape_daily(session, day)
+        # for chamber in chambers:
+        #     # only scrape GMs once
+        #     if chamber == "upper":
+        #         bill_types.append("gm")
+        #     for typ in bill_types:
+        #         yield from self.scrape_type(chamber, session, typ)
+
+    def scrape_daily(self, session, day):
+        url = f"https://www.capitol.hawaii.gov/reports/reportDailyDocs.aspx?date={day}&bills=true&resos=True&other=true"
+        
+        self.info(f"fetching url {url}")
+        page = self.scraper.get(url, params=self.request_params, verify=False).content
+        page = lxml.html.fromstring(page)
+        page.make_links_absolute(url)
+
+        for bill_link in page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]"):
+            bill_num = bill_link.xpath("text()")[0]
+            bill_url = bill_link.xpath("@href")[0]
+            chamber, billtype = self.classify_bill_type(bill_num)
+            yield from self.scrape_bill(session, chamber, billtype, bill_url)
 
     def session_from_scraped_name(self, scraped_name):
         # find the session from __init__.py matching scraped_name
@@ -434,3 +451,23 @@ class HIBillScraper(Scraper):
             if each["_scraped_name"] == scraped_name
         )
         return details["name"]
+
+    def classify_bill_type(self, bill: str) -> tuple:
+        chamber = "upper"
+        billtype = "bill"
+
+        billtypes = {
+            'HB' : ("lower", "bill"),
+            'HR' : ("lower", "resolution"),
+            'HCR' : ("lower", "concurrent resolution"),
+            'SB' : ("upper", "bill"),
+            'SR' : ("upper", "resolution"),
+            'SCR' : ("upper", "concurrent resolution"),
+            'GM' : ("upper", "proclamation")
+        }
+
+        for key, val in billtypes.items():
+            if bill.startswith(key):
+                return val
+
+        self.error(f"Invalid bill type: {bill}")
