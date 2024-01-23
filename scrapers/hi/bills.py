@@ -8,6 +8,7 @@ from urllib import parse as urlparse
 import os
 import pytz
 from zenrows import ZenRowsClient
+from openstates.exceptions import EmptyScrape
 
 # HI currently has cloudflare turned up,
 # so all normal requests fail.
@@ -421,8 +422,7 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        # day = dt.datetime.now(tz).strftime("%-m/%-d/%Y")
-        day = "1/23/2024"
+        day = dt.datetime.now(tz).strftime("%-m/%-d/%Y")
         # TODO: Turn this into an option somehow
         yield from self.scrape_daily(session, day)
         # for chamber in chambers:
@@ -439,6 +439,9 @@ class HIBillScraper(Scraper):
         page = self.scraper.get(url, params=self.request_params, verify=False).content
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
+
+        if not page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]"):
+            raise EmptyScrape
 
         for bill_link in page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]")[::-1]:
             bill_num = bill_link.xpath("text()")[0]
