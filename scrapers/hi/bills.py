@@ -421,7 +421,8 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now(tz).strftime("%-m/%-d/%Y")
+        # day = dt.datetime.now(tz).strftime("%-m/%-d/%Y")
+        day = "1/23/2024"
         # TODO: Turn this into an option somehow
         yield from self.scrape_daily(session, day)
         # for chamber in chambers:
@@ -439,7 +440,7 @@ class HIBillScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
-        for bill_link in page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]"):
+        for bill_link in page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]")[::-1]:
             bill_num = bill_link.xpath("text()")[0]
             bill_url = bill_link.xpath("@href")[0]
             chamber, billtype = self.classify_bill_type(bill_num)
