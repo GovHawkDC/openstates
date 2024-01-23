@@ -426,7 +426,7 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now(self.tz).date()
+        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 1)
         yield from self.scrape_xml(session, day)
 
         # TODO: Turn this into an option somehow
@@ -451,7 +451,7 @@ class HIBillScraper(Scraper):
             posted = posted.date()
             bill_type, bill_num = self.parse_bill_number(match.group('filename'))
             if posted >= day and bill_type in self.bill_types:
-                self.warning(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
+                self.info(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
                 chamber, classification = self.classify_bill_type(match.group('filename'))
 
                 # https://www.capitol.hawaii.gov/session/measure_indiv.aspx?billtype=SB&billnumber=3013
@@ -459,7 +459,7 @@ class HIBillScraper(Scraper):
 
                 yield from self.scrape_bill(session, chamber, classification, bill_url)
             else:
-                self.warning(f"Skipping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
+                self.info(f"Skipping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
 
     def scrape_daily(self, session, day):
         url = f"https://www.capitol.hawaii.gov/reports/reportDailyDocs.aspx?date={day}&bills=true&resos=True&other=true"
