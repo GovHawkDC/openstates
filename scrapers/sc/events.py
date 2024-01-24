@@ -5,6 +5,7 @@ import lxml.html
 
 from openstates.scrape import Scraper, Event
 from spatula import PdfPage, URL
+from utils.events import match_coordinates
 
 
 def normalize_time(time_string):
@@ -147,15 +148,17 @@ class SCEventScraper(Scraper):
             r"Week of [A-Z][a-z]+\s+[0-9]{1,2}, ([0-9]{4})", meeting_year
         ).group(1)
 
+        # Mostly each event is in a UL>LI, with date of event in UL>SPAN
+        # But some ULs do not include a date SPAN
+        # (subsequent ULs are on the same date, until a new date)
+        date_string = ""
         dates = page.xpath("//div[@id='contentsection']/ul")
 
         for date in dates:
-            date_string = date.xpath("span")
+            date_elements = date.xpath("span")
 
-            if len(date_string) == 1:
-                date_string = date_string[0].text_content()
-            else:
-                continue
+            if len(date_elements) == 1:
+                date_string = date_elements[0].text_content()
 
             # If an event is in the next calendar year, the date_string
             # will have a year in it
@@ -216,12 +219,25 @@ class SCEventScraper(Scraper):
                 else:
                     classification = "other-meeting"
 
+                description = re.sub(" on$", "", description.strip())
                 event_key = f"{description}#{location}#{date_time}"
 
                 if event_key in self.event_keys:
                     continue
                 else:
                     self.event_keys.add(event_key)
+
+                location = location.replace(
+                    "Blatt", "Blatt Building, 1105 Pendleton St, Columbia, SC 29201"
+                )
+                location = location.replace(
+                    "Gressette",
+                    "Gressette Building, 1101 Pendleton St, Columbia, SC 29201",
+                )
+                location = location.replace(
+                    "State House",
+                    "South Carolina State House, 1100 Gervais St, Columbia, SC 29208",
+                )
 
                 event = Event(
                     name=description,  # Event Name
@@ -286,5 +302,14 @@ class SCEventScraper(Scraper):
                         f"https://www.scstatehouse.gov/video/stream.php?key={stream_id}&audio=1",
                         media_type="text/html",
                     )
+
+                match_coordinates(
+                    event,
+                    {
+                        "Blatt Building": ("33.99860", "-81.03323"),
+                        "Gressette Building": ("33.99917", "-81.03306"),
+                        "State House": ("34.00028", "-81.032954"),
+                    },
+                )
 
                 yield event
