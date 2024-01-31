@@ -450,6 +450,13 @@ class HIBillScraper(Scraper):
             posted = self.tz.localize(posted)
             posted = posted.date()
             bill_type, bill_num = self.parse_bill_number(match.group('filename'))
+
+            if 'Daily' in match.group("filename"):
+                self.info(
+                    f"Skipping {match.group('filename')} posted on {posted.strftime('%Y-%m-%d')}"
+                )
+                continue
+
             if posted >= day and bill_type in self.bill_types:
                 self.info(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
                 chamber, classification = self.classify_bill_type(match.group('filename'))
