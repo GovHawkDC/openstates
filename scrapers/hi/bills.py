@@ -449,13 +449,13 @@ class HIBillScraper(Scraper):
             posted = dateutil.parser.parse(f"{match.group('date')} {match.group('time')}")
             posted = self.tz.localize(posted)
             posted = posted.date()
-            bill_type, bill_num = self.parse_bill_number(match.group('filename'))
 
             if 'Daily' in match.group("filename"):
                 self.info(
                     f"Skipping {match.group('filename')} posted on {posted.strftime('%Y-%m-%d')}"
                 )
                 continue
+            bill_type, bill_num = self.parse_bill_number(match.group('filename'))
 
             if posted >= day and bill_type in self.bill_types:
                 self.info(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
