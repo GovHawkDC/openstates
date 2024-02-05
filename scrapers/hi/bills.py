@@ -179,6 +179,8 @@ class HIBillScraper(Scraper):
             self.logger.warning("No version table for {}".format(bill.identifier))
 
         for version in versions:
+            print("VERSION")
+            print(version)
             td = version.xpath("./a")[0]
             if "No other versions" in td.text_content():
                 return
@@ -218,8 +220,9 @@ class HIBillScraper(Scraper):
         return media_type
 
     def parse_testimony(self, bill, page):
-        links = page.xpath("//table[contains(@id, 'GridViewTestimony')]/tr/td/a")
-
+        links = page.xpath("//a[contains(@id, 'RepeaterTestimony_PdfLink')]")
+        print("TESTIMONY")
+        print(links)
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
 
@@ -237,9 +240,10 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def parse_cmte_reports(self, bill, page):
-        links = page.xpath("//table[contains(@id, 'GridViewCommRpt')]/tr/td/a")
+        links = page.xpath("//a[contains(@id, 'RepeaterCommRpt_PdfLink')]")
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
+        print(links)
 
         for link in links:
             filename = link.attrib["href"].replace("www.", "")
@@ -257,14 +261,17 @@ class HIBillScraper(Scraper):
     def scrape_bill(self, session, chamber, bill_type, url):
         self.info(f"GET {url}")
         bill_html = self.scraper.get(url, params=self.request_params, verify=False).text
+        print(bill_html)
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
         qs = dict(urlparse.parse_qsl(urlparse.urlparse(url).query))
         bill_id = "{}{}".format(qs["billtype"], qs["billnumber"])
         versions = bill_page.xpath(
-            "//*[@id='ctl00_MainContent_UpdatePanel2']/div/div/div"
+            "//*[@id='MainContent_UpdatePanel2']/div/div/div"
         )
+        print("VERSIONS")
+        print(versions)
 
         try:
             metainf_table = bill_page.xpath(
@@ -426,7 +433,7 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 1)
+        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 8)
         yield from self.scrape_xml(session, day)
 
         # TODO: Turn this into an option somehow
