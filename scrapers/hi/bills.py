@@ -425,7 +425,7 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 8)
+        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 1)
         yield from self.scrape_xml(session, day)
 
         # TODO: Turn this into an option somehow
