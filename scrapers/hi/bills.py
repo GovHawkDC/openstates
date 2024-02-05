@@ -179,8 +179,6 @@ class HIBillScraper(Scraper):
             self.logger.warning("No version table for {}".format(bill.identifier))
 
         for version in versions:
-            print("VERSION")
-            print(version)
             td = version.xpath("./a")[0]
             if "No other versions" in td.text_content():
                 return
@@ -221,8 +219,6 @@ class HIBillScraper(Scraper):
 
     def parse_testimony(self, bill, page):
         links = page.xpath("//a[contains(@id, 'RepeaterTestimony_PdfLink')]")
-        print("TESTIMONY")
-        print(links)
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
 
@@ -243,7 +239,6 @@ class HIBillScraper(Scraper):
         links = page.xpath("//a[contains(@id, 'RepeaterCommRpt_PdfLink')]")
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
-        print(links)
 
         for link in links:
             filename = link.attrib["href"].replace("www.", "")
@@ -261,7 +256,6 @@ class HIBillScraper(Scraper):
     def scrape_bill(self, session, chamber, bill_type, url):
         self.info(f"GET {url}")
         bill_html = self.scraper.get(url, params=self.request_params, verify=False).text
-        print(bill_html)
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
@@ -270,8 +264,6 @@ class HIBillScraper(Scraper):
         versions = bill_page.xpath(
             "//*[@id='MainContent_UpdatePanel2']/div/div/div"
         )
-        print("VERSIONS")
-        print(versions)
 
         try:
             metainf_table = bill_page.xpath(
