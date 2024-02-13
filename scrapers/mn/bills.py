@@ -485,12 +485,12 @@ class MNBillScraper(Scraper, LXMLMixin):
 
             # Try to extract vote
             # senate vote only, house votes are scraped by the vote_event.py scraper
-            if current_chamber == "upper":
-                vote = self.extract_vote_from_action(
-                    bill, bill_action, current_chamber, row, pages
-                )
-                if vote:
-                    votes.append(vote)
+            # if current_chamber == "upper":
+            #     vote = self.extract_vote_from_action(
+            #         bill, bill_action, current_chamber, row, pages
+            #     )
+            #     if vote:
+            #         votes.append(vote)
 
         return bill_actions, votes
 
