@@ -70,6 +70,7 @@ class KSBillScraper(Scraper):
                 effective = dateutil.parser.parse(bill_data["GOVERNOR_EFFECTIVEDATE"])
                 self.extras["date_effective"] = effective.strftime("%Y-%m-%d")
             except Exception as e:
+                self.warning(bill_data["GOVERNOR_EFFECTIVEDATE"])
                 self.error(e.message)
 
         bill.add_source(api_url)
