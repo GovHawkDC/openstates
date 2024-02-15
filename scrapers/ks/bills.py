@@ -66,12 +66,8 @@ class KSBillScraper(Scraper):
 
         bill.extras = {"status": bill_data["STATUS"]}
         if "GOVERNOR_EFFECTIVEDATE" in bill_data:
-            try:
-                effective = dateutil.parser.parse(bill_data["GOVERNOR_EFFECTIVEDATE"])
-                self.extras["date_effective"] = effective.strftime("%Y-%m-%d")
-            except Exception as e:
-                self.warning(bill_data["GOVERNOR_EFFECTIVEDATE"])
-                self.error(e.message)
+            effective = dateutil.parser.parse(bill_data["GOVERNOR_EFFECTIVEDATE"][0])
+            bill.extras["date_effective"] = effective.strftime("%Y-%m-%d")
 
         bill.add_source(api_url)
         bill.add_source(bill_url)
