@@ -244,30 +244,39 @@ class OHBillScraper(Scraper):
                 except scrapelib.HTTPError:
                     pass
                 else:
-
                     actions = action_doc.json()
-                    for action in reversed(actions["items"]):
-                        actor = chamber_dict[action["chamber"]]
-                        action_desc = action["description"]
+                    for action_row in reversed(actions["items"]):
+                        actor = chamber_dict[action_row["chamber"]]
+                        action_desc = action_row["description"]
                         try:
-                            action_type = action_dict[action["actioncode"]]
+                            action_type = action_dict[action_row["actioncode"]]
                         except KeyError:
                             self.warning(
                                 "Unknown action {desc} with code {code}."
                                 " Add it to the action_dict"
-                                ".".format(desc=action_desc, code=action["actioncode"])
+                                ".".format(
+                                    desc=action_desc, code=action_row["actioncode"]
+                                )
                             )
                             action_type = None
 
-                        date = dateutil.parser.parse(action["datetime"])
+                        date = dateutil.parser.parse(action_row["datetime"])
                         if date.tzinfo is None:
                             date = self._tz.localize(date)
 
                         date = "{:%Y-%m-%d}".format(date)
 
-                        bill.add_action(
+                        action = bill.add_action(
                             action_desc, date, chamber=actor, classification=action_type
                         )
+                        committee = action_row.get("committee", "")
+                        committee_id = action_row.get("cmte_lpid", "")
+                        if committee_id:
+                            committee = f'{action_row.get("chamber", "")} {committee} Committee'.strip()
+                            action.add_related_entity(
+                                committee,
+                                entity_type="organization",
+                            )
 
                 # attach documents gathered earlier
                 self.add_document(all_amendments, bill_id, "amendment", bill, base_url)
@@ -367,17 +376,35 @@ class OHBillScraper(Scraper):
             yield page
 
     def get_total_bills(self, session):
+        # The /resolutions endpoint has included duplicate bills in its output, so use a set to filter duplicates
+        bill_numbers_seen = set()
+        total_bills = []
         bills_url = f"https://search-prod.lis.state.oh.us/solarapi/v1/general_assembly_{session}/bills"
         bill_data = self.get(bills_url, verify=False).json()
         if len(bill_data["items"]) == 0:
             self.logger.warning("No bills")
+        for bill in bill_data["items"]:
+            if bill["number"] not in bill_numbers_seen:
+                bill_numbers_seen.add(bill["number"])
+                total_bills.append(bill)
+            else:
+                self.logger.warning(
+                    f"Duplicate bill found in bills API response: {bill['number']}"
+                )
 
         res_url = f"https://search-prod.lis.state.oh.us/solarapi/v1/general_assembly_{session}/resolutions"
         res_data = self.get(res_url, verify=False).json()
         if len(res_data["items"]) == 0:
             self.logger.warning("No resolutions")
+        for bill in res_data["items"]:
+            if bill["number"] not in bill_numbers_seen:
+                bill_numbers_seen.add(bill["number"])
+                total_bills.append(bill)
+            else:
+                self.logger.warning(
+                    f"Duplicate bill found in resolutions API response: {bill['number']}"
+                )
 
-        total_bills = bill_data["items"] + res_data["items"]
         return total_bills
 
     def get_other_data_source(self, first_page, base_url, source_name):
