@@ -96,7 +96,10 @@ class HIBillScraper(Scraper):
         # vote types that have been reconsidered since last vote of that type
         reconsiderations = set()
 
-        for action in action_table.xpath("*")[1:]:
+        if len(action_table.xpath("*")) < 2:
+            return
+
+        for action in list(reversed(action_table.xpath("*")[1:])):
             date = action[0].text_content()
             date = dt.datetime.strptime(date, "%m/%d/%Y").strftime("%Y-%m-%d")
             actor_code = action[1].text_content().upper()
