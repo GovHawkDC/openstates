@@ -38,7 +38,7 @@ class OKEventScraper(Scraper):
     # poetry run os-update ne \
     # events --scrape start=2022-02-01 end=2022-03-02
     def scrape(self, start=None, end=None):
-        # yield from self.scrape_senate()
+        yield from self.scrape_senate()
 
         if start is None:
             delta = datetime.timedelta(days=90)
@@ -51,7 +51,8 @@ class OKEventScraper(Scraper):
         yield from self.scrape_page(start, end)
 
     def scrape_senate(self):
-        url = "https://oksenate.gov/committee-meetings"
+        # url = "https://oksenate.gov/committee-meetings"
+        url = "https://accessible.oksenate.gov/committee-meetings"
         page = lxml.html.fromstring(self.get(url).content)
         page.make_links_absolute(url)
 
