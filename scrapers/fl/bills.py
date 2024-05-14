@@ -139,7 +139,7 @@ class BillDetail(HtmlPage):
             self.process_summary()
             self.process_citations()
         yield self.input  # the bill, now augmented
-        yield HouseSearchPage(self.input)
+        # yield HouseSearchPage(self.input)
         yield from self.process_votes()
 
     def process_sponsors(self):
