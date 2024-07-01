@@ -517,5 +517,9 @@ class HIBillScraper(Scraper):
         self.error(f"Invalid bill type: {bill}")
 
     def parse_bill_number(self, bill: str) -> tuple:
-        match = re.search(r"(?P<type>[A-Z]+)(?P<number>\d+)", bill)
+        # match bill ids with any number of spaces, but avoid matching on AM/PM\s*Filesize
+        match = re.search(r"(?P<type>[DGHJMS][A-Z]+)\s*(?P<number>\d+)", bill)
+        if not match:
+            self.error(f"Unable to parse bill number from {bill}")
+
         return (match.group("type"), match.group("number"))
