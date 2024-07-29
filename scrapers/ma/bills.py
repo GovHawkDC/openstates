@@ -153,6 +153,8 @@ class MABillScraper(Scraper):
         if re.sub("[0-9]", "", bill_id) not in bill_types:
             self.warning("Unsupported bill type for {}; skipping".format(bill_id))
             return False
+        # classification = "proposed bill" if "D" in bill_id else "bill"
+        classification = "bill"
 
         if "SRes" in bill_id:
             bill_id = bill_id.replace("SRes", "SR")
@@ -162,7 +164,7 @@ class MABillScraper(Scraper):
             legislative_session=session,
             chamber=chamber,
             title=bill_title,
-            classification="bill",
+            classification=classification,
         )
 
         bill_summary = None
