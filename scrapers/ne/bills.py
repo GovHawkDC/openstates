@@ -1,6 +1,6 @@
 import pytz
 import urllib
-from datetime import datetime, timedelta
+from datetime import datetime
 import dateutil
 
 from openstates.scrape import Scraper, Bill, VoteEvent
