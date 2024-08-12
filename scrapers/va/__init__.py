@@ -214,7 +214,7 @@ class Virginia(State):
             "name": "2024 Regular Session",
             "start_date": "2024-01-10",
             "end_date": "2024-03-09",
-            "active": False,
+            "active": True,
         },
         {
             "_scraped_name": "2024 Special Session I",
