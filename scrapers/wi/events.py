@@ -11,7 +11,7 @@ from utils.events import match_coordinates
 
 # calurl = "http://committeeschedule.legis.wisconsin.gov/?filter=Upcoming&committeeID=-1"
 today = datetime.datetime.today().strftime("%Y-%m-%d")
-calurl = f"https://committeeschedule.legis.wisconsin.gov/?StartDate={today}&CommitteeID=-1&CommItemVisibleName=-1&TopicID=-1&ViewType=listDay"
+calurl = f"https://committeeschedule.legis.wisconsin.gov/?StartDate={today}&CommitteeID=-1&CommItemVisibleName=-1&TopicID=-1&ViewType=listDay&ReloadCache=True"
 
 
 # TODO: We may be able to scrape additional documents and minutes
