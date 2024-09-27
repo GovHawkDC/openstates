@@ -1,6 +1,7 @@
 import pytz
 import dateutil.parser
 
+import datetime
 import re
 from utils import LXMLMixin
 from openstates.scrape import Scraper, Event
@@ -8,8 +9,9 @@ from openstates.scrape import Scraper, Event
 from openstates.exceptions import EmptyScrape
 from utils.events import match_coordinates
 
-calurl = "http://committeeschedule.legis.wisconsin.gov/?filter=Upcoming&committeeID=-1"
-# calurl = "https://committeeschedule.legis.wisconsin.gov/?StartDate=2023-03-14&CommitteeID=-1&CommItemVisibleName=-1&TopicID=-1&ViewType=listDay"
+# calurl = "http://committeeschedule.legis.wisconsin.gov/?filter=Upcoming&committeeID=-1"
+today = datetime.datetime.today().strftime("%Y-%m-%d")
+calurl = f"https://committeeschedule.legis.wisconsin.gov/?StartDate={today}&CommitteeID=-1&CommItemVisibleName=-1&TopicID=-1&ViewType=listDay"
 
 
 # TODO: We may be able to scrape additional documents and minutes
