@@ -191,8 +191,7 @@ class Virginia(State):
         },
         {
             "_scraped_name": "2023 Session",
-            # TODO: remove classification when more than bills, histories, & votes posted
-            "classification": "special",
+            "classification": "primary",
             "identifier": "2023",
             "name": "2023 Regular Session",
             "start_date": "2023-01-11",
@@ -214,7 +213,7 @@ class Virginia(State):
             "name": "2024 Regular Session",
             "start_date": "2024-01-10",
             "end_date": "2024-03-09",
-            "active": True,
+            "active": False,
         },
         {
             "_scraped_name": "2024 Special Session I",
@@ -271,6 +270,7 @@ class Virginia(State):
 
     def get_session_list(self):
         sessions = url_xpath(
-            "http://lis.virginia.gov/", "//div[@id='sLink']//select/option/text()"
+            "https://legacylis.virginia.gov/",
+            "//div[@id='sLink']//select/option/text()",
         )
         return [s.strip() for s in sessions if "Session" in s]
