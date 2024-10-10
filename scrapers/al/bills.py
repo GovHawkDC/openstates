@@ -123,19 +123,12 @@ class ALBillScraper(Scraper):
                     row["CompanionInstrumentNbr"], session, "companion"
                 )
 
-            # TODO: EffectiveDateCertain, EffectiveDateOther
-            if row['EffectiveDateCertain'] != '' or row['EffectiveDateOther'] != '':
-                print(row)
-                print("CODE UP DATE")
-
             # TODO: BUDGET ISOLATION RESOLUTION
 
             bill.extras["AL_BILL_ID"] = row["ID"]
 
             self.count += 1
             yield bill
-
-        print(f'Count: {page["data"]["allInstrumentOverviewsCount"]} offset: {offset}')
 
         # no need to paginate again if we max the last page
         if page["data"]["allInstrumentOverviewsCount"] > offset:
@@ -161,14 +154,9 @@ class ALBillScraper(Scraper):
                 media_type="application/pdf",
             )
 
-    # the search JSON contains the act reference, but not the date,
-    # which we need to build the action. It's on the act page at the SoS though.
-    def scrape_act(self, bill: Bill, link: str):
-        act_page = lxml.html.fromstring(link)
-        link = act_page.xpath("//a")[0]
-        url = link.xpath("@href")[0]
-        act_number = link.xpath("text()")[0].replace("View Act", "").strip()
-
+    # the search JSON contains the act reference, but not the final text
+    # so scrape it from the SoS
+    def scrape_act(self, bill: Bill, url: str, effective: str):
         try:
             page = self.get(url, timeout=120).content
         except requests.exceptions.ConnectTimeout:
@@ -178,24 +166,12 @@ class ALBillScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
-        if not page.xpath(
-            '//tr[td[contains(text(),"Approved Date and Time")]]/td[2]/text()'
-        ):
-            return
-
-        # second td in the row containing Approved Date and Time
-        act_date = page.xpath(
-            '//tr[td[contains(text(),"Approved Date and Time")]]/td[2]/text()'
-        )[0]
-        act_date = act_date.strip().replace("&nbsp;", "")
-        action_date = dateutil.parser.parse(act_date)
-        action_date = self.tz.localize(action_date)
-        bill.add_action(
-            chamber="executive",
-            description=f"Enacted as {act_number}",
-            date=action_date,
-            classification="became-law",
+        act_number = (
+            page.xpath("//td[contains(text(), 'ACT NUMBER')]/text()")[0]
+            .replace("ACT NUMBER", "")
+            .strip()
         )
+        act_number = act_number.replace(" ", "")
 
         if page.xpath("//a[input[@value='View Image']]"):
             act_text_url = page.xpath("//a[input[@value='View Image']]/@href")[0]
@@ -203,13 +179,24 @@ class ALBillScraper(Scraper):
                 f"Act {act_number}",
                 act_text_url,
                 media_type=get_media_type(act_text_url),
+                on_duplicate="ignore",
             )
 
         bill.extras["AL_ACT_NUMBER"] = act_number
 
-        bill.add_citation(
-            "Alabama Chapter Law", act_number, "chapter", url=act_text_url
-        )
+        if effective:
+            date_effective = dateutil.parser.parse(effective).date()
+            bill.add_citation(
+                "Alabama Chapter Law",
+                act_number,
+                "chapter",
+                url=act_text_url,
+                effective=date_effective,
+            )
+        else:
+            bill.add_citation(
+                "Alabama Chapter Law", act_number, "chapter", url=act_text_url
+            )
 
     def scrape_actions(self, bill, bill_row):
         bill_id = bill.identifier.replace(" ", "")
@@ -269,15 +256,16 @@ class ALBillScraper(Scraper):
                     row["Matter"],
                     url=row["AmdSubUrl"],
                     media_type=get_media_type(row["AmdSubUrl"]),
-                    on_duplicate="ignore"
+                    on_duplicate="ignore",
                 )
 
             if int(row["VoteNbr"]) > 0:
                 yield from self.scrape_vote(bill, row)
 
         if bill_row["ViewEnacted"]:
-            print(bill_row)
-            self.scrape_act(bill, bill_row["ViewEnacted"])
+            self.scrape_act(
+                bill, bill_row["ViewEnacted"], bill_row["EffectiveDateCertain"]
+            )
 
     def scrape_fiscal_notes(self, bill):
         bill_id = bill.identifier.replace(" ", "")
