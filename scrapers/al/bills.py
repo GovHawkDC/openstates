@@ -6,6 +6,7 @@ import datetime
 import dateutil
 import requests
 from openstates.scrape import Scraper, Bill, VoteEvent
+from openstates.exceptions import EmptyScrape
 from utils.media import get_media_type
 from .actions import Categorizer
 
@@ -22,6 +23,7 @@ class ALBillScraper(Scraper):
     session_type = ""
     bill_ids = set()
     vote_keys = set()
+    count = 0
 
     gql_headers = {
         "Accept": "*/*",
@@ -40,13 +42,16 @@ class ALBillScraper(Scraper):
         for bill_type in ["B", "R"]:
             yield from self.scrape_bill_type(session, bill_type, 0, 50)
 
+        if self.count == 0:
+            raise EmptyScrape
+
     def scrape_bill_type(self, session: str, bill_type: str, offset: int, limit: int):
-        self.info(f"Scraping offset {offset} limit {limit}")
+        self.info(f"Scraping {bill_type} offset {offset} limit {limit}")
 
         json_data = {
             "query": "query bills($googleId: String, $category: String, $sessionYear: String, $sessionType: String, $direction: String, $orderBy: String, $offset: Int, $limit: Int, $filters: InstrumentOverviewInput! = {}, $search: String, $instrumentType: String) {\n  allInstrumentOverviews(\n    googleId: $googleId\n    category: $category\n    instrumentType: $instrumentType\n    sessionYear: $sessionYear\n    sessionType: $sessionType\n    direction: $direction\n    orderBy: $orderBy\n    limit: $limit\n    offset: $offset\n    customFilters: $filters\n    search: $search\n  ) {\n    ID\n    SessionYear\n    InstrumentNbr\n    InstrumentSponsor\n    SessionType\n    Body\n    Subject\n    ShortTitle\n    AssignedCommittee\n    PrefiledDate\n    FirstRead\n    CurrentStatus\n    LastAction\n LastActionDate\n   ActSummary\n    ViewEnacted\n    CompanionInstrumentNbr\n    EffectiveDateCertain\n    EffectiveDateOther\n    InstrumentType\n InstrumentUrl\n IntroducedUrl\n EngrossedUrl\n EnrolledUrl\n  }\n  allInstrumentOverviewsCount(\n    googleId: $googleId\n    category: $category\n    instrumentType: $instrumentType\n    sessionYear: $sessionYear\n    sessionType: $sessionType\n    customFilters: $filters\n    search: $search\n  )\n}",
             "variables": {
-                "sessionType": "2025 Regular Session",
+                "sessionType": self.session_year,
                 "instrumentType": bill_type,
                 "orderBy": "LastActionDate",
                 "direction": "DESC",
@@ -58,9 +63,8 @@ class ALBillScraper(Scraper):
 
         page = requests.post(self.gql_url, headers=self.gql_headers, json=json_data)
         page = json.loads(page.content)
-        if len(page["data"]["allInstrumentOverviews"]) < 1 and offset == 0:
-            # TODO: this fails if one chamber is empty and the other isn't
-            # raise EmptyScrape
+
+        if len(page["data"]["allInstrumentOverviews"]) < 1:
             return
 
         for row in page["data"]["allInstrumentOverviews"]:
@@ -115,15 +119,23 @@ class ALBillScraper(Scraper):
                 bill.add_subject(first_sub[0])
 
             if row["CompanionInstrumentNbr"] != "":
-                self.warning("AL Companion found. Code it up.")
+                bill.add_related_bill(
+                    row["CompanionInstrumentNbr"], session, "companion"
+                )
 
             # TODO: EffectiveDateCertain, EffectiveDateOther
+            if row['EffectiveDateCertain'] != '' or row['EffectiveDateOther'] != '':
+                print(row)
+                print("CODE UP DATE")
 
-            # TODO: Fiscal notes, BUDGET ISOLATION RESOLUTION
+            # TODO: BUDGET ISOLATION RESOLUTION
 
             bill.extras["AL_BILL_ID"] = row["ID"]
 
+            self.count += 1
             yield bill
+
+        print(f'Count: {page["data"]["allInstrumentOverviewsCount"]} offset: {offset}')
 
         # no need to paginate again if we max the last page
         if page["data"]["allInstrumentOverviewsCount"] > offset:
@@ -201,6 +213,7 @@ class ALBillScraper(Scraper):
 
     def scrape_actions(self, bill, bill_row):
         bill_id = bill.identifier.replace(" ", "")
+
         if bill_row["PrefiledDate"]:
             action_date = datetime.datetime.strptime(
                 bill_row["PrefiledDate"], "%m/%d/%Y"
@@ -235,7 +248,7 @@ class ALBillScraper(Scraper):
             if row["Committee"]:
                 action_text = f'{row["Matter"]} ({row["Committee"]})'
 
-            action_date = datetime.datetime.strptime(row["CalendarDate"], "%m-%d-%Y")
+            action_date = dateutil.parser.parse(row["CalendarDate"])
             action_date = self.tz.localize(action_date)
 
             action_attr = self.categorizer.categorize(row["Matter"])
@@ -252,31 +265,25 @@ class ALBillScraper(Scraper):
             )
 
             if row["AmdSubUrl"] != "":
-                page = lxml.html.fromstring(row["AmdSubUrl"])
-                link = page.xpath("//a")[0]
-                amd_url = link.xpath("@href")[0]
-                amd_name = link.xpath("text()")[0].strip()
-                amd_name = f"Amendment {amd_name}"
-                if row["Committee"] != "":
-                    amd_name = f"{row['Committee']} {amd_name}"
-
                 bill.add_version_link(
-                    amd_name,
-                    url=amd_url,
-                    media_type=get_media_type(amd_url),
+                    row["Matter"],
+                    url=row["AmdSubUrl"],
+                    media_type=get_media_type(row["AmdSubUrl"]),
+                    on_duplicate="ignore"
                 )
 
             if int(row["VoteNbr"]) > 0:
                 yield from self.scrape_vote(bill, row)
 
         if bill_row["ViewEnacted"]:
+            print(bill_row)
             self.scrape_act(bill, bill_row["ViewEnacted"])
 
     def scrape_fiscal_notes(self, bill):
         bill_id = bill.identifier.replace(" ", "")
 
         json_data = {
-            "query": "query fiscalNotesBySessionYearInstrumentNbr($instrumentNbr: String, $sessionType: String, $sessionYear: String){fiscalNotesBySessionYearInstrumentNbr(instrumentNbr:$instrumentNbr, sessionType:$sessionType, sessionYear: $sessionYear, ){ FiscalNoteDescription,FiscalNoteUrl,SortOrder }}",
+            "query": "query fiscalNotes($instrumentNbr: String, $sessionType: String, $sessionYear: String){fiscalNotes(instrumentNbr:$instrumentNbr, sessionType:$sessionType, sessionYear: $sessionYear, ){ FiscalNoteDescription,FiscalNoteUrl,SortOrder }}",
             "variables": {
                 "instrumentNbr": bill_id,
                 "sessionType": self.session_type,
@@ -286,7 +293,7 @@ class ALBillScraper(Scraper):
 
         page = requests.post(self.gql_url, headers=self.gql_headers, json=json_data)
         page = json.loads(page.content)
-        for row in page["data"]["fiscalNotesBySessionYearInstrumentNbr"]:
+        for row in page["data"]["fiscalNotes"]:
             bill.add_document_link(
                 f"Fiscal Note: {row['FiscalNoteDescription']}",
                 row["FiscalNoteUrl"],
@@ -297,8 +304,8 @@ class ALBillScraper(Scraper):
     def scrape_vote(self, bill, action_row):
         cal_date = self.transform_date(action_row["CalendarDate"])
         json_data = {
-            'query': f'{{\nrollCallVotesByRollNbr(\ninstrumentNbr: "{action_row["InstrumentNbr"]}"\nsessionYear: "{self.session_year}"\nsessionType: "{self.session_type}"\ncalendarDate:"{cal_date}"\nrollNumber:"{action_row["VoteNbr"]}"\n) {{\nFullName\nVote\nYeas\nNays\nAbstains\nPass\n}}\n}}',
-            'variables': {},
+            "query": f'{{\nrollCallVotesByRollNbr(\ninstrumentNbr: "{action_row["InstrumentNbr"]}"\nsessionYear: "{self.session_year}"\nsessionType: "{self.session_type}"\ncalendarDate:"{cal_date}"\nrollNumber:"{action_row["VoteNbr"]}"\n) {{\nFullName\nVote\nYeas\nNays\nAbstains\nPass\n}}\n}}',
+            "variables": {},
         }
 
         page = requests.post(self.gql_url, headers=self.gql_headers, json=json_data)
@@ -352,5 +359,5 @@ class ALBillScraper(Scraper):
 
     # The api gives us dates as m-d-Y but needs them in Y-m-d
     def transform_date(self, date: str) -> str:
-        date = datetime.datetime.strptime(date, "%m-%d-%Y")
+        date = dateutil.parser.parse(date)
         return date.strftime("%Y-%m-%d")
