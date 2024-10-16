@@ -3,7 +3,6 @@ from utils import url_xpath
 from openstates.scrape import State
 from .csv_bills import VaCSVBillScraper
 from .events import VaEventScraper
-from .bills import VaBillScraper
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -14,8 +13,7 @@ settings = {"SCRAPELIB_RPM": 40}
 class Virginia(State):
     scrapers = {
         "events": VaEventScraper,
-        "csv_bills": VaCSVBillScraper,
-        "bills": VaBillScraper,
+        "bills": VaCSVBillScraper,
     }
     legislative_sessions = [
         {
@@ -225,16 +223,7 @@ class Virginia(State):
             "start_date": "2024-05-13",
             # TODO: update actual end date
             "end_date": "2024-05-20",
-            "active": False,
-        },
-        {
-            "_scraped_name": "2025 Session",
-            "identifier": "2025",
-            "name": "2025 Regular Session",
-            "start_date": "2025-01-08",
-            "end_date": "2025-02-22",
             "active": True,
-            "extras": {"session_code": "20251"},
         },
     ]
     ignored_scraped_sessions = [
