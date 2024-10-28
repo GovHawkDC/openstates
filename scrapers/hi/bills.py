@@ -442,6 +442,7 @@ class HIBillScraper(Scraper):
         #         yield from self.scrape_type(chamber, session, typ)
 
     def scrape_xml(self, session, day):
+        bill_ct = 0
         url = "https://www.capitol.hawaii.gov/sessions/session2024/rss/"
         self.info(f"fetching url {url}")
         page = self.scraper.get(url, params=self.request_params, verify=False).text
@@ -460,6 +461,7 @@ class HIBillScraper(Scraper):
             bill_type, bill_num = self.parse_bill_number(match.group('filename'))
 
             if posted >= day and bill_type in self.bill_types:
+                bill_ct += 1
                 self.info(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
                 chamber, classification = self.classify_bill_type(match.group('filename'))
 
@@ -469,6 +471,9 @@ class HIBillScraper(Scraper):
                 yield from self.scrape_bill(session, chamber, classification, bill_url)
             else:
                 self.info(f"Skipping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
+
+        if bill_ct == 0:
+            raise EmptyScrape
 
     def scrape_daily(self, session, day):
         url = f"https://www.capitol.hawaii.gov/reports/reportDailyDocs.aspx?date={day}&bills=true&resos=True&other=true"
