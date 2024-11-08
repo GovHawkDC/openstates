@@ -92,7 +92,7 @@ class PABillScraper(Scraper):
         )
 
         # only fetch votes if votes were seen in history
-        yield from self.parse_votes(bill, page)
+        # yield from self.parse_votes(bill, page)
 
         # Dedupe sources.
         sources = bill.sources
