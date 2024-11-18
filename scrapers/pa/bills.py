@@ -16,8 +16,16 @@ tz = pytz.timezone("America/New_York")
 
 
 class PABillScraper(Scraper):
+    session_year: str = ""
+
     def scrape(self, chamber=None, session=None):
         chambers = [chamber] if chamber is not None else ["upper", "lower"]
+
+        # Session Year code needed to fix committee vote URLs
+        # until new PA site fixes them
+        for i in self.jurisdiction.legislative_sessions:
+            if i["identifier"] == session:
+                self.session_year = i.get("extras", {}).get("session_year", "2023")
 
         match = re.search(r"[S#](\d+)", session)
         for chamber in chambers:
@@ -64,7 +72,7 @@ class PABillScraper(Scraper):
         page = self.get_page(url)
 
         xpath = (
-            '//div[contains(@class, "header ")]/following-sibling::*[1]'
+            '//div[contains(@class, "header")]/following-sibling::*[1]'
             '/div[@class="col-md-9"]/div[1]'
         )
 
@@ -92,7 +100,7 @@ class PABillScraper(Scraper):
         )
 
         # only fetch votes if votes were seen in history
-        # yield from self.parse_votes(bill, page)
+        yield from self.parse_votes(bill, page)
 
         # Dedupe sources.
         sources = bill.sources
@@ -267,6 +275,10 @@ class PABillScraper(Scraper):
             if "/roll-calls/" in url:
                 yield from self.parse_chamber_votes(bill, url)
             elif "/roll-call-votes/" in url:
+                # As of Nov 2024, this URL in the new site is broken
+                # but works if we add a query param
+                if "sessyr" not in url:
+                    url = f"{url}&sessyr={self.session_year}"
                 yield from self.parse_committee_votes(bill, url)
             else:
                 msg = "Unexpected vote url: %r" % url
