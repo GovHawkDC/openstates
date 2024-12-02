@@ -14,6 +14,7 @@ from .actions import Categorizer
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 four_digit_regex = re.compile("[0-9]{4}")
+vote_shorthand_regex = re.compile("[0-9]+-[YN]")
 
 
 class VaBillScraper(Scraper):
@@ -66,8 +67,6 @@ class VaBillScraper(Scraper):
         ).json()
 
         for row in page["Legislations"]:
-            # print(json.dumps(row))
-
             # the short title on the VA site is 'description',
             # LegislationTitle is on top of all the versions
             title = row["Description"]
@@ -125,8 +124,8 @@ class VaBillScraper(Scraper):
 
             # map reference numbers back to their actions for impact filenames
             # HB9F122.PDF > { 'HB9F122' => "Impact statement from DPB (HB9)" }
-            if row["ReferenceNumber"]:
-                ref_num = row["ReferenceNumber"].split(".")[0]
+            if row["ReferenceNumber"] and row["ReferenceNumber"].strip() != "":
+                ref_num = row["ReferenceNumber"].split(".")[0].strip()
                 self.ref_num_map[ref_num] = row["Description"]
 
     def add_carryover_related_bill(self, bill: Bill):
@@ -172,7 +171,6 @@ class VaBillScraper(Scraper):
         ).json()
 
         for row in page["TextsList"]:
-            # print(json.dumps(row))
             if (row["PDFFile"] and len(row["PDFFile"]) > 1) or (
                 row["HTMLFile"] and len(row["HTMLFile"]) > 1
             ):
@@ -197,22 +195,16 @@ class VaBillScraper(Scraper):
             if row["ImpactFile"]:
                 for impact in row["ImpactFile"]:
                     # map 241HB9F122 => HB9F122
-                    action = self.ref_num_map[impact["ReferenceNumber"][3:]]
+                    # however somtimes ReferenceNumber does NOT have a weird prefix
+                    if impact["ReferenceNumber"][3:] in self.ref_num_map:
+                        action = self.ref_num_map[impact["ReferenceNumber"][3:]]
+                    elif impact["ReferenceNumber"] in self.ref_num_map:
+                        action = self.ref_num_map[impact["ReferenceNumber"]]
+                    else:
+                        action = "Unknown"
                     bill.add_document_link(
                         action, impact["FileURL"], media_type="application/pdf"
                     )
-
-    # This method doesn't work as of 2024-10-15 but leaving this code in,
-    # in case they bring it back
-    # def get_vote_types(self):
-
-    #     page = requests.get(
-    #         f"{self.base_url}/api/getvotetypereferencesasync",
-    #         headers=self.headers,
-    #         verify=False,
-    #     ).content
-
-    #     print(page)
 
     def add_votes(self, bill: Bill, legislation_id: str):
         body = {
@@ -235,10 +227,16 @@ class VaBillScraper(Scraper):
         for row in page["Votes"]:
             # VA Voice votes don't indicate pass fail,
             # and right now OS core requires a pass or fail, so we skip them with a notice
-            if row["PassFail"] or row["IsVoice"] is not True:
+            # also skip rows that correspond to a bill action that does not indicate a vote by presence of ##-Y / ##-N
+            #   if we don't skip on that last criteria, we get duplicate vote events
+            if (
+                row["PassFail"] or row["IsVoice"] is not True
+            ) and vote_shorthand_regex.search(row["LegislationActionDescription"]):
                 vote_date = dateutil.parser.parse(row["VoteDate"]).date()
 
                 motion_text = row["VoteActionDescription"]
+                if motion_text is None:
+                    motion_text = row["LegislationActionDescription"]
 
                 # the api returns 'Continued to %NextSessionYear% in Finance' so fix that
                 motion_text = motion_text.replace(
@@ -255,7 +253,14 @@ class VaBillScraper(Scraper):
                     classification=[],
                 )
 
-                v.dedupe_key = row["BatchNumber"]
+                # BatchNumber is not unique to an individual Vote Event, so we need to add context
+                # in order to avoid duplicate dedupe keys
+                if not row["BatchNumber"]:
+                    continue
+                v.dedupe_key = (
+                    f"{row['BatchNumber'].strip()}-{bill.identifier.strip()}-"
+                    f"{row['LegislationActionDescription'].strip()}"
+                )[:500]
 
                 tally = {
                     "Y": 0,
@@ -290,7 +295,9 @@ class VaBillScraper(Scraper):
 
                 # https://lis.virginia.gov/vote-details/HB88/20251/H1003V0001
                 v.add_source(
-                    f"https://lis.virginia.gov/vote-details/{row['VoteLegislation']}/{self.session_code}/{row['BatchNumber']}"
+                    f"https://lis.virginia.gov/vote-details/"
+                    f"{row['VoteLegislation'][0].get('LegislationNumber', 'NOT_FOUND')}/"
+                    f"{self.session_code}/{row['BatchNumber']}"
                 )
                 yield v
             else:
@@ -303,20 +310,6 @@ class VaBillScraper(Scraper):
             btype = "constitutional amendment"
 
         return btype
-
-    # TODO: we can get the subject list,
-    # then do a search API call for each individual subject,
-    # but is there a faster way?
-    # def get_subjects(self):
-    #     body = {
-    #         "sessionCode": self.session_code,
-    #     }
-    #     page = requests.get(
-    #         f"{self.base_url}/LegislationSubject/api/getsubjectreferencesasync",
-    #         params=body,
-    #         headers=self.headers,
-    #         verify=False,
-    #     ).json()
 
     def text_from_html(self, html: str):
         return lxml.html.fromstring(html).text_content()
