@@ -89,6 +89,14 @@ class Maine(State):
             "end_date": "2024-04-17",
             "active": True,
         },
+        {
+            "_scraped_name": "132nd Legislature",
+            "identifier": "132",
+            "name": "132nd Legislature (2025-2026)",
+            "start_date": "2024-12-04",
+            "end_date": "2025-06-18",
+            "active": False,
+        },
     ]
     ignored_scraped_sessions = ["2001-2002"]
 
