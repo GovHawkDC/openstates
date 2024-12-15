@@ -189,6 +189,7 @@ class MTBillScraper(Scraper):
         for action in row["draft"]["billStatuses"]:
             name = action["billStatusCode"]["name"]
             when = dateutil.parser.parse(action["timeStamp"])
+            when = when.replace(microsecond=0)
             when = self.TIMEZONE.localize(when)
             if "(H)" in name:
                 chamber = "lower"
