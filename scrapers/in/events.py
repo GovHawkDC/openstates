@@ -7,13 +7,13 @@ import dateutil.parser
 import pytz
 from openstates.scrape import Scraper, Event
 from .apiclient import ApiClient
-from .utils import add_space
+from .utils import add_space, backoff
 from openstates.exceptions import EmptyScrape
 
 
 class INEventScraper(Scraper):
     _tz = pytz.timezone("America/Indianapolis")
-    base_url = "https://beta-api.iga.in.gov"
+    base_url = "https://api.iga.in.gov"
     session = date.today().year
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +21,7 @@ class INEventScraper(Scraper):
         super().__init__(*args, **kwargs)
 
     def scrape(self):
-        session_no = self.apiclient.get_session_no(self.session)
+        session_no = backoff(self.apiclient.get_session_no, self.session)
         response = self.apiclient.get("meetings", session=self.session)
 
         meetings = response["meetings"]
@@ -57,6 +57,7 @@ class INEventScraper(Scraper):
 
             date_str = meeting["meetingdate"].replace(" ", "")
             time_str = meeting["starttime"]
+            custom_start_string = ""
             # Determine the 'when' variable based on the presence of time
             if time_str:
                 time_str = time_str.replace(
@@ -68,21 +69,22 @@ class INEventScraper(Scraper):
             else:
                 when = dateutil.parser.parse(date_str).date()
                 all_day = True
+                if "customstart" in meeting and meeting["customstart"] != "":
+                    custom_start_string = f" - {meeting['customstart']}"
 
             location = meeting["location"] or "See Agenda"
             video_url = (
                 f"https://iga.in.gov/legislative/{self.session}/meeting/watchlive/{_id}"
             )
-            event_name = f"{committee['chamber']}#{committee_name}#{location}#{when}"
 
             event = Event(
-                name=committee_name,
+                name=f"{committee_name}{custom_start_string}",
                 start_date=when,
                 all_day=all_day,
                 location_name=location,
                 classification="committee-meeting",
             )
-            event.dedupe_key = event_name
+            event.dedupe_key = meeting["link"]
             event.add_source(link, note="API details")
             name_slug = re.sub("[^a-zA-Z0-9]+", "-", committee_name.lower())
 
