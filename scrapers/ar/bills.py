@@ -496,7 +496,8 @@ class ARBillScraper(Scraper):
 
     # the data is utf-16, with null bytes for empty cells.
     def decode_ar_utf16(self, data) -> str:
-        data = data.decode("utf-16", errors="ignore")
+        data = data.decode("utf-16-le")
+        data = data.replace("\ufeff", "")
         data = data.replace("\x00", "")
         return data
 
@@ -512,6 +513,9 @@ class ARBillScraper(Scraper):
         with open(raw.name, "wb") as f:
             ftp_client.retrbinary("RETR " + filename, raw.write)
 
-        with open(raw.name, "rb") as f:
-            text = self.decode_ar_utf16(f.read())
+        with io.open(raw.name, "r", encoding="utf-16-le") as f:
+            # text = self.decode_ar_utf16(f.read())
+            text = f.read()
+            text = text.replace("\ufeff", "")
+            text = text.replace("\x00", "").strip()
             return text
