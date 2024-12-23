@@ -6,6 +6,7 @@ import os
 import ssl
 import ftplib
 import tempfile
+import io
 
 
 from openstates.scrape import Scraper, Bill, VoteEvent
