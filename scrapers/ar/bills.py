@@ -241,7 +241,7 @@ class ARBillScraper(Scraper):
             "https://www.arkleg.state.ar.us/assembly/%s/%s/"
             "Pages/BillInformation.aspx?measureno=%s" % (odd_year, self.slug, measureno)
         )
-        page = self.get(url).text
+        page = self.get(url, verify=False).text
         bill.add_source(url)
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
@@ -404,7 +404,7 @@ class ARBillScraper(Scraper):
             yield from self.scrape_vote(bill, date, motion, link.attrib["href"])
 
     def scrape_vote(self, bill, date, motion, url):
-        page = self.get(url).text
+        page = self.get(url, verify=False).text
         if "not yet official" in page or "No data found for the vote" in page:
             # Sometimes they link to vote pages before they go live
             pass
@@ -487,7 +487,7 @@ class ARBillScraper(Scraper):
         if url in self.sponsors_chamber_cache:
             return self.sponsors_chamber_cache[url]
 
-        page = self.get(url).text
+        page = self.get(url, verify=False).text
         page = lxml.html.fromstring(page)
         title = page.xpath("//h1")[0].text_content().strip()
         chamber = self.get_chamber(title)
