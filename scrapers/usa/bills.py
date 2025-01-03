@@ -629,6 +629,7 @@ class USBillScraper(Scraper):
                 return
 
     def scrape_senate_votes(self, bill, page, url):
+        print(f"scrape_senate_votes {url}")
         vote_date = page.xpath("//roll_call_vote/vote_date/text()")[0].strip()
 
         if not vote_date or vote_date == "":
