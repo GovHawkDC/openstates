@@ -630,6 +630,11 @@ class USBillScraper(Scraper):
 
     def scrape_senate_votes(self, bill, page, url):
         vote_date = page.xpath("//roll_call_vote/vote_date/text()")[0].strip()
+
+        if not vote_date or vote_date == "":
+            self.error(f"Unable to parse vote date in {url}")
+            return
+
         when = self._TZ.localize(
             datetime.datetime.strptime(vote_date, "%B %d, %Y, %H:%M %p")
         )
