@@ -1,12 +1,12 @@
-import re
 import csv
+import re
+import io
 import datetime
 import pytz
 import os
 import ssl
 import ftplib
 import tempfile
-import io
 
 
 from openstates.scrape import Scraper, Bill, VoteEvent
@@ -241,7 +241,7 @@ class ARBillScraper(Scraper):
             "https://www.arkleg.state.ar.us/assembly/%s/%s/"
             "Pages/BillInformation.aspx?measureno=%s" % (odd_year, self.slug, measureno)
         )
-        page = self.get(url, verify=False).text
+        page = self.get(url).text
         bill.add_source(url)
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
@@ -404,7 +404,7 @@ class ARBillScraper(Scraper):
             yield from self.scrape_vote(bill, date, motion, link.attrib["href"])
 
     def scrape_vote(self, bill, date, motion, url):
-        page = self.get(url, verify=False).text
+        page = self.get(url).text
         if "not yet official" in page or "No data found for the vote" in page:
             # Sometimes they link to vote pages before they go live
             pass
@@ -487,7 +487,7 @@ class ARBillScraper(Scraper):
         if url in self.sponsors_chamber_cache:
             return self.sponsors_chamber_cache[url]
 
-        page = self.get(url, verify=False).text
+        page = self.get(url).text
         page = lxml.html.fromstring(page)
         title = page.xpath("//h1")[0].text_content().strip()
         chamber = self.get_chamber(title)
@@ -497,9 +497,9 @@ class ARBillScraper(Scraper):
 
     # the data is utf-16, with null bytes for empty cells.
     def decode_ar_utf16(self, data) -> str:
-        data = data.decode("utf-16-le")
-        data = data.replace("\ufeff", "")
+        data = data.decode("utf-16", errors="ignore")
         data = data.replace("\x00", "")
+
         return data
 
     def get_utf_16_ftp_content(self, filename):
@@ -514,9 +514,16 @@ class ARBillScraper(Scraper):
         with open(raw.name, "wb") as f:
             ftp_client.retrbinary("RETR " + filename, raw.write)
 
-        with io.open(raw.name, "r", encoding="utf-16-le") as f:
-            # text = self.decode_ar_utf16(f.read())
-            text = f.read()
-            text = text.replace("\ufeff", "")
-            text = text.replace("\x00", "").strip()
-            return text
+        # 2025: we've seen encoding issues oscillate on this file
+        # so try both the "old" and "new" methods to decode
+        # as necessary
+        try:
+            with io.open(raw.name, "r", encoding="utf-16-le") as f:
+                text = f.read()
+                text = text.replace("\ufeff", "")
+                text = text.replace("\x00", "").strip()
+                return text
+        except UnicodeDecodeError:
+            with open(raw.name, "rb") as f:
+                text = self.decode_ar_utf16(f.read())
+                return text
