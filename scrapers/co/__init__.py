@@ -157,7 +157,7 @@ class Colorado(State):
             "name": "2024 Regular Session",
             "start_date": "2024-01-10",
             "end_date": "2024-05-08",
-            "active": False,
+            "active": True,
         },
         {
             "_scraped_name": "2024 Extraordinary Session",
@@ -168,6 +168,15 @@ class Colorado(State):
             # TODO
             "end_date": "2024-08-30",
             "active": True,
+        },
+        {
+            "_scraped_name": "2025 Regular Session",
+            "classification": "primary",
+            "identifier": "2025A",
+            "name": "2025 Regular Session",
+            "start_date": "2025-01-08",
+            "end_date": "2025-05-07",
+            "active": False,
         },
     ]
     ignored_scraped_sessions = [
