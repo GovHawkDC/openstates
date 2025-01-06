@@ -99,7 +99,8 @@ class IDBillScraper(Scraper):
         if "spcl" in session:
             self._subjects = defaultdict(list)
         else:
-            self.scrape_subjects(session)
+            self._subjects = defaultdict(list)
+            # self.scrape_subjects(session)
 
         chambers = [chamber] if chamber else ["upper", "lower"]
         for chamber in chambers:
