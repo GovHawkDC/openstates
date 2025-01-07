@@ -223,10 +223,11 @@ class Wisconsin(State):
     def get_session_list(self):
         user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
 
-        sessions = url_xpath(
-            "https://docs.legis.wisconsin.gov/search",
-            "//select[@name='sessionNumber']/option/text()",
-            verify=False,
-            user_agent=user_agent,
-        )
-        return [session.strip(" -") for session in sessions]
+        # sessions = url_xpath(
+        #     "https://docs.legis.wisconsin.gov/search",
+        #     "//select[@name='sessionNumber']/option/text()",
+        #     verify=False,
+        #     user_agent=user_agent,
+        # )
+        # return [session.strip(" -") for session in sessions]
+        return "2025"
