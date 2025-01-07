@@ -230,4 +230,4 @@ class Wisconsin(State):
         #     user_agent=user_agent,
         # )
         # return [session.strip(" -") for session in sessions]
-        return ["2025"]
+        return ["2025 Regular Session"]
