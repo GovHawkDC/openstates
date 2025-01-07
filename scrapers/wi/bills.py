@@ -45,6 +45,7 @@ class WIBillScraper(Scraper):
         # that we use to scrape the data
 
         while last_url != next_url:
+            print(f"scrape_subjects {next_url}")
             html = self.session.get(next_url, verify=False).text
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(next_url)
@@ -118,6 +119,7 @@ class WIBillScraper(Scraper):
             bill_type = "bill"
 
         try:
+            print(f"scape_bill_list {url}")
             data = self.session.get(url, verify=False).text
         except scrapelib.HTTPError:
             self.warning("skipping URL %s" % url)
@@ -150,6 +152,7 @@ class WIBillScraper(Scraper):
 
     def scrape_bill_history(self, bill, url, chamber):
         seen_votes = set()
+        print(f"scrape_bill_history {url}")
         body = self.session.get(url).text
         doc = lxml.html.fromstring(body)
         doc.make_links_absolute(url)
@@ -193,6 +196,7 @@ class WIBillScraper(Scraper):
                 "Record of Committee Proceedings",
             ):
                 extra_doc_url = a.get("href")
+                print(f"extra_doc_url {extra_doc_url}")
                 extra_doc = lxml.html.fromstring(self.session.get(extra_doc_url).text)
                 extra_doc.make_links_absolute(extra_doc_url)
                 for extra_a in extra_doc.xpath('//ul[@class="docLinks"]/li//a'):
@@ -355,6 +359,7 @@ class WIBillScraper(Scraper):
 
     def add_senate_votes(self, vote, url):
         try:
+            print(f"add_senate_votes {url}")
             html = self.session.get(url).text
         except scrapelib.HTTPError:
             self.warning("No Senate Votes found for %s" % url)
@@ -395,6 +400,7 @@ class WIBillScraper(Scraper):
 
     def add_house_votes(self, vote, url):
         try:
+            print(f"add_house_votes {url}")
             html = self.session.get(url).content
         except scrapelib.HTTPError:
             self.warning("No House Votes found for %s" % url)
