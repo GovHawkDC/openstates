@@ -388,7 +388,8 @@ class WIBillScraper(Scraper):
                 vote.vote(vote_type, name.strip())
 
         for vote_type in vote_types:
-            vote.set_count(vote_type, vote_counts[vote_type])
+            if vote_type in vote_counts:
+                vote.set_count(vote_type, vote_counts[vote_type])
 
         if name_counts != vote_counts:
             raise ValueError("Vote Count and number of Names don't match")
