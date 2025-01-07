@@ -45,6 +45,7 @@ class WIBillScraper(Scraper):
         # that we use to scrape the data
 
         while last_url != next_url:
+            print(next_url)
             html = self.session.get(next_url, verify=False).text
             print(html)
             doc = lxml.html.fromstring(html)
