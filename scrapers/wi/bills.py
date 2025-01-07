@@ -260,7 +260,7 @@ class WIBillScraper(Scraper):
                 if "committee" in action.lower():
                     vote_url = journal.xpath("a/@href")
                 if vote_url and vote_url[0] not in seen_votes:
-                    yield self.add_vote(bill, actor, date, action, vote_url[0])
+                    # yield self.add_vote(bill, actor, date, action, vote_url[0])
                     seen_votes.add(vote_url[0])
 
         bill.add_source(url)
@@ -346,10 +346,10 @@ class WIBillScraper(Scraper):
         if url:
             v.add_source(url)
 
-            if "av" in url:
-                self.add_house_votes(v, url)
-            elif "sv" in url:
-                self.add_senate_votes(v, url)
+            # if "av" in url:
+            #     self.add_house_votes(v, url)
+            # elif "sv" in url:
+            #     self.add_senate_votes(v, url)
 
         return v
 
