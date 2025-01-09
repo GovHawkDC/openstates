@@ -1,13 +1,11 @@
 import lxml
 
-HI_URL_BASE = "https://capitol.hawaii.gov"
-SHORT_CODES = "%s/legislature/committees.aspx?chamber=all" % (HI_URL_BASE)
+HI_URL_BASE = "https://data.capitol.hawaii.gov"
+SHORT_CODES = f"{HI_URL_BASE}/legislature/committees.aspx?chamber=all"
 
 
-def get_short_codes(scraper, session):
-    params = {"premium_proxy": "true", "proxy_country": "us"}
-    scraper.info(f"Fetching short code dictionary {SHORT_CODES}")
-    list_html = session.get(SHORT_CODES, params=params, verify=False).text
+def get_short_codes(scraper):
+    list_html = scraper.get(SHORT_CODES, verify=False).text
     list_page = lxml.html.fromstring(list_html)
     rows = list_page.xpath("//*[@id='MainContent_GridView1']//tr")
     scraper.short_ids = {"CONF": {"chamber": "joint", "name": "Conference Committee"}}
@@ -27,3 +25,10 @@ def get_short_codes(scraper, session):
         else:
             chamber = "joint"
         scraper.short_ids[short_id] = {"chamber": chamber, "name": ctty_name}
+
+
+def make_data_url(url: str) -> str:
+    if "www" in url:
+        return url.replace("www.", "data.")
+    else:
+        return url.replace("capitol.", "data.capitol.")

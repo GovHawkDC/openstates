@@ -3,24 +3,16 @@ import lxml.html
 import re
 from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer, find_committee
-from .utils import get_short_codes
+from .utils import get_short_codes, make_data_url
 from urllib import parse as urlparse
 import dateutil
-import os
 import pytz
-from zenrows import ZenRowsClient
-from openstates.exceptions import EmptyScrape
 
-# HI currently has cloudflare turned up,
-# so all normal requests fail.
-# We're currently using zenrows.com as a paid proxy.
-
-# TODO: can we use
-# https://www.capitol.hawaii.gov/sessions/session2024/rss/
-# to find bills that have changed since start_date?
-
-HI_URL_BASE = "https://capitol.hawaii.gov"
-SHORT_CODES = "%s/legislature/committees.aspx?chamber=all" % (HI_URL_BASE)
+HI_URL_BASE = "https://www.capitol.hawaii.gov"
+SHORT_CODES = f"{HI_URL_BASE}/legislature/committees.aspx?chamber=all"
+# Set this flag to true to run scrape for just one bill
+TEST_SINGLE_BILL = False
+TEST_SINGLE_BILL_NUMBER = "572"  # set to bill num you want to test
 repeated_action = ["Excused: none", "Representative(s) Eli"]
 
 
@@ -33,7 +25,6 @@ def create_bill_report_url(chamber, year, bill_type):
         "gm": "gm",
     }
 
-    # &active=true ?
     return (
         HI_URL_BASE
         + "/advreports/advreport.aspx?report=deadline&rpt_type=&measuretype="
@@ -57,10 +48,6 @@ def split_specific_votes(voters):
 class HIBillScraper(Scraper):
     categorizer = Categorizer()
     bill_types = ["HB", "HR", "HCR", "SB", "SR", "SCR", "GM"]
-
-    scraper = None
-    request_params = {"premium_proxy": "true", "proxy_country": "us"}
-
     tz = pytz.timezone("US/Hawaii")
 
     def parse_bill_metainf_table(self, metainf_table):
@@ -70,7 +57,7 @@ class HIBillScraper(Scraper):
         interceptors = {"Introducer(s)": _sponsor_interceptor}
 
         ret = {}
-        for tr in metainf_table:
+        for tr in metainf_table.cssselect("tr"):
             row = tr.xpath("td")
             key = row[0].text_content().strip()
             value = row[1].text_content().strip()
@@ -96,14 +83,16 @@ class HIBillScraper(Scraper):
         # vote types that have been reconsidered since last vote of that type
         reconsiderations = set()
 
-        if len(action_table.xpath("*")) < 2:
-            return
+        for index, action_row in enumerate(action_table.cssselect("tr")[1:]):
+            cells = action_row.cssselect("td")
+            date_cell = cells[0]
+            actor_cell = cells[1]
+            desc_cell = cells[2]
 
-        for action in list(reversed(action_table.xpath("*")[1:])):
-            date = action[0].text_content()
+            date = date_cell.text_content()
             date = dt.datetime.strptime(date, "%m/%d/%Y").strftime("%Y-%m-%d")
-            actor_code = action[1].text_content().upper()
-            string = action[2].text_content()
+            actor_code = actor_cell.text_content().upper()
+            string = desc_cell.text_content()
             actor = self._vote_type_map[actor_code]
             committees = find_committee(string)
 
@@ -151,9 +140,12 @@ class HIBillScraper(Scraper):
                 )
                 reconsiderations.discard(actor)
                 vote.add_source(url)
-                vote.set_count("yes", int(v["n_yes"] or 0))
-                vote.set_count("no", int(v["n_no"] or 0))
+                yays = v["n_yes"]
+                nays = v["n_no"]
+                vote.set_count("yes", int(yays or 0))
+                vote.set_count("no", int(nays or 0))
                 vote.set_count("not voting", int(v["n_excused"] or 0))
+                vote.dedupe_key = f"{index}#{bill_id}#{date}#{string[:300]}"
                 for voter in split_specific_votes(v["yes"]):
                     voter = self.clean_voter_name(voter)
                     vote.yes(voter)
@@ -177,9 +169,26 @@ class HIBillScraper(Scraper):
             name = name[:-1]
         return name.strip()
 
-    def parse_bill_versions_table(self, bill, versions):
-        if not versions:
-            self.logger.warning("No version table for {}".format(bill.identifier))
+    def parse_bill_versions_table(self, bill, bill_page):
+        no_versions_warnings = bill_page.xpath(
+            "//*[contains(@id, 'MainContent_UpdatePanel2')]"
+            "//span[contains(text(),'You may search in our Document Directories')]"
+        )
+        if len(no_versions_warnings) == 1:
+            # Text on the page indicates there are no versions for this bill, which happens once in a while
+            self.logger.info(
+                "No bill versions posted yet for {}".format(bill.identifier)
+            )
+            return
+        else:
+            versions = bill_page.xpath(
+                "//*[contains(@id, 'MainContent_UpdatePanel2')]//a/img/../.."
+            )
+            if len(versions) == 0:
+                self.logger.warning(
+                    "Failed to select bill versions for {}".format(bill.identifier)
+                )
+                return
 
         for version in versions:
             td = version.xpath("./a")[0]
@@ -199,11 +208,13 @@ class HIBillScraper(Scraper):
                 # some bills (and GMs) swap the order or double-link to the same format
                 # so detect the type, and ignore dupes
                 bill.add_version_link(
-                    name, http_link, media_type=self.classify_media(http_link)
+                    name,
+                    make_data_url(http_link),
+                    media_type=self.classify_media(http_link),
                 )
                 bill.add_version_link(
                     name,
-                    pdf_link,
+                    make_data_url(pdf_link),
                     media_type=self.classify_media(pdf_link),
                     on_duplicate="ignore",
                 )
@@ -221,7 +232,8 @@ class HIBillScraper(Scraper):
         return media_type
 
     def parse_testimony(self, bill, page):
-        links = page.xpath("//a[contains(@id, 'RepeaterTestimony_PdfLink')]")
+        links = page.xpath("//table[contains(@id, 'GridViewTestimony')]/tr/td/a")
+
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
 
@@ -239,7 +251,7 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def parse_cmte_reports(self, bill, page):
-        links = page.xpath("//a[contains(@id, 'RepeaterCommRpt_PdfLink')]")
+        links = page.xpath("//table[contains(@id, 'GridViewCommRpt')]/tr/td/a")
         # sometimes they have a second link w/ an icon for the pdf, sometimes now
         last_item = ""
 
@@ -257,23 +269,19 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def scrape_bill(self, session, chamber, bill_type, url):
-        self.info(f"GET {url}")
-        bill_html = self.scraper.get(url, params=self.request_params, verify=False).text
+        bill_html = self.get(make_data_url(url), verify=False).text
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
         qs = dict(urlparse.parse_qsl(urlparse.urlparse(url).query))
         bill_id = "{}{}".format(qs["billtype"], qs["billnumber"])
-        versions = bill_page.xpath(
-            "//*[@id='MainContent_UpdatePanel2']/div/div/div"
-        )
 
         try:
             metainf_table = bill_page.xpath(
                 '//div[contains(@id, "itemPlaceholder")]//table[1]'
             )[0]
         except IndexError:
-            self.error(bill_html)
+            self.error(f"Missing Metainf table on {url}")
             return
 
         action_table = bill_page.xpath(
@@ -347,11 +355,14 @@ class HIBillScraper(Scraper):
         if "gm" in bill_id.lower():
             b.add_sponsorship("governor", "primary", "person", True)
 
-        self.parse_bill_versions_table(b, versions)
+        self.parse_bill_versions_table(b, bill_page)
         self.parse_testimony(b, bill_page)
         self.parse_cmte_reports(b, bill_page)
 
-        if bill_page.xpath("//input[@id='MainContent_ImageButtonPDF']"):
+        if (
+            bill_page.xpath("//input[@id='MainContent_ImageButtonPDF']")
+            and len(b.versions) == 0
+        ):
             self.parse_bill_header_versions(b, bill_id, session, bill_page)
 
         current_referral = meta["Current Referral"].strip()
@@ -370,10 +381,10 @@ class HIBillScraper(Scraper):
 
     # sometimes they link to a version that's only in the header,
     # and works via a form submit, so hardcode it here
+    # jessemortenson: not sure that this condition still occurs
+    #                 couldn't find evidence of it in late 2024 session
     def parse_bill_header_versions(self, bill, bill_id, session, page):
-        pdf_link = (
-            f"https://capitol.hawaii.gov/session{session[0:4]}/bills/{bill_id}_.PDF"
-        )
+        pdf_link = f"https://capitol.hawaii.gov/session/session{session[0:4]}/bills/{bill_id}_.PDF"
         bill.add_version_link(
             bill_id,
             pdf_link,
@@ -408,90 +419,68 @@ class HIBillScraper(Scraper):
             "r": "resolution",
             "gm": "proclamation",
         }[billtype]
-        self.info(f"GET {report_page_url}")
-        list_html = self.scraper.get(
-            report_page_url, params=self.request_params, verify=False
-        ).text
 
-        self.debug(list_html)
-
+        list_html = self.get(make_data_url(report_page_url), verify=False).text
         list_page = lxml.html.fromstring(list_html)
-        for bill_url in list_page.xpath("//a[@class='report']")[::-1]:
+        for bill_url in list_page.xpath("//a[@class='report']"):
             bill_url = bill_url.attrib["href"].replace("www.", "")
             if not bill_url.startswith("http"):
                 bill_url = f"{HI_URL_BASE}{bill_url}"
-            yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
+            if (
+                TEST_SINGLE_BILL is False
+                or f"billnumber={TEST_SINGLE_BILL_NUMBER}" in bill_url
+            ):
+                yield from self.scrape_bill(session, chamber, billtype_map, bill_url)
 
-    def scrape(self, chamber=None, session=None):
-        
-        self.scraper = ZenRowsClient(os.environ.get("ZENROWS_API_KEY"))
-        get_short_codes(self, self.scraper)
-        bill_types = ["bill", "cr", "r"]
-        chambers = [chamber] if chamber else ["lower", "upper"]
+    def scrape(self, chamber=None, session=None, scrape_since=None):
+        get_short_codes(self)
 
-        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 2)
-        yield from self.scrape_xml(session, day)
-
-        # TODO: Turn this into an option somehow
-        # day = dt.datetime.now(self.tz).strftime("%-m/%-d/%Y")
-        # yield from self.scrape_daily(session, day)
-        # for chamber in chambers:
-        #     # only scrape GMs once
-        #     if chamber == "upper":
-        #         bill_types.append("gm")
-        #     for typ in bill_types:
-        #         yield from self.scrape_type(chamber, session, typ)
+        if scrape_since is None:
+            bill_types = ["bill", "cr", "r"]
+            chambers = [chamber] if chamber else ["lower", "upper"]
+            for chamber in chambers:
+                # only scrape GMs once
+                if chamber == "upper":
+                    bill_types.append("gm")
+                for typ in bill_types:
+                    yield from self.scrape_type(chamber, session, typ)
+        else:
+            day = dt.datetime.now(self.tz).date() - dt.timedelta(days=int(scrape_since))
+            yield from self.scrape_xml(session, day)
 
     def scrape_xml(self, session, day):
-        bill_ct = 0
-        url = "https://www.capitol.hawaii.gov/sessions/session2025/rss/"
+        url = "https://www.capitol.hawaii.gov/sessions/session2024/rss/"
         self.info(f"fetching url {url}")
-        page = self.scraper.get(url, params=self.request_params, verify=False).text
+        page = self.get(make_data_url(url), verify=False).text
         # this content isn't amenable to lxml, but it's machine generated so regex should be ok
         bill_re = r"(?P<date>\d+\/\d+\/\d+)\s+(?P<time>.*?)\s+\d+\s\<a href=\"(?P<url>.*?)\">(?P<filename>.*?)\.xml<\/a>"
         for match in re.finditer(bill_re, page, flags=re.IGNORECASE):
-            posted = dateutil.parser.parse(f"{match.group('date')} {match.group('time')}")
+            posted = dateutil.parser.parse(
+                f"{match.group('date')} {match.group('time')}"
+            )
             posted = self.tz.localize(posted)
             posted = posted.date()
-
-            if 'Daily' in match.group("filename"):
-                self.info(
-                    f"Skipping {match.group('filename')} posted on {posted.strftime('%Y-%m-%d')}"
-                )
+            try:
+                bill_type, bill_num = self.parse_bill_number(match.group("filename"))
+            except TypeError:
+                self.error(f"Skipping {match.group('filename')}")
                 continue
-            bill_type, bill_num = self.parse_bill_number(match.group('filename'))
-
             if posted >= day and bill_type in self.bill_types:
-                bill_ct += 1
-                self.info(f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
-                chamber, classification = self.classify_bill_type(match.group('filename'))
+                self.info(
+                    f"Scraping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}"
+                )
+                chamber, classification = self.classify_bill_type(
+                    match.group("filename")
+                )
 
                 # https://www.capitol.hawaii.gov/session/measure_indiv.aspx?billtype=SB&billnumber=3013
                 bill_url = f"https://www.capitol.hawaii.gov/session/measure_indiv.aspx?billtype={bill_type}&billnumber={bill_num}"
 
                 yield from self.scrape_bill(session, chamber, classification, bill_url)
             else:
-                self.info(f"Skipping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}")
-
-        if bill_ct == 0:
-            raise EmptyScrape
-
-    def scrape_daily(self, session, day):
-        url = f"https://www.capitol.hawaii.gov/reports/reportDailyDocs.aspx?date={day}&bills=true&resos=True&other=true"
-        
-        self.info(f"fetching url {url}")
-        page = self.scraper.get(url, params=self.request_params, verify=False).content
-        page = lxml.html.fromstring(page)
-        page.make_links_absolute(url)
-
-        if not page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]"):
-            raise EmptyScrape
-
-        for bill_link in page.xpath("//a[contains(@id, 'ReportGridView_HyperLinkStatus')]")[::-1]:
-            bill_num = bill_link.xpath("text()")[0]
-            bill_url = bill_link.xpath("@href")[0]
-            chamber, billtype = self.classify_bill_type(bill_num)
-            yield from self.scrape_bill(session, chamber, billtype, bill_url)
+                self.info(
+                    f"Skipping {bill_type}{bill_num} posted on {posted.strftime('%Y-%m-%d')}"
+                )
 
     def session_from_scraped_name(self, scraped_name):
         # find the session from __init__.py matching scraped_name
@@ -503,17 +492,14 @@ class HIBillScraper(Scraper):
         return details["name"]
 
     def classify_bill_type(self, bill: str) -> tuple:
-        chamber = "upper"
-        billtype = "bill"
-
         billtypes = {
-            'HB' : ("lower", "bill"),
-            'HR' : ("lower", "resolution"),
-            'HCR' : ("lower", "concurrent resolution"),
-            'SB' : ("upper", "bill"),
-            'SR' : ("upper", "resolution"),
-            'SCR' : ("upper", "concurrent resolution"),
-            'GM' : ("upper", "proclamation")
+            "HB": ("lower", "bill"),
+            "HR": ("lower", "resolution"),
+            "HCR": ("lower", "concurrent resolution"),
+            "SB": ("upper", "bill"),
+            "SR": ("upper", "resolution"),
+            "SCR": ("upper", "concurrent resolution"),
+            "GM": ("upper", "proclamation"),
         }
 
         for key, val in billtypes.items():
@@ -523,9 +509,6 @@ class HIBillScraper(Scraper):
         self.error(f"Invalid bill type: {bill}")
 
     def parse_bill_number(self, bill: str) -> tuple:
-        # match bill ids with any number of spaces, but avoid matching on AM/PM\s*Filesize
-        match = re.search(r"(?P<type>[DGHJMS][A-Z]+)\s*(?P<number>\d+)", bill)
-        if not match:
-            self.error(f"Unable to parse bill number from {bill}")
-
-        return (match.group("type"), match.group("number"))
+        match = re.search(r"(?P<type>[A-Z]+)(?P<number>\d+)", bill)
+        if match:
+            return (match.group("type"), match.group("number"))

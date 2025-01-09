@@ -1,32 +1,26 @@
 import datetime as dt
 from openstates.scrape import Scraper, Event
 from openstates.exceptions import EmptyScrape
-from .utils import get_short_codes
+from .utils import get_short_codes, make_data_url
 from requests import HTTPError
 import pytz
 import lxml
-import os
-from zenrows import ZenRowsClient
 
-
-URL = "https://capitol.hawaii.gov/upcominghearings.aspx"
+URL = "https://www.capitol.hawaii.gov/upcominghearings.aspx"
 
 TIMEZONE = pytz.timezone("Pacific/Honolulu")
-scraper = None
 
 
 class HIEventScraper(Scraper):
     seen_hearings = []
     chambers = {"lower": "House", "upper": "Senate", "joint": "Joint"}
 
-    request_params = {"premium_proxy": "true", "proxy_country": "us"}
-
     def get_related_bills(self, href):
         ret = []
         try:
-            self.info(f"GET {href}")
+            self.info(f"GET {make_data_url(href)}")
             page = lxml.html.fromstring(
-                self.scraper.get(href, params=self.request_params).content
+                self.get(make_data_url(href), verify=False).content
             )
         except HTTPError:
             return ret
@@ -52,18 +46,16 @@ class HIEventScraper(Scraper):
         return ret
 
     def scrape(self):
-        self.scraper = ZenRowsClient(os.environ.get("ZENROWS_API_KEY"))
 
-        get_short_codes(self, self.scraper)
-
-        self.info(f"GET {URL}")
-        page = self.scraper.get(URL, params=self.request_params).content
+        get_short_codes(self)
+        self.info(f"GET {make_data_url(URL)}")
+        page = self.get(make_data_url(URL), verify=False).content
         page = lxml.html.fromstring(page)
 
         if page.xpath("//td[contains(string(.),'No Hearings')]"):
             raise EmptyScrape
 
-        table = page.xpath("//table[@id='MainContent_GridView1']")[0]
+        table = page.xpath("//table[@id='ctl00_MainContent_GridView1']")[0]
 
         events = set()
         for event in table.xpath(".//tr")[1:]:
