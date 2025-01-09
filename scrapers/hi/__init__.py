@@ -112,7 +112,7 @@ class Hawaii(State):
             "_scraped_name": "2025",
             "identifier": "2025",
             "name": "2025 Regular Session",
-            "start_date": "2025-01-17",
+            "start_date": "2025-01-15",
             "end_date": "2025-05-02",
             "active": True,
         },

@@ -429,7 +429,7 @@ class HIBillScraper(Scraper):
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
 
-        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 14)
+        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 2)
         yield from self.scrape_xml(session, day)
 
         # TODO: Turn this into an option somehow
