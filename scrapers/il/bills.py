@@ -18,7 +18,7 @@ session_details = {
     # TODO: move this to session metadata
     "104th": {
         "speaker": "",
-        "president": "", 
+        "president": "",
         "params": {"GA": "104", "SessionId": "114"},
     },
     "103rd": {
