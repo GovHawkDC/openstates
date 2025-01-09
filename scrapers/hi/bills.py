@@ -428,7 +428,8 @@ class HIBillScraper(Scraper):
         get_short_codes(self, self.scraper)
         bill_types = ["bill", "cr", "r"]
         chambers = [chamber] if chamber else ["lower", "upper"]
-        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 1)
+
+        day = dt.datetime.now(self.tz).date() - dt.timedelta(days = 14)
         yield from self.scrape_xml(session, day)
 
         # TODO: Turn this into an option somehow
@@ -443,7 +444,7 @@ class HIBillScraper(Scraper):
 
     def scrape_xml(self, session, day):
         bill_ct = 0
-        url = "https://www.capitol.hawaii.gov/sessions/session2024/rss/"
+        url = "https://www.capitol.hawaii.gov/sessions/session2025/rss/"
         self.info(f"fetching url {url}")
         page = self.scraper.get(url, params=self.request_params, verify=False).text
         # this content isn't amenable to lxml, but it's machine generated so regex should be ok
