@@ -74,6 +74,7 @@ class PRBillScraper(Scraper):
     def scrape(self, session=None, chamber=None, page=None):
         self.seen_votes = set()
         self.seen_bills = set()
+        self.seen_bill_identifiers = set()
         chambers = [chamber] if chamber is not None else ["upper", "lower"]
         for chamber in chambers:
             yield from self.scrape_search_results(
@@ -332,14 +333,32 @@ class PRBillScraper(Scraper):
         }
         html = self.s.get(url, headers=headers, verify=False).text
         page = lxml.html.fromstring(html)
-        # search for Titulo, accent over i messes up lxml, so use 'tulo'
-        title = page.xpath('//main//div[contains(@class, "items-center")]/h1/text()')[
-            0
-        ].strip()
-        if title:
-            bill_id = re.findall(r"[A-Z]{2}\d{4}", title)[0]
+
+        page_header_elems = page.xpath(
+            '//main//div[contains(@class, "items-center")]/h1/text()'
+        )
+        if len(page_header_elems) > 0:
+            page_header_text = page_header_elems[0].strip()
+            bill_id = re.findall(r"[A-Z]{2}\d{4}", page_header_text)[0]
         else:
-            bill_id = ""
+            self.logger.error(f"Bill found with no bill identifier at {url}")
+
+        bill_title_elems = page.xpath(
+            '//span/strong[text()="Título:"]/../following-sibling::span'
+        )
+        if len(bill_title_elems) > 0:
+            title = bill_title_elems[0].text_content().strip()
+        else:
+            self.logger.error(f"Bill found with no title at {url}")
+
+        # PR occasionally repeats a bill at different URLs (????)
+        # example:
+        # PC0205 https://sutra.oslpr.org/medidas/152982
+        # PC0205 https://sutra.oslpr.org/medidas/152909
+        if bill_id in self.seen_bill_identifiers:
+            return
+        else:
+            self.seen_bill_identifiers.add(bill_id)
 
         bill_type = self.classify_bill_type(bill_id)
 
