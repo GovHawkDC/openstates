@@ -493,11 +493,15 @@ class MTBillScraper(Scraper):
                 if str(row["billStatusId"]) in self.actions_by_id:
                     bill_action = self.actions_by_id[str(row["billStatusId"])]
                 else:
-                    self.warning(f"Unable to find bill action {str(row["billStatusId"])}")
+                    self.warning(
+                        f"Unable to find bill action {str(row['billStatusId'])}"
+                    )
                     bill_action = None
                 when = dateutil.parser.parse(row["voteTime"])
             else:
-                self.error(f"Found MT vote with neither an action nor a meeting. {vote_url}")
+                self.error(
+                    f"Found MT vote with neither an action nor a meeting. {vote_url}"
+                )
                 continue
 
             when = self.tz.localize(when)
