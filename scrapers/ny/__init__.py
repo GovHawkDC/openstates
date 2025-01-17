@@ -1,7 +1,9 @@
-from utils import url_xpath
 from openstates.scrape import State
 from .bills import NYBillScraper
 from .events import NYEventScraper
+
+import lxml
+import requests
 
 
 settings = dict(SCRAPELIB_TIMEOUT=120)
@@ -83,8 +85,20 @@ class NewYork(State):
     ignored_scraped_sessions = []
 
     def get_session_list(self):
-        return url_xpath(
-            "https://nysenate.gov/search/legislation",
-            '//select[@name="session_year"]/option[@value!="0"]/@value',
-            verify=False
-        )
+        # return self.get(
+        #     "https://nysenate.gov/search/legislation",
+        #     '',
+        #     verify=False
+        # )
+    
+        ua = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        headers = {"User-Agent": ua}
+
+        url = "https://nysenate.gov/search/legislation"
+
+        page = requests.get(url, headers=headers, verify=False).content
+        page = lxml.html.fromstring(page)
+
+        sessions = page.xpath('//select[@name="session_year"]/option[@value!="0"]/@value')
+        return sessions
+
