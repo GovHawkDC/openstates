@@ -473,11 +473,11 @@ class MTBillScraper(Scraper):
                 # validation doesn't allow hybrid votes eg YES_EXCUSED
                 # so translate these to YES and NO
                 if v[vote_type_key] == "YES_EXCUSED":
-                    counts["YES"] += 1
+                    vote_type_key = "YES"
                 elif v[vote_type_key] == "NO_EXCUSED":
-                    counts["NO"] += 1
-                else:
-                    counts[v[vote_type_key]] += 1
+                    vote_type_key = "NO"
+                
+                counts[v[vote_type_key]] += 1
 
             passed = counts["YES"] > counts["NO"]
 
