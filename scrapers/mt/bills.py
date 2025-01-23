@@ -473,16 +473,11 @@ class MTBillScraper(Scraper):
                 # validation doesn't allow hybrid votes eg YES_EXCUSED
                 # so translate these to YES and NO
                 if v[vote_type_key] == "YES_EXCUSED":
-                    vote_type_key = "YES"
+                    counts["YES"] += 1
                 elif v[vote_type_key] == "NO_EXCUSED":
-                    vote_type_key = "NO"
-
-                if vote_type_key not in v:
-                    self.error(f"v missing {vote_type_key}")
-                    continue
-
-                counts[v[vote_type_key]] += 1
-
+                    counts["NO"] += 1
+                else:
+                    counts[v[vote_type_key]] += 1
 
             passed = counts["YES"] > counts["NO"]
 
@@ -548,9 +543,9 @@ class MTBillScraper(Scraper):
                 voter = self.legislators_by_id[str(leg_id)]
                 vote_type_key = "voteType" if "voteType" in v else "committeeVote"
 
-                if v[vote_type_key] == "YES":
+                if "YES" in v[vote_type_key]:
                     vote.yes(voter)
-                elif v[vote_type_key] == "NO":
+                elif "NO" in v[vote_type_key]:
                     vote.no(voter)
                 elif v[vote_type_key] == "ABSENT":
                     vote.vote("absent", voter)
@@ -562,6 +557,6 @@ class MTBillScraper(Scraper):
                     vote.no(voter)
                 else:
                     self.error("Missing vote_type_key coding for {vote_type_key}")
-
+                    raise NotImplementedError
 
             yield vote
