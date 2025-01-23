@@ -476,8 +476,13 @@ class MTBillScraper(Scraper):
                     vote_type_key = "YES"
                 elif v[vote_type_key] == "NO_EXCUSED":
                     vote_type_key = "NO"
-                
+
+                if vote_type_key not in v:
+                    self.error(f"v missing {vote_type_key}")
+                    continue
+
                 counts[v[vote_type_key]] += 1
+
 
             passed = counts["YES"] > counts["NO"]
 
@@ -551,8 +556,12 @@ class MTBillScraper(Scraper):
                     vote.vote("absent", voter)
                 elif v[vote_type_key] == "EXCUSED":
                     vote.vote("excused", voter)
+                elif v[vote_type_key] == "YES_EXCUSED":
+                    vote.yes(voter)
+                elif v[vote_type_key] == "NO_EXCUSED":
+                    vote.no(voter)
                 else:
-                    self.error(v)
-                    raise NotImplementedError
+                    self.error("Missing vote_type_key coding for {vote_type_key}")
+
 
             yield vote
