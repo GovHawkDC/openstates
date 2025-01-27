@@ -425,7 +425,7 @@ class HIBillScraper(Scraper):
             "gm": "proclamation",
         }[billtype]
 
-        list_html = self.get(make_data_url(report_page_url), verify=False, timeout=900).text
+        list_html = self.get(make_data_url(report_page_url), verify=False, timeout=1200).text
         list_page = lxml.html.fromstring(list_html)
         for bill_url in list_page.xpath("//a[@class='report']"):
             bill_url = bill_url.attrib["href"].replace("www.", "")
