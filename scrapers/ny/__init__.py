@@ -97,8 +97,6 @@ class NewYork(State):
         url = "https://nysenate.gov/search/legislation"
 
         page = requests.get(url, headers=headers, verify=False).content
-
-        print(page)
         page = lxml.html.fromstring(page)
 
         sessions = page.xpath('//select[@name="session_year"]/option[@value!="0"]/@value')
