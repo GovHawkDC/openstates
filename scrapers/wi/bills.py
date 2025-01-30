@@ -1,7 +1,6 @@
 import re
 import pytz
 import datetime
-import requests
 from collections import defaultdict
 
 import lxml.html
@@ -26,11 +25,6 @@ TIMEZONE = pytz.timezone("US/Central")
 class WIBillScraper(Scraper):
     subjects = defaultdict(list)
     categorizer = Categorizer()
-    session = requests.Session()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-
 
     def scrape_subjects(self, year, site_id):
         last_url = None
@@ -45,15 +39,13 @@ class WIBillScraper(Scraper):
         # that we use to scrape the data
 
         while last_url != next_url:
-            print(f"scrape_subjects {next_url}")
-            html = self.session.get(next_url, verify=False).text
+            html = self.get(next_url, verify=False).text
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(next_url)
 
             last_url = next_url
             # get the 'Down' url
-            if doc.xpath('//a[text()="Down"]/@href'):
-                next_url = doc.xpath('//a[text()="Down"]/@href')[0]
+            next_url = doc.xpath('//a[text()="Down"]/@href')[0]
 
             # slug is upper case in links for special sessions
             if site_id != "reg":
@@ -82,8 +74,6 @@ class WIBillScraper(Scraper):
                 last_subject = last_subject_div[0]
 
     def scrape(self, chamber=None, session=None):
-        self.session.headers.update(self.headers)
-
         chambers = [chamber] if chamber is not None else ["upper", "lower"]
 
         for chamber in chambers:
@@ -119,8 +109,7 @@ class WIBillScraper(Scraper):
             bill_type = "bill"
 
         try:
-            print(f"scape_bill_list {url}")
-            data = self.session.get(url, verify=False).text
+            data = self.get(url, verify=False).text
         except scrapelib.HTTPError:
             self.warning("skipping URL %s" % url)
             return
@@ -152,8 +141,8 @@ class WIBillScraper(Scraper):
 
     def scrape_bill_history(self, bill, url, chamber):
         seen_votes = set()
-        print(f"scrape_bill_history {url}")
-        body = self.session.get(url).text
+        body = self.get(url).text
+        print(body)
         doc = lxml.html.fromstring(body)
         doc.make_links_absolute(url)
 
@@ -196,8 +185,7 @@ class WIBillScraper(Scraper):
                 "Record of Committee Proceedings",
             ):
                 extra_doc_url = a.get("href")
-                print(f"extra_doc_url {extra_doc_url}")
-                extra_doc = lxml.html.fromstring(self.session.get(extra_doc_url).text)
+                extra_doc = lxml.html.fromstring(self.get(extra_doc_url).text)
                 extra_doc.make_links_absolute(extra_doc_url)
                 for extra_a in extra_doc.xpath('//ul[@class="docLinks"]/li//a'):
                     if extra_a.text:
@@ -264,7 +252,7 @@ class WIBillScraper(Scraper):
                 if "committee" in action.lower():
                     vote_url = journal.xpath("a/@href")
                 if vote_url and vote_url[0] not in seen_votes:
-                    # yield self.add_vote(bill, actor, date, action, vote_url[0])
+                    yield self.add_vote(bill, actor, date, action, vote_url[0])
                     seen_votes.add(vote_url[0])
 
         bill.add_source(url)
@@ -350,17 +338,16 @@ class WIBillScraper(Scraper):
         if url:
             v.add_source(url)
 
-            # if "av" in url:
-            #     self.add_house_votes(v, url)
-            # elif "sv" in url:
-            #     self.add_senate_votes(v, url)
+            if "av" in url:
+                self.add_house_votes(v, url)
+            elif "sv" in url:
+                self.add_senate_votes(v, url)
 
         return v
 
     def add_senate_votes(self, vote, url):
         try:
-            print(f"add_senate_votes {url}")
-            html = self.session.get(url).text
+            html = self.get(url).text
         except scrapelib.HTTPError:
             self.warning("No Senate Votes found for %s" % url)
             return
@@ -392,16 +379,14 @@ class WIBillScraper(Scraper):
                 vote.vote(vote_type, name.strip())
 
         for vote_type in vote_types:
-            if vote_type in vote_counts:
-                vote.set_count(vote_type, vote_counts[vote_type])
+            vote.set_count(vote_type, vote_counts[vote_type])
 
         if name_counts != vote_counts:
             raise ValueError("Vote Count and number of Names don't match")
 
     def add_house_votes(self, vote, url):
         try:
-            print(f"add_house_votes {url}")
-            html = self.session.get(url).content
+            html = self.get(url).content
         except scrapelib.HTTPError:
             self.warning("No House Votes found for %s" % url)
             return
