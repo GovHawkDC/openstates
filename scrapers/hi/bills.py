@@ -49,6 +49,7 @@ class HIBillScraper(Scraper):
     categorizer = Categorizer()
     bill_types = ["HB", "HR", "HCR", "SB", "SR", "SCR", "GM"]
     tz = pytz.timezone("US/Hawaii")
+    headers = {"User-Agent": "Openstates"}
 
     def parse_bill_metainf_table(self, metainf_table):
         def _sponsor_interceptor(line):
@@ -269,7 +270,7 @@ class HIBillScraper(Scraper):
             bill.add_document_link(name, filename, media_type=media_type)
 
     def scrape_bill(self, session, chamber, bill_type, url):
-        bill_html = self.get(make_data_url(url), verify=False).text
+        bill_html = self.get(make_data_url(url), headers=self.headers, verify=False).text
         bill_page = lxml.html.fromstring(bill_html)
         bill_page.make_links_absolute(url)
 
@@ -425,7 +426,7 @@ class HIBillScraper(Scraper):
             "gm": "proclamation",
         }[billtype]
 
-        list_html = self.get(make_data_url(report_page_url), verify=False, timeout=1200).text
+        list_html = self.get(make_data_url(report_page_url), headers=self.headers,verify=False).text
         list_page = lxml.html.fromstring(list_html)
         for bill_url in list_page.xpath("//a[@class='report']"):
             bill_url = bill_url.attrib["href"].replace("www.", "")
@@ -456,7 +457,7 @@ class HIBillScraper(Scraper):
     def scrape_xml(self, session, day):
         url = "https://www.capitol.hawaii.gov/sessions/session2024/rss/"
         self.info(f"fetching url {url}")
-        page = self.get(make_data_url(url), verify=False).text
+        page = self.get(make_data_url(url), headers=self.headers, verify=False).text
         # this content isn't amenable to lxml, but it's machine generated so regex should be ok
         bill_re = r"(?P<date>\d+\/\d+\/\d+)\s+(?P<time>.*?)\s+\d+\s\<a href=\"(?P<url>.*?)\">(?P<filename>.*?)\.xml<\/a>"
         for match in re.finditer(bill_re, page, flags=re.IGNORECASE):
