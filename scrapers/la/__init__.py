@@ -274,6 +274,15 @@ class Louisiana(State):
             "name": "2024 Regular Session",
             "start_date": "2024-03-11",
             "end_date": "2024-06-03",
+            "active": True,
+        },
+        {
+            "_scraped_name": "2025 Regular Session",
+            "classification": "primary",
+            "identifier": "2025",
+            "name": "2025 Regular Session",
+            "start_date": "2025-04-14",
+            "end_date": "2025-06-12",
             "active": False,
         },
     ]
