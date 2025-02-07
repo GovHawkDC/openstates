@@ -1,12 +1,14 @@
 from openstates.scrape import State
 from .bills import ALBillScraper
 from .events import ALEventScraper
+from .events_agency import ALAgencyEventScraper
 
 
 class Alabama(State):
     scrapers = {
         "bills": ALBillScraper,
         "events": ALEventScraper,
+        "agency_events": ALAgencyEventScraper,
     }
     legislative_sessions = [
         {
