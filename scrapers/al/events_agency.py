@@ -62,11 +62,12 @@ class ALAgencyEventScraper(Scraper):
             name=org,
             location_name=location,
             description=desc,
+            classification="agency_event",
         )
 
         event.add_source(url)
 
-        event.add_participant(org, "organization")
+        event.add_participant(org, "agency")
 
         yield event
 
