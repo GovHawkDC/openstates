@@ -4,12 +4,14 @@ import requests
 from openstates.scrape import State
 from .bills import AZBillScraper
 from .events import AZEventScraper
+from .events_agency import AZAgencyEventScraper
 
 
 class Arizona(State):
     scrapers = {
         "events": AZEventScraper,
         "bills": AZBillScraper,
+        "agency_events": AZAgencyEventScraper,
     }
     legislative_sessions = [
         {
