@@ -8,7 +8,7 @@ from openstates.scrape import Scraper, Event
 class ALAgencyEventScraper(Scraper):
     tz = pytz.timezone("US/Eastern")
 
-    def scrape(self, start_date=None, end_date=None):
+    def scrape(self):
         yield from self.scrape_page(0)
 
     def scrape_page(self, page_num: int, current_page: lxml.html.HtmlElement = None):
@@ -17,12 +17,6 @@ class ALAgencyEventScraper(Scraper):
             "__EVENTTARGET": f"dgrdTitles$_ctl29$_ctl{page_num}",
             "Agency_TextBox": "",
             "location_Filter_TextBox": "",
-            "From_Month_List": "2",
-            "From_Day_List": "7",
-            "From_Year_List": "2025",
-            "To_Month_List": "3",
-            "To_Day_List": "7",
-            "To_Year_List": "2025",
             "From_Hour_List": "12",
             "From_Minute_List": "00",
             "From_AM_PM_List": "AM",
@@ -78,19 +72,21 @@ class ALAgencyEventScraper(Scraper):
 
     def asp_post(self, url: str, data: dict, page=None):
         # if there's no page object to pull the ASP session vars from, GET one first
-        if not page:
+        if page is None:
             page = self.get(url)
             page = lxml.html.fromstring(page.content)
 
-        (viewstate,) = page.xpath('//input[@id="__VIEWSTATE"]/@value')
-        (viewstategenerator,) = page.xpath('//input[@id="__VIEWSTATEGENERATOR"]/@value')
-        (eventvalidation,) = page.xpath('//input[@id="__EVENTVALIDATION"]/@value')
-
         form = {
-            "__VIEWSTATE": viewstate,
-            "__VIEWSTATEGENERATOR": viewstategenerator,
-            "__EVENTVALIDATION": eventvalidation,
+            "__VIEWSTATE": self.get_field_value(page, "__VIEWSTATE"),
+            "__VIEWSTATEGENERATOR": self.get_field_value(page, "__VIEWSTATEGENERATOR"),
+            "__EVENTVALIDATION": self.get_field_value(page, "__EVENTVALIDATION"),
             "__EVENTARGUMENT": "",
+            "From_Month_List": self.get_field_value(page, "From_Month_List"),
+            "From_Day_List": self.get_field_value(page, "From_Day_List"),
+            "From_Year_List": self.get_field_value(page, "From_Year_List"),
+            "To_Month_List": self.get_field_value(page, "To_Month_List"),
+            "To_Day_List": self.get_field_value(page, "To_Day_List"),
+            "To_Year_List": self.get_field_value(page, "To_Year_List"),
         }
 
         data = {**form, **data}
@@ -98,3 +94,9 @@ class ALAgencyEventScraper(Scraper):
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
         return page
+
+    def get_field_value(self, page, field: str) -> str:
+        if page.xpath(f"//*[@id='{field}']/@value"):
+            return page.xpath(f"//*[@id='{field}']/@value")[0]
+        elif page.xpath(f"//select[@name='{field}']"):
+            return page.xpath(f"//select[@name='{field}']/option[@selected]/@value")[0]
