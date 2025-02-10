@@ -2,12 +2,14 @@ from utils import url_xpath
 from openstates.scrape import State
 from .bills import ARBillScraper
 from .events import AREventScraper
+from .events_agency import ARAgencyEventScraper
 
 
 class Arkansas(State):
     scrapers = {
         "bills": ARBillScraper,
         "events": AREventScraper,
+        "events_agency": ARAgencyEventScraper,
     }
     legislative_sessions = [
         {
