@@ -266,8 +266,8 @@ class UTBillScraper(Scraper, LXMLMixin):
                     # There seem to be XML and PDF files on Utah server
                     # the UT bill details page seems to have code to
                     # display the XML as HTML inline
-                        
-                    if not doc_data['url'].startswith("http"):
+
+                    if not doc_data["url"].startswith("http"):
                         doc_url = f"https://le.utah.gov{doc_data['url']}"
 
                     bill.add_version_link(
@@ -305,9 +305,9 @@ class UTBillScraper(Scraper, LXMLMixin):
                     actor = "lower"
                 elif "clerk of the senate" in action_data["owner"].lower():
                     actor = "upper"
-                elif action_data.startswith("Senate"):
+                elif action_data["owner"].startswith("Senate"):
                     actor = "upper"
-                elif action_data.startswith("House"):
+                elif action_data["owner"].startswith("House"):
                     actor = "lower"
                 else:
                     self.warning(
