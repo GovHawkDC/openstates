@@ -45,7 +45,7 @@ class WIBillScraper(Scraper):
 
             last_url = next_url
             # get the 'Down' url
-            if doc.xpath('//a[text()="Down"]/@href')
+            if doc.xpath('//a[text()="Down"]/@href'):
                 next_url = doc.xpath('//a[text()="Down"]/@href')[0]
             else:
                 break
