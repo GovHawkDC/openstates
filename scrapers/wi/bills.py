@@ -45,7 +45,10 @@ class WIBillScraper(Scraper):
 
             last_url = next_url
             # get the 'Down' url
-            next_url = doc.xpath('//a[text()="Down"]/@href')[0]
+            if doc.xpath('//a[text()="Down"]/@href')
+                next_url = doc.xpath('//a[text()="Down"]/@href')[0]
+            else:
+                break
 
             # slug is upper case in links for special sessions
             if site_id != "reg":
