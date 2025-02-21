@@ -29,8 +29,8 @@ class LXMLMixin(object):
         Returns:
             Element: Document node representing the page.
         """
-        if not verify:
-            verify = bool(os.environ.get("VERIFY_CERTS", True))
+        if verify is None:
+            verify = (os.getenv('VERIFY_CERTS', 'True').lower() == 'true')
 
         try:
             # This class is always mixed into subclasses of `Scraper`,
