@@ -3,8 +3,13 @@ import lxml.html
 import logging
 import os
 
-def url_xpath(url, path, verify=False, user_agent=None):
+
+def url_xpath(url, path, verify=None, user_agent=None):
     headers = {"user-agent": user_agent} if user_agent else None
+
+    if verify is None:
+        verify = os.getenv("VERIFY_CERTS", "True").lower() == "true"
+
     res = requests.get(url, verify=verify, headers=headers)
     try:
         doc = lxml.html.fromstring(res.text)
@@ -23,14 +28,14 @@ class LXMLMixin(object):
 
     def lxmlize(self, url, raise_exceptions=False, verify=None):
         """Parses document into an LXML object and makes links absolute.
-        
+
         Args:
             url (str): URL of the document to parse.
         Returns:
             Element: Document node representing the page.
         """
         if verify is None:
-            verify = (os.getenv('VERIFY_CERTS', 'True').lower() == 'true')
+            verify = os.getenv("VERIFY_CERTS", "True").lower() == "true"
 
         try:
             # This class is always mixed into subclasses of `Scraper`,
