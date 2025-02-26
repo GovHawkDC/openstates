@@ -34,6 +34,6 @@ ENV PYTHONPATH=./scrapers
 
 RUN set -ex \
     && pip install poetry \
-    && poetry install --extras "california"
+    && poetry install -no-root --extras "california"
 
 ENTRYPOINT ["poetry", "run", "os-update"]
