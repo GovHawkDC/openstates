@@ -544,7 +544,7 @@ class MTBillScraper(Scraper):
                     bill_action = None
                 when = dateutil.parser.parse(row["voteTime"])
             else:
-                self.error(
+                self.warning(
                     f"Found MT vote with neither an action nor a meeting. {vote_url}"
                 )
                 continue
