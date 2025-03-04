@@ -273,7 +273,6 @@ class Florida(State):
         "Apr",
         "Oct",
         "2019 I",
-# Empty, maybe informational session
         "2010",
         "2010A",
         "2010O",
