@@ -232,8 +232,7 @@ class Florida(State):
             "identifier": "2025A",
             "classification": "special",
             "start_date": "2025-01-27",
-            "end_date": "2025-12-31",
-# est
+            "end_date": "2025-12-31",  # est
             "active": True,
         },
         {
@@ -241,8 +240,7 @@ class Florida(State):
             "identifier": "2025B",
             "classification": "special",
             "start_date": "2025-01-27",
-            "end_date": "2025-12-31",
-# est
+            "end_date": "2025-12-31",  # est
             "active": True,
         },
         {
@@ -250,8 +248,7 @@ class Florida(State):
             "identifier": "2025C",
             "classification": "special",
             "start_date": "2025-02-11",
-            "end_date": "2025-12-31",
-# est
+            "end_date": "2025-12-31",  # est
             "active": True,
         },
     ]
@@ -259,20 +256,7 @@ class Florida(State):
         *(str(each) for each in range(1997, 2010)),
         # 2016 Org., 2017 Org., etc
         *(f"{str(each)} Org." for each in range(1997, 2050)),
-        "2026",
-        "Sep",
-        "Aug",
-        "Jan",
-        "Mar",
-        "Jun",
-        "Dec",
-        "May",
-        "Feb",
-        "Nov",
-        "Jul",
-        "Apr",
-        "Oct",
-        "2019 I",
+        "2019 I",  # Empty, maybe informational session
         "2010",
         "2010A",
         "2010O",
@@ -309,4 +293,6 @@ class Florida(State):
 
         requests.packages.urllib3.disable_warnings()
         requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ":HIGH:!DH:!aNULL"
-        return url_xpath("https://flsenate.gov", "//option/text()", False)
+        return url_xpath(
+            "https://flsenate.gov", "//select[@name='SessionYear']/option/text()", False
+        )
