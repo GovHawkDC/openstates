@@ -493,7 +493,9 @@ class MTBillScraper(Scraper):
             return
 
         for row in page:
-            motion = row["motion"]
+            # at least one example where this value is "null" in source
+            # https://api.legmt.gov/bills/v1/votes/findByBillId?billId=2308
+            motion = row["motion"] if row["motion"] else "Unknown"
 
             counts = {
                 "YES": 0,
@@ -543,6 +545,12 @@ class MTBillScraper(Scraper):
                     )
                     bill_action = None
                 when = dateutil.parser.parse(row["voteTime"])
+            elif "billStatus" in row and row["billStatus"] is None:
+                # Possibly when voting on a crossover bill?
+                # see the third entry on https://api.legmt.gov/bills/v1/votes/findByBillId?billId=559
+                bill_action = None
+                when = dateutil.parser.parse(row["dateTime"])
+                chamber = "lower" if row["systemId"]["chamber"] == "HOUSE" else "upper"
             else:
                 self.warning(
                     f"Found MT vote with neither an action nor a meeting. {vote_url}"
