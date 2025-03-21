@@ -302,6 +302,7 @@ class CAVoteDetail(Base):
             CAVoteSummary.vote_date_time == vote_date_time,
             CAVoteSummary.vote_date_seq == vote_date_seq,
             CAVoteSummary.motion_id == motion_id,
+            overlaps="bill,detail_votes"
         ),
         backref=backref("votes"),
         overlaps="bill,detail_votes",
