@@ -763,7 +763,7 @@ class HouseSearchPage(HtmlListPage):
             yield from self._process_or_skip_loop(items)
         except SelectorError:
             # Occasionally a bill will not appear in House search even though it should!
-            self.logger.warning(
+            self.logger.error(
                 f"Selector Error at source {self.source}, could not find bill in House Search"
             )
 
@@ -975,7 +975,7 @@ class FlBillScraper(Scraper):
 
                 # If it's a connection error, add a longer delay
                 if isinstance(e, (ConnectionError, RemoteDisconnected)):
-                    self.logger.warning(f"Connection error. Adding longer delay.")
+                    self.logger.warning("Connection error. Adding longer delay.")
                     add_random_delay(5, 15)
 
                     # Rotate user agent after connection error
