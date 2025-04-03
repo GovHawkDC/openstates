@@ -502,17 +502,23 @@ class MTBillScraper(Scraper):
                 "NO": 0,
                 "ABSENT": 0,
                 "EXCUSED": 0,
+                "ABSTAIN": 0,
             }
             for v in row["legislatorVotes"]:
                 vote_type_key = "voteType" if "voteType" in v else "committeeVote"
-                # validation doesn't allow hybrid votes eg YES_EXCUSED
+                # validation doesn't allow hybrid votes eg YES_EXCUSED, YES_BY_PROXY
                 # so translate these to YES and NO
                 if v[vote_type_key] in ("YES_EXCUSED", "YES_BY_PROXY", "YES_VOTE"):
                     counts["YES"] += 1
                 elif v[vote_type_key] in ("NO_EXCUSED", "NO_BY_PROXY", "NO_VOTE"):
                     counts["NO"] += 1
                 else:
-                    counts[v[vote_type_key]] += 1
+                    if v[vote_type_key] not in counts:
+                        self.warning(
+                            f"Unknown vote type {v[vote_type_key]} found at {vote_url}"
+                        )
+                    else:
+                        counts[v[vote_type_key]] += 1
 
             passed = counts["YES"] > counts["NO"]
 
@@ -592,8 +598,12 @@ class MTBillScraper(Scraper):
                     vote.vote("absent", voter)
                 elif v[vote_type_key] == "EXCUSED":
                     vote.vote("excused", voter)
+                elif v[vote_type_key] == "ABSTAINED":
+                    vote.vote("abstain", voter)
                 else:
-                    self.error(v)
-                    raise NotImplementedError
+                    self.warning(
+                        f"Could not match vote {vote_id} option for legislator vote: {v}"
+                    )
+                    vote.vote("other", voter)
 
             yield vote
