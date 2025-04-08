@@ -94,7 +94,6 @@ class WVEventScraper(Scraper, LXMLMixin):
             when = re.sub("time to be announced", "", when, flags=re.IGNORECASE)
             when = re.sub("TBA", "", when, flags=re.IGNORECASE)
 
-
         status = "tentative"
 
         if "cancelled" in when.lower():
@@ -130,7 +129,7 @@ class WVEventScraper(Scraper, LXMLMixin):
             classification="committee-meeting",
             # descriptions have a character limit
             description=desc,
-            status=status
+            status=status,
         )
 
         event.add_committee(com, note="host")
@@ -213,4 +212,6 @@ class WVEventScraper(Scraper, LXMLMixin):
         # ?Chart=agr&input=March%201,%202022
         if when == "March 1, 2022, PM":
             when = "March 1, 2022, 1:00 PM"
+
+        when = re.sub(r"\s+", " ", when)
         return when
