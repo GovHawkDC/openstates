@@ -78,7 +78,11 @@ class CAEventWebScraper(Scraper, LXMLMixin):
             hearing_time = (
                 hearing_time.replace(".", "").strip() if ".m." in hearing_time else ""
             )
-            hearing_location = time_content.split(" - ")[1]
+            time_content_parts = time_content.split(" - ")
+            if len(time_content_parts) > 1:
+                hearing_location = time_content_parts[1]
+            else:
+                hearing_location = time_content_parts[0]
             hearing_location = hearing_location.strip()
             when = (
                 " ".join([hearing_date, hearing_time])
@@ -193,13 +197,15 @@ class CAEventWebScraper(Scraper, LXMLMixin):
         elif measure_class:
             for measure in measure_class:
 
-                bill_id = (
+                bill_type = (
                     measure.xpath('.//span[@class="MeasureType"]/text()')[0]
-                    .replace("No", "")
                     .replace(".", "")
-                    .replace(" ", "")
                     .strip()
                 )
+                bill_number = measure.xpath('.//span[@class="MeasureNum"]/text()')[
+                    0
+                ].strip()
+                bill_id = f"{bill_type}{bill_number}"
                 note = measure.xpath('.//span[contains(@class, "Topic")]//text()')[
                     0
                 ].strip()
