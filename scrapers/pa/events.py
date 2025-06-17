@@ -7,6 +7,7 @@ from openstates.scrape import Scraper, Event
 from . import utils
 
 
+# FYI: as of 2025 this should be run with --http-resilience
 class PAEventScraper(Scraper):
     _tz = pytz.timezone("US/Eastern")
 
@@ -16,10 +17,8 @@ class PAEventScraper(Scraper):
             yield from self.scrape_chamber(chamber)
 
     def scrape_chamber(self, chamber):
-        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36"
-        headers = {"User-Agent": user_agent}
         url = utils.urls["events"][chamber]
-        page = self.get(url, headers=headers).text
+        page = self.get(url).text
         page = lxml.html.fromstring(page)
         page.make_links_absolute(url)
 
@@ -37,7 +36,11 @@ class PAEventScraper(Scraper):
             time_string = "".join(
                 div.xpath('.//i[contains(@class, "fa-clock")]/..//text()')
             ).strip()
-            if "Call of Chair" in time_string or "Off the Floor" in time_string:
+            if time_string in [
+                "Call of Chair",
+                "Off the Floor",
+                "At the Conclusion of Session",
+            ]:
                 time_string = ""
                 all_day = True
             time_string = time_string.replace("*", "").strip()
