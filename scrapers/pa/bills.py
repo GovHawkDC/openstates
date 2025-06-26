@@ -4,7 +4,8 @@ import pytz
 import urllib
 import datetime
 import collections
-
+import os
+import requests
 import lxml.html
 from openstates.scrape import Scraper, Bill, VoteEvent
 
@@ -17,6 +18,26 @@ tz = pytz.timezone("America/New_York")
 
 # FYI: as of 2025 this should be run with --http-resilience
 class PABillScraper(Scraper):
+    # headers = {
+    #     # "User-Agent": os.getenv("USER_AGENT", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"),
+    #     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+    # }
+    HEADERS = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'accept-language': 'en-US,en;q=0.9',
+        'cache-control': 'max-age=0',
+        'dnt': '1',
+        'priority': 'u=0, i',
+        'sec-ch-ua': '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Linux"',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'cross-site',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+    }    
     session_year: str = ""
 
     def scrape(self, chamber=None, session=None):
@@ -36,6 +57,7 @@ class PABillScraper(Scraper):
                 yield from self.scrape_session(chamber, session)
 
     def scrape_session(self, chamber, session, special=0):
+
         url = utils.bill_list_url(chamber, session, special)
         page = self.get_page(url)
 
@@ -293,10 +315,14 @@ class PABillScraper(Scraper):
                 raise Exception(msg)
 
     def get_page(self, url):
-        html = self.get(url).text
-        page = lxml.html.fromstring(html)
-        page.make_links_absolute(url)
-        return page
+        try:
+            html = requests.get(url, headers=self.HEADERS).text
+            page = lxml.html.fromstring(html)
+            page.make_links_absolute(url)
+            return page
+        except Exception as e:
+            self.error(html)
+            self.error(e)
 
     def parse_chamber_votes(self, bill, url):
         page = self.get_page(url)
