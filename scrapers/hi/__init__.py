@@ -134,12 +134,11 @@ class Hawaii(State):
     ]
 
     def get_session_list(self):
-        # response = requests.get(
-        #     "https://data.capitol.hawaii.gov/session/archives/main.aspx", verify=False
-        # ).content
-        # page = lxml.html.fromstring(response)
-        # # page doesn't include current session, we need to add it
-        # sessions = page.xpath("//*[@name='ctl00$MainContent$yearList']/option/text()")
-        # sessions.append("2024")
-        return [str(year) for year in range(2012, 2026)]
-        # return sessions
+        response = requests.get(
+            "https://data.capitol.hawaii.gov/session/archives/main.aspx", verify=False
+        ).content
+        page = lxml.html.fromstring(response)
+        # page doesn't include current session, we need to add it
+        sessions = page.xpath("//*[@name='ctl00$MainContent$yearList']/option/text()")
+        sessions.append("2024")
+        return sessions
