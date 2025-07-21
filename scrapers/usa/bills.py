@@ -71,6 +71,7 @@ class USBillScraper(Scraper):
         "Motion to Proceed Rejected": "fail",
         "Motion Rejected": "fail",
         "Motion to Refer Rejected": "fail",
+        "Motion to Recommit Rejected": "fail",
         "Bill Defeated": "fail",
         "Joint Resolution Passed": "pass",
         "Joint Resolution Defeated": "fail",
@@ -468,6 +469,9 @@ class USBillScraper(Scraper):
                         )
             except (requests.exceptions.HTTPError, lxml.etree.XMLSyntaxError):
                 # Not every bill has a rules committee page
+                return
+            except requests.exceptions.ProxyError:
+                self.warning(f"ProxyError exception was swallowed for {rules_url}")
                 return
 
     # CBO cost estimates
