@@ -45,10 +45,7 @@ class WIBillScraper(Scraper):
 
             last_url = next_url
             # get the 'Down' url
-            if doc.xpath('//a[text()="Down"]/@href'):
-                next_url = doc.xpath('//a[text()="Down"]/@href')[0]
-            else:
-                break
+            next_url = doc.xpath('//a[text()="Down"]/@href')[0]
 
             # slug is upper case in links for special sessions
             if site_id != "reg":
@@ -315,7 +312,7 @@ class WIBillScraper(Scraper):
                     )
 
     def add_vote(self, bill, chamber, date, text, url):
-        votes = re.findall(r"Ayes,?[\s]?(\d+)[,;]\s+N(?:oes|ays),?[\s]?(\d+)", text)
+        votes = re.findall(r"Ayes,?[\s]?(\d+)[,;.]\s+N(?:oes|ays),?[\s]?(\d+)", text)
         yes, no = int(votes[0][0]), int(votes[0][1])
 
         vtype = []

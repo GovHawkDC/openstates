@@ -10,6 +10,7 @@ from utils.events import match_coordinates
 
 calurl = "https://committeeschedule.legis.wisconsin.gov/?StartDate=2025-01-30&CommitteeID=-1&CommItemVisibleName=-1&TopicID=-1&ViewType=listBiennium&ReloadCache=True"
 
+
 # TODO: We may be able to scrape additional documents and minutes
 # from the committee page at com_url, but the page structure is a mess.
 class WIEventScraper(Scraper, LXMLMixin):
