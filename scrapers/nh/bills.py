@@ -64,7 +64,7 @@ class NHBillScraper(Scraper):
     cachebreaker = dt.datetime.now().strftime("%Y%d%d%H%I%s")
     categorizer = Categorizer()
 
-    def scrape(self, chamber=None, session=None, scrape_from_web=None):
+    def scrape(self, chamber=None, session=None, scrape_from_web=True):
         est = pytz.timezone("America/New_York")
         time_est = dt.datetime.now(est)
 
@@ -128,7 +128,7 @@ class NHBillScraper(Scraper):
 
         return bills
 
-    def scrape_chamber(self, chamber, session, scrape_from_web=True):
+    def scrape_chamber(self, chamber, session, scrape_from_web=None):
         if int(session) < 2017:
             legacy = NHLegacyBillScraper(self.metadata, self.datadir)
             yield from legacy.scrape(chamber, session)
