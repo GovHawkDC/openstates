@@ -93,7 +93,7 @@ class NHBillScraper(Scraper):
                 legislative_session=session,
                 chamber=chamber_map[item.billnumber[0:1]],
                 identifier=bill_id,
-                title=item.lsrtitle,
+                title=item.lsrtitle.replace("\n", ""),
                 classification=bill_type,
             )
 
@@ -128,7 +128,7 @@ class NHBillScraper(Scraper):
 
         return bills
 
-    def scrape_chamber(self, chamber, session, scrape_from_web=None):
+    def scrape_chamber(self, chamber, session, scrape_from_web=True):
         if int(session) < 2017:
             legacy = NHLegacyBillScraper(self.metadata, self.datadir)
             yield from legacy.scrape(chamber, session)
