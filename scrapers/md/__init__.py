@@ -213,7 +213,7 @@ class Maryland(State):
             "classification": "primary",
             "identifier": "2026",
             "name": "2026 Regular Session",
-            "start_date": "2026-01-04",
+            "start_date": "2026-01-14",
             "end_date": "2026-04-13",
             "active": False,
         },
@@ -232,6 +232,7 @@ class Maryland(State):
         "2005 Regular Session",
         "2006 Regular Session",
         "2006 Special Session 1",
+        "2025 Special Session",
     ]
 
     def get_session_list(self):
