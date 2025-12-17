@@ -301,7 +301,6 @@ class SCBillScraper(Scraper):
         """
         (path, resp) = self.urlretrieve(vurl)
         pdflines = convert_pdf(path, "text")
-        print(pdflines)
         os.remove(path)
 
         current_vfunc = None
