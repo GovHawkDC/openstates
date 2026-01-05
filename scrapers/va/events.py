@@ -43,7 +43,7 @@ class VaEventScraper(Scraper):
         elif "sfac.virginia.gov" in url.lower():
             self.scrape_senate_fac_agendas(event, url)
         else:
-            self.error(f"Found VA agenda link with no parser {url}")
+            self.info(f"Found VA agenda link with no parser {url}")
 
     # instead of linking directly to their agendas,
     # individual events USUALLY link to committee pages that link to multiple meeting agendas
