@@ -74,7 +74,9 @@ class AZBillScraper(Scraper):
         versions_url = "https://apps.azleg.gov/api/DocType/?billStatusId={}".format(
             internal_id
         )
-        page = json.loads(self.get(versions_url, timeout=80, verify=False).content.decode("utf-8"))
+        page = json.loads(
+            self.get(versions_url, timeout=80, verify=False).content.decode("utf-8")
+        )
         for document_set in page:
             type_ = document_set["DocumentGroupName"]
             for doc in document_set["Documents"]:
@@ -110,7 +112,9 @@ class AZBillScraper(Scraper):
         sponsors_url = "https://apps.azleg.gov/api/BillSponsor/?id={}".format(
             internal_id
         )
-        page = json.loads(self.get(sponsors_url, timeout=80, verify=False).content.decode("utf-8"))
+        page = json.loads(
+            self.get(sponsors_url, timeout=80, verify=False).content.decode("utf-8")
+        )
         for sponsor in page:
             if "Prime" in sponsor["SponsorType"]:
                 sponsor_type = "primary"
@@ -137,7 +141,9 @@ class AZBillScraper(Scraper):
         subjects_url = "https://apps.azleg.gov/api/Keyword/?billStatusId={}".format(
             internal_id
         )
-        page = json.loads(self.get(subjects_url, timeout=80, verify=False).content.decode("utf-8"))
+        page = json.loads(
+            self.get(subjects_url, timeout=80, verify=False).content.decode("utf-8")
+        )
         for subject in page:
             if subject.get("Name", None):
                 bill.add_subject(subject["Name"])
