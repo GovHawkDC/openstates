@@ -17,7 +17,7 @@ class NJBillScraper(Scraper):
 
     def process_versions(self, year, bill):
         url = f"https://www.njleg.state.nj.us/api/billDetail/billText/{bill.identifier}/{year}"
-        json_data = self.get(url).text
+        json_data = self.get(url, verify=False).text
         version_list = json.loads(json_data)
         for version in version_list:
             description = version["Description"].strip()
@@ -38,7 +38,7 @@ class NJBillScraper(Scraper):
 
     def process_actions(self, year, bill):
         url = f"https://www.njleg.state.nj.us/api/billDetail/billHistory/{bill.identifier}/{year}"
-        json_data = self.get(url).text
+        json_data = self.get(url, verify=False).text
         action_list = json.loads(json_data)
         for act in action_list:
             date = act["ActionDate"].strip()
@@ -59,7 +59,7 @@ class NJBillScraper(Scraper):
 
     def process_sponsors(self, year, bill):
         url = f"https://www.njleg.state.nj.us/api/billDetail/billSponsors/{bill.identifier}/{year}"
-        json_data = self.get(url).text
+        json_data = self.get(url, verify=False).text
         # they split sponsors into 2 lists
         primary_list = json.loads(json_data)[0]
         cosponsor_list = json.loads(json_data)[1]
@@ -86,7 +86,7 @@ class NJBillScraper(Scraper):
         year_abr = ((int(session) - 209) * 2) + 2000
         url = f"https://www.njleg.state.nj.us/api/billSearch/allBills/{session}"
 
-        json_data = self.get(url).text
+        json_data = self.get(url, verify=False).text
         bill_list = json.loads(json_data)[0]
 
         for item in bill_list:
