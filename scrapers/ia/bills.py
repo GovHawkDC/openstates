@@ -218,6 +218,7 @@ class IABillScraper(Scraper):
             f"billHistory?billName={bill_id}&ga={session_id}"
         )
         req = self.session.get(hist_url)
+        print(hist_url)
         if req.status_code == 500:
             self.warning("500 error on {}, skipping".format(hist_url))
             return
