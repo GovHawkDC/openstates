@@ -37,10 +37,12 @@ class MNEventScraper(Scraper, LXMLMixin):
         yield from self.scrape_upper()
 
     def scrape_lower(self):
-        url = "https://www.house.leg.state.mn.us/Schedules/All"
+        url = "https://www.house.mn.gov/Schedules/All"
         page = self.lxmlize(url)
 
-        for row in page.xpath('//div[contains(@class,"my-2 d-print-block")]'):
+        for row in page.xpath(
+            '//div[contains(@class,"my-2") and contains(@class, "d-print-block")]'
+        ):
             # skip floor sessions and unlinked events
             if not row.xpath(
                 'div[contains(@class,"card-header")]/h3/a[contains(@class,"text-white")]/b'
