@@ -1,111 +1,125 @@
 import re
 import datetime
-import scrapelib
+
 import lxml.html
 
 from openstates.scrape import Scraper, VoteEvent
 
-VOTES_URLS = {
-    "2009-2010": "https://www.house.mn.gov/votes/getVotesls86.asp",
-    "2010 1st Special Session": "https://www.house.mn.gov/votes/getVotesls8620101.asp",
-    "2011-2012": "https://www.house.mn.gov/votes/getVotesls87.asp",
-    "2011s1": "https://www.house.mn.gov/votes/getVotesls8720111.asp",
-    "2012s1": "https://www.house.mn.gov/votes/getVotesls8720121.asp",
-    "2013-2014": "https://www.house.mn.gov/votes/getVotesls88.asp",
-    "2013s1": "https://www.house.mn.gov/votes/getVotesls8820131.asp",
-    "2015-2016": "https://www.house.mn.gov/votes/getVotesls89.asp",
-    "2015s1": "https://www.house.mn.gov/votes/getVotesls8920151.asp",
-    "2017-2018": "https://www.house.mn.gov/votes/getVotesls90.asp",
-    "2017s1": "https://www.house.mn.gov/votes/getVotesls9020171.asp",
-    "2019-2020": "https://www.house.mn.gov/votes/getVotesls91.asp",
-    "2020s1": "https://www.house.mn.gov/votes/getVotesls9120201.asp",
-    "2020s2": "https://www.house.mn.gov/votes/getVotesls9120202.asp",
-    "2020s3": "https://www.house.mn.gov/votes/getVotesls9120203.asp",
-    "2020s4": "https://www.house.mn.gov/votes/getVotesls9120204.asp",
-    "2020s5": "https://www.house.mn.gov/votes/getVotesls9120205.asp",
-    "2020s6": "https://www.house.mn.gov/votes/getVotesls9120206.asp",
-    "2020s7": "https://www.house.mn.gov/votes/getVotesls9120207.asp",
-    "2021-2022": "https://www.house.mn.gov/votes/getVotesls92.asp",
-    "2023-2024": "https://www.house.mn.gov/votes/getVotesls93.asp",
-    "2025-2026": "https://www.house.mn.gov/votes/getVotesls94.asp",
-    "2025s1": "https://www.house.mn.gov/votes/getVotesls9420251.asp",
+
+SESSION_SOURCE_IDS = {
+    "2019-2020": "249",
+    "2020s1": "252",
+    "2020s2": "253",
+    "2020s3": "254",
+    "2020s4": "255",
+    "2020s5": "256",
+    "2020s6": "258",
+    "2020s7": "259",
+    "2021-2022": "257",
+    "2023-2024": "300",
+    "2025-2026": "302",
+    "2025s1": "304",
 }
 
 
 # Please note: this only supports the MN House, not the Senate. Senate votes are scraped in bills.py
 class MNVoteScraper(Scraper):
-    # bad SSL as of August 2017
-    verify = False
 
-    date_re = re.compile(r"Date: (\d+/\d+/\d+)")
+    bill_link_number_re = re.compile(r"([A-Z]+)0*([1-9]+[0-9]*)")
 
-    def scrape(self, session=None, chamber=None):
-        chambers = [chamber] if chamber else ["upper", "lower"]
-
-        votes_url = VOTES_URLS.get(session)
-        if not votes_url:
-            self.warning("no house votes URL for %s", session)
+    def scrape(self, session=None):
+        session_internal_id = SESSION_SOURCE_IDS.get(session)
+        if not session_internal_id:
+            self.warning("no session internal ID recorded for %s", session)
             return
-        html = self.get(votes_url).text
-        doc = lxml.html.fromstring(html)
-        for chamber in chambers:
-            prefix = {"lower": "H", "upper": "S"}[chamber]
-            xpath = '//a[contains(@href, "votesbynumber.asp?billnum=%s")]' % prefix
-            links = doc.xpath(xpath)
-            for link in links:
-                bill_id = link.text
-                link_url = link.get("href")
-                yield from self.scrape_votes(chamber, session, bill_id, link_url)
+        votes_summary_endpoint = "https://www.house.mn.gov/Votes/GetVoteSummary"
+        votes = self.post(
+            votes_summary_endpoint,
+            {
+                "SessionKey": session_internal_id,
+                "sortOption": "BillNumber",
+            },
+        ).json()
+        # JSON has a Date property that looks like '/Date(-62135575200000)/' - useful?
+        for vote in votes:
+            bill_id_with_leading = vote["Number"]
+            bill_id_match = self.bill_link_number_re.search(bill_id_with_leading)
+            bill_id = f"{bill_id_match.group(1)} {bill_id_match.group(2)}"
+            yield from self.scrape_votes(session, bill_id, bill_id_with_leading)
 
-    def scrape_votes(self, chamber, session, bill_id, link_url):
+    def scrape_votes(self, session, bill_id, bill_id_for_url):
+        # URL looks like https://www.house.mn.gov/Votes/Details?SessionKey=302&BillNumber=HF0003
+        link_url = f"https://www.house.mn.gov/Votes/Details?SessionKey={SESSION_SOURCE_IDS.get(session)}&BillNumber={bill_id_for_url}"
         html = self.get(link_url).text
         doc = lxml.html.fromstring(html)
-        for vote_url in doc.xpath('//a[starts-with(text(), "View Vote")]/@href'):
-            yield from self.scrape_vote(chamber, session, bill_id, vote_url)
+        for vote_container in doc.xpath('//div[contains(@class, "collapsible-panel")]'):
+            # Parse Vote Event metadata
+            header_table_cells = vote_container.xpath(
+                './/div[contains(@class, "panel-header")]//tbody//td'
+            )
+            motion_text_line_breaks = header_table_cells[1].xpath("./br")
+            motion_text = motion_text_line_breaks[-1].tail
+            yes_votes = int(header_table_cells[3].text_content())
+            no_votes = int(header_table_cells[4].text_content())
 
-    def scrape_vote(self, chamber, session, bill_id, vote_url):
-        try:
-            resp = self.get(vote_url)
-            html = resp.text
-        except scrapelib.HTTPError:
-            return
+            is_amendment = False
+            amendment_br_elems = header_table_cells[2].xpath("./br")
+            if len(amendment_br_elems) > 0:
+                if amendment_br_elems[0].tail and amendment_br_elems[0].tail.strip():
+                    is_amendment = True
 
-        doc = lxml.html.fromstring(html)
-        motion = doc.xpath("//p[1]//b[1]/text()")[-1].strip()
-        if len(motion) == 0:
-            print(motion)
-            motion = doc.xpath("//h2[1]/text()")[0].strip()
+            if is_amendment:
+                motion_classification = "amendment"
+            else:
+                motion_classification = "passage"
 
-        vote_count = (
-            doc.xpath("//h3[contains(text(),'YEA and ')]/text()")[0].strip().split()
-        )
-        yeas = int(vote_count[0])
-        nays = int(vote_count[3])
+            date_text = f"{header_table_cells[6].text_content()}"
+            date = datetime.datetime.strptime(date_text, "%m/%d/%Y").date()
 
-        date = doc.xpath("//b[contains(text(),'Date:')]/../text()")[1].strip()
-        date = datetime.datetime.strptime(date, "%m/%d/%Y").date()
+            if bill_id[0] == "H":
+                bill_chamber = "lower"
+            elif bill_id[0] == "S":
+                bill_chamber = "upper"
+            else:
+                raise Exception(f"Unexpected bill ID to parse chamber: {bill_id}")
 
-        vote = VoteEvent(
-            chamber="lower",
-            start_date=date,
-            motion_text=motion,
-            result="pass" if yeas > nays else "fail",
-            classification="passage",
-            legislative_session=session,
-            bill=bill_id,
-            bill_chamber=chamber,
-        )
-        vote.set_count("yes", yeas)
-        vote.set_count("no", nays)
-        vote.add_source(vote_url)
-        vote.dedupe_key = vote_url
+            journal_page_number = header_table_cells[5].xpath("./a")[0].text_content()
+            # TODO add source journal URL
+            # You can make a POST request to https://www.house.mn.gov/Votes/GetPage
+            # to get redirected to the source journal page (HTML) for this vote
+            # with values like {PageNumber: "643", SessionKey: 302}
 
-        # first table has YEAs
-        for name in doc.xpath("//table[1]//font/text()"):
-            vote.yes(name.strip())
+            vote = VoteEvent(
+                chamber="lower",
+                start_date=date,
+                motion_text=motion_text,
+                result="pass" if yes_votes > no_votes else "fail",
+                classification=motion_classification,
+                legislative_session=session,
+                bill=bill_id,
+                bill_chamber=bill_chamber,
+            )
+            vote.set_count("yes", yes_votes)
+            vote.set_count("no", no_votes)
+            vote.add_source(link_url)
+            vote.dedupe_key = (
+                f"{session}-{bill_id}-{date_text}-{motion_text}-{journal_page_number}"
+            )
 
-        # second table is nays
-        for name in doc.xpath("//table[2]//font/text()"):
-            vote.no(name.strip())
+            # parse individual votes
+            # first table is the YES and second table is the NO
+            # plenty of "spacer" TDs in here that are just whitespace for no good reason
+            content_vote_tables = vote_container.xpath(
+                ".//div[contains(@class, 'panel-content')]//table"
+            )
+            for i, vote_table in enumerate(content_vote_tables):
+                content_vote_cells = vote_table.xpath(".//td")
+                for content_vote_cell in content_vote_cells:
+                    voter = content_vote_cell.text_content()
+                    if voter.strip():
+                        if i == 0:
+                            vote.yes(voter)
+                        else:
+                            vote.no(voter)
 
-        yield vote
+            yield vote

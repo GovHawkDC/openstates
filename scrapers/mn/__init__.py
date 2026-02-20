@@ -237,7 +237,7 @@ class Minnesota(State):
             "start_date": "2025-06-08",
             # TODO: update end_date
             "end_date": "2025-12-31",
-            "active": True,
+            "active": False,
         },
     ]
     ignored_scraped_sessions = [
