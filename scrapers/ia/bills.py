@@ -228,9 +228,16 @@ class IABillScraper(Scraper):
 
         # bills that had neither title nor sponsors passed in
         if not title and not sponsors:
-            sponsors_div = page.xpath(
+            sponsors_elems = page.xpath(
                 ".//div[@style='margin-left:10px;']//div[@class='divideVert']"
-            )[0]
+            )
+            if len(sponsors_elems) == 0:
+                self.warning(
+                    f"Skipping {bill_id}: No sponsors/title info found at {hist_url}"
+                )
+                return
+            sponsors_div = sponsors_elems[0]
+
 
             raw_sponsors = sponsors_div.text
             sponsors = re.sub(r"By\s+", "", raw_sponsors).strip()
