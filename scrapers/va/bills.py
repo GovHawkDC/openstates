@@ -298,10 +298,16 @@ class VaBillScraper(Scraper):
 
                 # Our historical votes have mostly used the bill action descrioption, so we stick with this
                 motion_text = row["LegislationActionDescription"]
-                if motion_text is None:
+                if motion_text is None and row["VoteActionDescription"]:
                     # VoteActionDescription doesn't seem as user friendly, when looking at the text values.
                     # A lot of "H Vote:" values
                     motion_text = row["VoteActionDescription"]
+                elif motion_text is None:
+                    # second layer of fallback :(
+                    motion_text = "Unknown motion"
+                    self.logger.warning(
+                        f"Failed to get motion text for {bill} vote on {vote_date}"
+                    )
 
                 # the api returns 'Continued to %NextSessionYear% in Finance' so fix that
                 motion_text = motion_text.replace(
