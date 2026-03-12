@@ -255,6 +255,7 @@ class Arkansas(State):
         },
     ]
     ignored_scraped_sessions = [
+        "Fiscal Session, 2026",
         "Regular Session, 2009",
         "Fiscal Session, 2010",
         "Regular Session, 2007",
