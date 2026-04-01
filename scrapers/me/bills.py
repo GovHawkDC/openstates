@@ -270,35 +270,50 @@ class MEBillScraper(Scraper):
                     and contains(.,"Cannot find requested paper")])'
                 )
 
+                previous_title = ""
                 if not is_bill_text_missing:
                     vdoc.make_links_absolute(ver_url)
                     for row in vdoc.cssselect("span.tlnk-bill, span.tlnk-fiscal"):
-                        title = " ".join(row.xpath(".//span[@class='story_header' or @class='story_subhead']/text()")).strip()
-                        title = title.replace("Text", "").replace("RESLV ", "")
-                        classification = ''
+                        title = " ".join(
+                            row.xpath(
+                                ".//span[@class='story_header' or @class='story_subhead' or @class='inlineHeading']/text()"
+                            )
+                        ).strip()
+                        title = (
+                            title.replace("Text", "")
+                            .replace("RESLV ", "")
+                            .replace("ACTPUB", "")
+                            .replace("Chapter Fiscal Note", "")
+                            .strip()
+                        )
+                        classification = ""
                         if row.xpath("parent::span[contains(@class, 'tlnk-amdblk')]"):
                             title = f"Amendment {title}"
-                            classification="amendment"
-
+                            classification = "amendment"
 
                         if row.xpath(".//a[contains(@href, 'getPDF')]"):
-                            pdf_url = row.xpath(".//a[contains(@href, 'getPDF')]/@href")[0]
+                            pdf_url = row.xpath(
+                                ".//a[contains(@href, 'getPDF')]/@href"
+                            )[0]
                             bill.add_version_link(
                                 title,
                                 pdf_url,
                                 classification=classification,
                                 media_type="application/pdf",
-                                on_duplicate="ignore"
+                                on_duplicate="ignore",
                             )
                         if row.xpath(".//a[contains(@href, '/fiscalpdfs/')]"):
-                            pdf_url = row.xpath(".//a[contains(@href, 'fiscalpdfs')]/@href")[0]
+                            pdf_url = row.xpath(
+                                ".//a[contains(@href, 'fiscalpdfs')]/@href"
+                            )[0]
                             bill.add_document_link(
-                                f"{title} - Fiscal Note PDF",
+                                f"{previous_title} - Fiscal Note",
                                 pdf_url,
+                                classification="fiscal-note",
                                 media_type="application/pdf",
-                                on_duplicate="ignore"
+                                on_duplicate="ignore",
                             )
-
+                        previous_title = title
                     # committee actions are also on this page
                     for row in vdoc.xpath('//table[@name="CDtab"]/tr')[2:]:
                         action_date = row.xpath("td[1]/text()")[0].strip()
