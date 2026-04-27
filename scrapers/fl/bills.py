@@ -8,6 +8,7 @@ from http.client import RemoteDisconnected
 from urllib.error import URLError
 from urllib.parse import urlencode
 
+import lxml.html
 import requests
 from openstates.scrape import Bill, VoteEvent, Scraper
 from openstates.utils import format_datetime
@@ -710,6 +711,7 @@ class HouseSearchPage(HtmlListPage):
         # a URL param that looks like billNumber=1
         bill_number = re.search(r"^\w+\s(\d+)\w*$", self.input.identifier).group(1)
         session_number = {
+            "2026D": "116",
             "2025C": "111",
             "2025B": "109",
             "2025A": "107",
@@ -754,6 +756,32 @@ class HouseSearchPage(HtmlListPage):
             verify=False,
         )
 
+    def accept_response(self, response: requests.Response):
+        # Check if the page response is an annoying 404 error message in the HTML
+        # which sometimes happens despite a 200 HTTP code response
+        # which looks like:
+        # <div class="page-404">
+        # We're Sorry, the page you requested can not <br/> be located within FLHouse.gov
+        page = lxml.html.fromstring(response.content)
+        # also can be a "request rejected" page that looks like
+        # <html><head><title>Request Rejected</title></head>
+        text_not_found_msg = page.xpath("//div[@class='page-404']")
+        request_rejected_msg = page.xpath(
+            "//title[contains(text(), 'Request Rejected')]"
+        )
+        if len(text_not_found_msg) > 0:
+            self.logger.info(
+                f"Encountered text-based Not Found message at {response.url}"
+            )
+            return False
+        elif len(request_rejected_msg) > 0:
+            self.logger.info(
+                f"Encountered text-based Rejected message at {response.url}"
+            )
+            return False
+        else:
+            return True
+
     def process_item(self, item):
         source = URL(f"{item}", verify=False)
         return HouseBillPage(self.input, source=source)
@@ -768,7 +796,7 @@ class HouseSearchPage(HtmlListPage):
             yield from self._process_or_skip_loop(items)
         except SelectorError:
             # Occasionally a bill will not appear in House search even though it should!
-            self.logger.warning(
+            self.logger.error(
                 f"Selector Error at source {self.source}, could not find bill in House Search"
             )
 
@@ -976,7 +1004,7 @@ class FlBillScraper(Scraper):
 
             except Exception as e:
                 self._consecutive_failures += 1
-                self.logger.warning(f"Error processing item: {e}")
+                self.logger.error(f"Error processing item: {e}")
 
                 # If it's a connection error, add a longer delay
                 if isinstance(e, (ConnectionError, RemoteDisconnected)):
