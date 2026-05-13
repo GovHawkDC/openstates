@@ -189,7 +189,7 @@ class Wisconsin(State):
             "name": "2025-2026 Regular Session",
             "start_date": "2025-01-06",
             "end_date": "2026-05-25",
-            "active": False,
+            "active": True,
         },
         {
             "_scraped_name": "May 2026 Special Session",
