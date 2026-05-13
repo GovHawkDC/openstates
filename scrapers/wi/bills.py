@@ -85,8 +85,8 @@ class WIBillScraper(Scraper):
         site_id = SESSION_SITE_IDS.get(session, "reg")
         chamber_slug = {"upper": "sen", "lower": "asm"}[chamber]
 
-        if not self.subjects:
-            self.scrape_subjects(year, site_id)
+        # if not self.subjects:
+        #     self.scrape_subjects(year, site_id)
 
         types = ("bill", "joint_resolution", "resolution")
 
