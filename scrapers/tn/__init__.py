@@ -162,7 +162,7 @@ class Tennessee(State):
             "name": "114th Second Extraordinary Session (May 2026)",
             "start_date": "2026-05-05",
             "end_date": "2026-05-08",
-            "active": True,
+            "active": False,
         },
     ]
     ignored_scraped_sessions = [
