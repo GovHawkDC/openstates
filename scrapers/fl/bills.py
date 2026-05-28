@@ -711,6 +711,7 @@ class HouseSearchPage(HtmlListPage):
         # a URL param that looks like billNumber=1
         bill_number = re.search(r"^\w+\s(\d+)\w*$", self.input.identifier).group(1)
         session_number = {
+            "2026E": "119",
             "2026D": "116",
             "2025C": "111",
             "2025B": "109",
@@ -796,7 +797,7 @@ class HouseSearchPage(HtmlListPage):
             yield from self._process_or_skip_loop(items)
         except SelectorError:
             # Occasionally a bill will not appear in House search even though it should!
-            self.logger.error(
+            self.logger.warning(
                 f"Selector Error at source {self.source}, could not find bill in House Search"
             )
 
@@ -1004,7 +1005,7 @@ class FlBillScraper(Scraper):
 
             except Exception as e:
                 self._consecutive_failures += 1
-                self.logger.error(f"Error processing item: {e}")
+                self.logger.warning(f"Error processing item: {e}")
 
                 # If it's a connection error, add a longer delay
                 if isinstance(e, (ConnectionError, RemoteDisconnected)):
