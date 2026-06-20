@@ -1,9 +1,17 @@
 import re
+import requests
 from collections import defaultdict
 
 from openstates.scrape import Scraper, Bill, VoteEvent
 
-from .util import get_client, get_url, backoff, SESSION_SITE_IDS
+from .util import (
+    get_client,
+    get_url,
+    backoff,
+    get_token,
+    SESSION_SITE_IDS,
+    SPECIAL_SESSION_SITE_URL_PARTS,
+)
 
 #         Methods (7):
 #            GetLegislationDetail(xs:int LegislationId, )
@@ -45,6 +53,63 @@ class GABillScraper(Scraper):
         mem = backoff(self.mservice.GetMember, member_id)
         member_cache[member_id] = mem
         return mem
+
+    def scrape_subjects(self, session_id):
+        """Build a mapping of legislation_id -> [subject names] via the REST API."""
+        self._subjects = defaultdict(list)
+        headers = {
+            "Authorization": get_token(),
+            "Content-Type": "application/json",
+        }
+
+        try:
+            titles_resp = requests.get(
+                "https://www.legis.ga.gov/api/georgia-code/titles",
+                headers=headers,
+                timeout=30,
+            )
+            titles = titles_resp.json()
+        except Exception:
+            self.warning("Could not load subject titles, skipping subjects.")
+            return
+
+        self.info(f"Found {len(titles)} subject categories")
+
+        for title in titles:
+            title_name = title["name"].strip()
+            title_id = title["id"]
+
+            try:
+                page = 0
+                while True:
+                    resp = requests.post(
+                        f"https://www.legis.ga.gov/api/Legislation/Search/250/{page}",
+                        json={"sessionId": session_id, "titleIds": [title_id]},
+                        headers=headers,
+                        timeout=30,
+                    )
+                    if resp.status_code != 200:
+                        break
+
+                    data = resp.json()
+                    results = data.get("results", [])
+                    if not results:
+                        break
+
+                    for r in results:
+                        lid = r["legislationId"]
+                        self._subjects[lid].append(title_name)
+
+                    if len(results) < 250:
+                        break
+                    page += 1
+            except Exception:
+                self.warning(
+                    f"Could not load bills for subject '{title_name}', skipping."
+                )
+                continue
+
+        self.info(f"Loaded subjects for {len(self._subjects)} bills")
 
     def scrape(self, session=None, chamber=None):
         bill_type_map = {
@@ -124,6 +189,8 @@ class GABillScraper(Scraper):
             "HTS": None,
         }
         sid = SESSION_SITE_IDS[session]
+
+        self.scrape_subjects(sid)
 
         legislation = backoff(self.lservice.GetLegislationForSession, sid)[
             "LegislationIndex"
@@ -305,16 +372,21 @@ class GABillScraper(Scraper):
                     url = (
                         f"https://www.legis.ga.gov/api/legislation/document/{bill_bit}"
                     )
-                if session == "2023_ss":
-                    # gets url as 2023EX220573.pdf
-                    # so would be easier to put together using session & version id
-                    # to get https://www.legis.ga.gov/api/legislation/document/2023EX/220573
-                    url = f"https://www.legis.ga.gov/api/legislation/document/2023EX/{doc_id}"
+                if session in ["2023_ss", "2026_ss"]:
+                    # Last couple special sessions the url provided in instrument["Versions"]["DocumentDescription"]
+                    # is wrong, so it'll look like http://www.legis.ga.gov/Legislation/2026EX/249298.pdf
+                    # but that URL does not resolve (gets 404 on GA page)
+                    # the web UI actually gets to you to a path that uses a varient session ID and the doc_id
+                    # like https://www.legis.ga.gov/api/legislation/document/2026EX/249298
+                    url = f"https://www.legis.ga.gov/api/legislation/document/{SPECIAL_SESSION_SITE_URL_PARTS[session]}/{doc_id}"
                 link = bill.add_version_link(name, url, media_type="application/pdf")
                 link["extras"] = {
                     "_internal_document_id": doc_id,
                     "_version_id": version_id,
                 }
+
+            for subject in self._subjects.get(lid, []):
+                bill.add_subject(subject)
 
             bill.add_source(self.msource, note="api")
             bill.add_source(self.lsource, note="api")
