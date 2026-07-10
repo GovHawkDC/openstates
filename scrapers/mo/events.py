@@ -37,13 +37,13 @@ def add_bill_to_agenda(agenda_item, bill_text):
         multi_bill_match = multi_bills_re.search(bill_text)
         if multi_bill_match:
             prefix, raw_bill_nums = multi_bill_match.groups()
-            raw_bill_nums_list = raw_bill_nums.split()
+            # Slice from where the first number begins to capture all numbers,
+            # including those after '&' (e.g. "HS HCS HBs 3068 & 3049" -> "3068 & 3049")
+            tail = bill_text[multi_bill_match.start(2) :]
+            raw_bill_nums_list = re.findall(r"\d+", tail)
             item_bills = []
-            for raw_str in raw_bill_nums_list:
-                num_match = re.search(r"(\d+)", raw_str)
-                if num_match:
-                    bill_num = num_match.group(1)
-                    item_bills.append(f"{prefix} {bill_num}")
+            for bill_num in raw_bill_nums_list:
+                item_bills.append(f"{prefix} {bill_num}")
         # If regex pattern does not cover particular case of '&' in string
         else:
             raise UnknownBillStringPattern(bill_text)
@@ -151,6 +151,8 @@ class MOEventScraper(Scraper, LXMLMixin):
                     agenda_item = event.add_agenda_item(description=agenda_line)
 
                     bill_link = bill_table.xpath(self.bill_link_xpath)[0].strip()
+                    # Drop leading "HCS" prefix like "HCS HB 2434" -> "HB 2434"
+                    bill_link = re.sub(r"^HCS\s+", "", bill_link)
                     add_bill_to_agenda(agenda_item, bill_link)
                 else:
                     agenda_line = bill_table.xpath("string(tr[1])").strip()
