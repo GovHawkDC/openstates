@@ -1,6 +1,7 @@
 import datetime as dt
 import lxml
 import re
+import requests
 
 from openstates.scrape import Scraper, Event
 from openstates.exceptions import EmptyScrape
@@ -24,12 +25,14 @@ bill_re = re.compile(r"(\w+?)\s*0*(\d+)")
 # Used to remove prefixes from committee name
 committee_name_re = re.compile(r"(.*) Hearing Details", flags=re.IGNORECASE)
 
+HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"}
 
 class IlEventScraper(Scraper):
     localize = pytz.timezone("America/Chicago").localize
 
     def scrape_page(self, url, chamber):
-        html = self.get(url).text
+
+        html = requests.get(url, headers=HEADERS).text
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute(url)
 
@@ -41,7 +44,7 @@ class IlEventScraper(Scraper):
         ctty_name = committee_name_re.match(ctty_name).group(1)
 
         tables = doc.xpath(
-            '//div[contains(@class, "card")][.//h4[contains(., "Hearing Details")]]//table'
+            '//div[contains(@class, "card")][.//h2[contains(., "Hearing Details")]]//table'
         )
         if not tables:
             self.warning(f"Empty hearing data for {url}")
@@ -81,7 +84,7 @@ class IlEventScraper(Scraper):
         event.add_participant(ctty_name, "organization")
 
         bills = doc.xpath(
-            '//div[contains(@class, "card")][.//h4[contains(., "Bills Assigned To Hearing")]]//table'
+            '//div[contains(@class, "card")][.//h2[contains(., "Bills Assigned To Hearing")]]//table'
         )
         if bills:
             bills = bills[0]
@@ -109,7 +112,7 @@ class IlEventScraper(Scraper):
                 url = urls[chamber]
             except KeyError:
                 return  # Not for us.
-            html = self.get(url).text
+            html = requests.get(url, headers=HEADERS).text
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(url)
 
