@@ -305,7 +305,7 @@ class Florida(State):
             "classification": "special",
             "start_date": "2026-05-12",
             "end_date": "2026-05-29",
-            "active": True,
+            "active": False,
             "extras": {"session_number": "119"},
         },
         {
