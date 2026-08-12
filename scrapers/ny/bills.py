@@ -51,7 +51,7 @@ class NYBillScraper(Scraper):
         title = bill["title"].strip()
 
         if not title:
-            self.logger.warn("Bill missing title.")
+            self.logger.warning("Bill missing title.")
             return
 
         # Determine the chamber the bill originated from.
@@ -61,7 +61,7 @@ class NYBillScraper(Scraper):
             bill_chamber = "lower"
         else:
             warning = "Could not identify chamber for {}."
-            self.logger.warn(warning).format(bill_id)
+            self.logger.warning(warning).format(bill_id)
 
         senate_url = (
             "http://www.nysenate.gov/legislation/bills/{bill_session}/" "{bill_id}"
@@ -529,6 +529,16 @@ class NYBillScraper(Scraper):
                 nv_count = 0
                 other_count = 0
 
+                # vote-name divs are siblings of the table (not children),
+                # all wrapped in a shared floor-vote-container, so walk
+                # siblings until the next table to scope votes to this one
+                vote_name_divs = []
+                for sibling in table.itersiblings():
+                    if sibling.tag == "table":
+                        break
+                    if sibling.get("class") == "vote-name":
+                        vote_name_divs.append(sibling)
+
                 votes = [
                     (
                         div.xpath('string(div[@class="vote"])')
@@ -536,7 +546,7 @@ class NYBillScraper(Scraper):
                         .strip(),
                         div.xpath('string(div[@class="name"])').strip(),
                     )
-                    for div in table.xpath('//div[@class="vote-name"]')
+                    for div in vote_name_divs
                 ]
 
                 vote_dictionary = {
