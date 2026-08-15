@@ -1,3 +1,4 @@
+import os
 import re
 import datetime
 from dateutil import parser
@@ -31,6 +32,12 @@ SPONSOR_HOUSE_TO_CHAMBER = {
     "S": "upper",
 }
 
+user_agent = os.getenv("USER_AGENT", "openstates.org <contact@openstates.org>")
+
+headers = {
+    "User-Agent": user_agent,
+}
+
 
 class UTBillScraper(Scraper, LXMLMixin):
     categorizer = Categorizer()
@@ -55,7 +62,7 @@ class UTBillScraper(Scraper, LXMLMixin):
         session_url = "https://le.utah.gov/billlist.jsp?session={}".format(session_slug)
 
         # For some sessions the link doesn't go straight to the bill list
-        doc = self.lxmlize(session_url)
+        doc = self.lxmlize(session_url, headers=headers)
 
         # Get all of the show/hide bill list elements
         # in order to get the IDs of the actual bill lists
@@ -93,9 +100,17 @@ class UTBillScraper(Scraper, LXMLMixin):
                     )
 
     def scrape_bill(self, chamber, session, url, session_slug):
-        page = self.lxmlize(url)
+        response = self.get(url, headers=headers)
+        page = lxml.html.fromstring(response.text)
+        page.make_links_absolute(url)
 
-        bill_id = page.cssselect("#breadcrumb li")[-1].text
+        bill_id = page.cssselect("#breadcrumb li")
+        if len(bill_id) > 0:
+            bill_id = bill_id[-1].text
+        else:
+            raise Exception(
+                f"Unexpected bill page content at {url}, truncated content {response.text[:500]}"
+            )
 
         (header,) = page.xpath(
             '//h3[@class="heading"]/text() | //h1[@class="heading"]/text()'
@@ -130,8 +145,7 @@ class UTBillScraper(Scraper, LXMLMixin):
             # starting 2025 seems UT is rendering bill data from an API/JSON
             # but prior years seem to have static-ish HTML
             # so we have two logic branches here
-            # TODO vote processing - need to see what data looks like
-            self.scrape_bill_details_from_api(bill, url, session_slug)
+            yield from self.scrape_bill_details_from_api(bill, url, session_slug)
         else:
             yield from self.parse_bill_details_from_html(
                 bill, bill_id, chamber, page, primary_info
@@ -215,7 +229,7 @@ class UTBillScraper(Scraper, LXMLMixin):
         api_url = (
             f"https://le.utah.gov/data/{session_slug}/{bill_filename}.json?_={now}"
         )
-        response = self.get(api_url, verify=False)
+        response = self.get(api_url, verify=False, headers=headers)
         data = json.loads(response.content)
 
         # Sponsorships
@@ -377,6 +391,26 @@ class UTBillScraper(Scraper, LXMLMixin):
                         committee, entity_type="organization"
                     )
 
+                # Recorded votes (voiceVote=="1" are voice votes with no individual records)
+                if action_data.get("voteID") and action_data.get("voiceVote") == "0":
+                    vote_chamber = (
+                        "lower" if action_data["voteHouse"] == "H" else "upper"
+                    )
+                    vote_url = (
+                        f"https://le.utah.gov/DynaBill/svotes.jsp"
+                        f"?sessionid={session_slug}"
+                        f"&voteid={action_data['voteID']}"
+                        f"&house={action_data['voteHouse']}"
+                    )
+                    yield from self.parse_html_vote(
+                        bill,
+                        vote_chamber,
+                        date,
+                        action_data["description"],
+                        vote_url,
+                        f"{action_data['voteID']}-{action_data['voteHouse']}",
+                    )
+
     def parse_status(self, bill, status_table, chamber):
         page = status_table
         uniqid = 0
@@ -494,20 +528,30 @@ class UTBillScraper(Scraper, LXMLMixin):
 
     def parse_html_vote(self, bill, actor, date, motion, url, uniqid):
         try:
-            page = self.get(url, verify=False).text
+            page_text = self.get(url, verify=False, headers=headers).text
         except scrapelib.HTTPError:
             self.warning("A vote page not found for bill {}".format(bill.identifier))
             return
         try:
-            page = lxml.html.fromstring(page)
+            page = lxml.html.fromstring(page_text)
         except ParserError:
             self.logger.warning(f"Could not parse HTML vote page {url}")
 
         page.make_links_absolute(url)
-        descr = page.xpath("//b")[0].text_content()
-        if descr == "":
-            # New page method
-            descr = page.xpath("//center")[0].text
+        descr = page.xpath("//b")
+        if len(descr) > 0:
+            descr = descr[0].text_content()
+        else:
+            # Try new page method
+            descr = page.xpath("//center")
+            if len(descr) > 0:
+                descr = descr[0].text
+
+        if len(descr) < 1:
+            # neither element is present, might have an unexpected page response
+            raise Exception(
+                f"Unexpected vote page content at {url}, truncated content {page_text[:500]}"
+            )
 
         if "on voice vote" in descr:
             return
@@ -531,7 +575,10 @@ class UTBillScraper(Scraper, LXMLMixin):
             self.warning(descr)
             raise NotImplementedError("Can't see if we passed or failed")
 
-        headings = page.xpath("//b")[1:]
+        # The "Yeas" heading uses <b><center><font ...> which lxml normalizes by
+        # promoting <center> out of <b>, leaving the <b> empty. Select the size=5
+        # Arial fonts directly — they appear in all three section headings.
+        headings = page.xpath('//font[@face="Arial"][@size="5"]')
         votes = page.xpath("//table")
         sets = zip(headings, votes)
         vdict = {}
@@ -573,7 +620,7 @@ class UTBillScraper(Scraper, LXMLMixin):
         yield vote
 
     def parse_vote(self, bill, actor, date, motion, url, uniqid):
-        page = self.get(url, verify=False).text
+        page = self.get(url, verify=False, headers=headers).text
         bill.add_source(url)
         vote_re = re.compile(
             r"YEAS -?\s?(\d+)(.*)NAYS -?\s?(\d+)"
