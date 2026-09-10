@@ -419,7 +419,9 @@ class IlBillScraper(Scraper):
                         '//a[contains (., "Bill Summary")]/@href'
                     )[0]
                     summary_page_url = clean_archivebill_url(summary_page_url)
-                    summary_page_html = self.get(summary_page_url, headers=headers, verify=False).text
+                    summary_page_html = self.get(
+                        summary_page_url, headers=headers, verify=False
+                    ).text
                     summary_page_doc = lxml.html.fromstring(summary_page_html)
                     summary_page_doc.make_links_absolute(summary_page_url)
                 else:
@@ -635,7 +637,9 @@ class IlBillScraper(Scraper):
                     # eed to visit the version's page, and get PDF link from there
                     # otherwise get a faulty "latest version"/"LV" alias/duplicate
                     url = "{}&Print=1".format(url)
-                    version_page_html = self.get(url, headers=headers, verify=False).text
+                    version_page_html = self.get(
+                        url, headers=headers, verify=False
+                    ).text
                     version_page_doc = lxml.html.fromstring(version_page_html)
                     version_page_doc.make_links_absolute(url)
                     pdf_link = version_page_doc.xpath('//a[contains(@href, "PDF")]')
