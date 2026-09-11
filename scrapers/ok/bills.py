@@ -235,7 +235,8 @@ class OKBillScraper(Scraper):
 
         for link in page.xpath(".//a[contains(@href, '_VOTES')]"):
             if "HT_" not in link.attrib["href"]:
-                yield from self.scrape_votes(bill, self.urlescape(link.attrib["href"]))
+                # yield from self.scrape_votes(bill, self.urlescape(link.attrib["href"]))
+                pass
 
         # # If the bill has no actions and no versions, it's a bogus bill on
         # # their website, which appears to happen occasionally. Skip.
