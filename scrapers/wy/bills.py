@@ -1,6 +1,9 @@
 import pytz
 import datetime
 import json
+import re
+
+import lxml.html
 
 from openstates.scrape import Scraper, Bill, VoteEvent
 from .actions import Categorizer
@@ -231,8 +234,22 @@ class WYBillScraper(Scraper, LXMLMixin):
                 chamber=sp_chamber,
             )
 
-        if bill_json["summary"]:
-            bill.add_abstract(note="summary", abstract=bill_json["summary"])
+        # The API's "summary"/"digest" fields are only PDF paths (e.g.
+        # "2026/Summaries/HB0002.pdf"), not usable text. The actual text of
+        # each is served as HTML in the "digestHTML"/"summaryHTML" fields, so
+        # we extract the abstract text from those instead.
+        #
+        # The digest contains the "AN ACT ..." (or "A JOINT RESOLUTION ...")
+        # clause -- a concise description of the bill -- which we use as the
+        # primary abstract. The summary is a longer plain-language explanation
+        # that we add as a secondary abstract when available.
+        digest_abstract = self.extract_digest(bill_json.get("digestHTML"))
+        if digest_abstract:
+            bill.add_abstract(note="digest", abstract=digest_abstract)
+
+        summary_abstract = self.extract_summary(bill_json.get("summaryHTML"))
+        if summary_abstract:
+            bill.add_abstract(note="summary", abstract=summary_abstract)
 
         if bill_json["enrolledNumber"]:
             bill.extras["wy_enrolled_number"] = bill_json["enrolledNumber"]
@@ -250,6 +267,22 @@ class WYBillScraper(Scraper, LXMLMixin):
             yield from self.scrape_vote(bill, vote_json, session)
 
         yield bill
+
+    @staticmethod
+    def _split_voter_names(raw):
+        """Split WY's comma-joined voter list, re-merging a bare initial
+        (e.g. "Brown, G, Brown, L, Campbell, E") back onto the preceding
+        surname instead of treating it as its own voter."""
+        names = []
+        for token in (raw or "").split(","):
+            token = token.strip()
+            if not token:
+                continue
+            if names and re.match(r"^[A-Z]\.?$", token):
+                names[-1] = "{}, {}".format(names[-1], token)
+            else:
+                names.append(token)
+        return names
 
     def scrape_vote(self, bill, vote_json, session):
 
@@ -278,33 +311,23 @@ class WYBillScraper(Scraper, LXMLMixin):
         v.set_count("excused", vote_json["excusedVotesCount"])
         v.set_count("other", vote_json["conflictVotesCount"])
 
-        for name in vote_json["yesVotes"].split(","):
-            if name:
-                name = name.strip()
-                v.yes(name)
+        for name in self._split_voter_names(vote_json["yesVotes"]):
+            v.yes(name)
 
-        for name in vote_json["noVotes"].split(","):
-            if name:
-                name = name.strip()
-                v.no(name)
+        for name in self._split_voter_names(vote_json["noVotes"]):
+            v.no(name)
 
         # add votes with other classifications
         # option can be 'yes', 'no', 'absent',
         # 'abstain', 'not voting', 'paired', 'excused'
-        for name in vote_json["absentVotes"].split(","):
-            if name:
-                name = name.strip()
-                v.vote(option="absent", voter=name)
+        for name in self._split_voter_names(vote_json["absentVotes"]):
+            v.vote(option="absent", voter=name)
 
-        for name in vote_json["excusedVotes"].split(","):
-            if name:
-                name = name.strip()
-                v.vote(option="excused", voter=name)
+        for name in self._split_voter_names(vote_json["excusedVotes"]):
+            v.vote(option="excused", voter=name)
 
-        for name in vote_json["conflictVotes"].split(","):
-            if name:
-                name = name.strip()
-                v.vote(option="other", voter=name)
+        for name in self._split_voter_names(vote_json["conflictVotes"]):
+            v.vote(option="other", voter=name)
 
         source_url = "https://lso.wyoleg.gov/Legislation/{}/{}".format(
             session, vote_json["billNumber"]
@@ -312,6 +335,61 @@ class WYBillScraper(Scraper, LXMLMixin):
         v.add_source(source_url)
 
         yield v
+
+    @staticmethod
+    def _html_to_text(raw_html):
+        """Strip tags from an API HTML field and collapse whitespace."""
+        if not raw_html:
+            return ""
+        text = lxml.html.fromstring(raw_html).text_content()
+        return " ".join(text.split())
+
+    def extract_digest(self, digest_html):
+        """Pull the "AN ACT ..." clause out of the digest HTML.
+
+        The digest HTML contains the bill number, sponsors, the enacting
+        clause, and then the action history. We only want the enacting clause,
+        which starts with "AN ACT" (bills) or "A JOINT RESOLUTION"
+        (resolutions) and runs up to the first date in the action history.
+        """
+        text = self._html_to_text(digest_html)
+        if not text:
+            return None
+
+        match = re.search(
+            r"((?:AN ACT|A JOINT RESOLUTION).*?)(?=\s+\d{1,2}/\d{1,2}/\d{4})",
+            text,
+        )
+        if not match:
+            # No trailing action-history date to bound the clause; fall back to
+            # everything from the enacting clause onward.
+            match = re.search(r"(?:AN ACT|A JOINT RESOLUTION).*", text)
+            return match.group(0).strip() if match else None
+
+        return match.group(1).strip()
+
+    def extract_summary(self, summary_html):
+        """Pull the plain-language summary out of the summary HTML.
+
+        The summary HTML is a form with several labeled fields; the descriptive
+        text lives under the "Summary/Major Elements:" label. We also drop the
+        boilerplate disclaimer that the Legislative Service Office appends.
+        """
+        text = self._html_to_text(summary_html)
+        if not text:
+            return None
+
+        match = re.search(r"Summary/Major Elements:\s*(.*)", text)
+        if not match:
+            return None
+
+        summary = match.group(1).strip()
+        # Remove the trailing LSO disclaimer if present.
+        summary = re.split(
+            r"\s*The above summary is not an official publication",
+            summary,
+        )[0].strip()
+        return summary or None
 
     def parse_local_date(self, date_str):
         # provided dates are ISO 8601, but in mountain time
