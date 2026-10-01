@@ -290,8 +290,14 @@ class OKBillScraper(Scraper):
             )
 
     def scrape_votes(self, bill, url):
+        try:
+            response = self.get(url, verify=False)
+        except requests.exceptions.SSLError as e:
+            self.warning("SSL error (%s) fetching vote %s, skipping", e, url)
+            return
+
         html_content = unicodedata.normalize(
-            "NFKD", self.get(url, verify=False).text.replace("\r\n", " ")
+            "NFKD", response.text.replace("\r\n", " ")
         )
         page = html.fromstring(html_content)
 
