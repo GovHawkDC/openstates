@@ -31,6 +31,37 @@ class IABillScraper(Scraper):
         self.http_resilience_headers = {"X-Requested-With": "XMLHttpRequest"}
         req_session = requests.Session()
         req_session.headers.update({"X-Requested-With": "XMLHttpRequest"})
+
+        yield from self.scrape_bill(
+            "upper",
+            "2025-2026",
+            91,
+            "SCR103",
+            "https://www.legis.iowa.gov/legislation/BillBook?ga=91&ba=SCR103",
+            "A concurrent resolution to provide for the business of the first extraordinary session of the 2026 legislative session.",
+            "KLIMESH",
+        )
+
+        yield from self.scrape_bill(
+            "upper",
+            "2025-2026",
+            91,
+            "SCR104",
+            "https://www.legis.iowa.gov/legislation/BillBook?ga=91&ba=SCR104",
+            "A concurrent resolution to provide for adjournment sine die.",
+            "KLIMESH",
+        )
+
+        yield from self.scrape_bill(
+            "lower",
+            "2025-2026",
+            91,
+            "HCR105",
+            "https://www.legis.iowa.gov/legislation/BillBook?ga=91&ba=HCR105",
+            "A concurrent resolution to provide for the business of the first extraordinary session of the 2026 legislative session.",
+            "KAUFMANN",
+        )
+
         # openstates/issues#252 - IA continues to prefile after session starts
         # so we'll continue scraping both
         yield from self.scrape_prefiles(session)
