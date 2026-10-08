@@ -376,7 +376,7 @@ class NorthCarolina(State):
         {
             "_scraped_name": "2026 First Extra Session",
             "classification": "special",
-            "identifier": "2026E1",
+            "identifier": "2025E1",
             "name": "2026 Extra Session 1",
             "start_date": "2026-10-07",
             "end_date": "2026-10-08",
