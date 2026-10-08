@@ -12,7 +12,7 @@ from openstates.utils import convert_pdf
 BASE_URL = "https://ilga.gov"
 central = pytz.timezone("US/Central")
 
-user_agent = os.getenv("USER_AGENT", "openstates")
+user_agent = os.getenv("USER_AGENT", "govhawk.com")
 
 headers = {
     "User-Agent": user_agent,
@@ -301,7 +301,8 @@ class IlBillScraper(Scraper):
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute(url)
 
-        for bill_url in doc.xpath("//table/tbody/tr/td[1]/a/@href"):
+        bill_urls = doc.xpath("//table/tbody/tr/td[1]/a/@href")
+        for bill_url in reversed(bill_urls):
             yield bill_url
 
     def scrape(self, session=None, chamber=None, bill_type_abbrv=None):
