@@ -192,7 +192,7 @@ class Illinois(State):
 
     def get_session_list(self):
         # User-agent "openstates.org" and "python-requests/2.32.3" are blocked as of 10/6/26
-        useragent = os.getenv("USER_AGENT", "govhawk.com")
+        useragent = os.getenv("USER_AGENT", "openstates")
         headers = {"User-Agent": useragent}
         response = requests.get(
             "https://ilga.gov/API/Legislation/GetGeneralAssemblies",
