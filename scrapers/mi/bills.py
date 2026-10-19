@@ -74,10 +74,17 @@ class MIBillScraper(Scraper):
         #     bill_id = link.xpath("text()")[0].split(" of ")[0]
         #     yield from self.scrape_bill(session, bill_id, bill_url)
 
+        # The search results can repeat a bill at a pagination boundary. Keep
+        # the canonical detail URL so a repeated listing cannot produce a
+        # duplicate bill (and duplicate import record).
+        seen_bill_urls = set()
         for link in page.xpath(
             "//div[contains(@class,'tableScrollWrapper')]/table[1]/tbody/tr/td[1]/a"
         ):
             bill_url = self.make_bill_url(link.xpath("@href")[0])
+            if bill_url in seen_bill_urls:
+                continue
+            seen_bill_urls.add(bill_url)
             bill_id = link.xpath("text()")[0].split(" of ")[0]
             yield from self.scrape_bill(session, bill_id, bill_url)
 
@@ -328,10 +335,11 @@ class MIBillScraper(Scraper):
             self.warning('"In The Chair" indicator not found, unable to extract vote')
             return
 
-        # Split the file into lines using the <p> tags
+        # Split the file into lines using the <p> tags; Senate journals often
+        # print the "Excused"/"Not Voting" (sometimes "Nays") headers as <h4>
         pieces = [
             p.text_content().replace("\xa0", " ").replace("\r\n", " ")
-            for p in vote_doc.xpath("//p")
+            for p in vote_doc.xpath("//p | //h4")
         ]
 
         # Go until we find the roll call
@@ -357,12 +365,14 @@ class MIBillScraper(Scraper):
                 break
             # "In The Chair:" can share a <p> with the last voter names
             p, chair, _ = p.partition("In The Chair:")
-            if "Yeas" in p:
-                vtype = "yes"
+            # A header can share a line with the next one ("Nays—0 Excused—5"),
+            # so check them last-to-first
+            if "Excused" in p or "Not Voting" in p:
+                vtype = "other"
             elif "Nays" in p:
                 vtype = "no"
-            elif "Excused" in p or "Not Voting" in p:
-                vtype = "other"
+            elif "Yeas" in p:
+                vtype = "yes"
             elif "Roll Call No" in p:
                 continue
             elif vtype:
