@@ -1,7 +1,6 @@
 from utils.actions import Rule, BaseCategorizer
 
 rules = (
-    Rule(r"Assigned Chapter", "became-law"),
     Rule(r"Enacted, Chapter", "became-law"),
     Rule(r"Approved by Governor", "executive-signature"),
     Rule(r"Vetoed by Governor", "executive-veto"),
