@@ -8,6 +8,7 @@ import re
 import time
 from urllib.parse import urljoin
 
+import fitz
 from openstates.scrape import Scraper, Bill, VoteEvent
 from utils import LXMLMixin
 from .actions import Categorizer
@@ -269,24 +270,24 @@ class DEBillScraper(Scraper, LXMLMixin):
             return
 
         additional_sponsors = html.xpath(
-            '//label[text()="Additional Sponsor(s):"]/following-sibling::div/a/@href'
+            '//label[text()="Additional Sponsor(s):"]/following-sibling::div/a'
         )
 
-        for sponsor_url in additional_sponsors:
-            sponsor_id, sponsor_key = self.parse_sponsor_url(sponsor_url)
+        for sponsor_link in additional_sponsors:
+            sponsor_id, sponsor_key = self.parse_sponsor_link(sponsor_link)
             if sponsor_id is not None:
                 self.add_sponsor_by_legislator_id(
                     bill, sponsor_id, "primary", sponsor_key
                 )
 
         cosponsors = html.xpath(
-            '//label[text()="Co-Sponsor(s):"]/following-sibling::div/a/@href'
+            '//label[text()="Co-Sponsor(s):"]/following-sibling::div/a'
         )
-        for sponsor_url in cosponsors:
-            sponsor_id, sponsor_key = self.parse_sponsor_url(sponsor_url)
+        for sponsor_link in cosponsors:
+            sponsor_id, sponsor_key = self.parse_sponsor_link(sponsor_link)
             if sponsor_id is not None:
                 self.add_sponsor_by_legislator_id(
-                    bill, sponsor_id, "primary", sponsor_key
+                    bill, sponsor_id, "cosponsor", sponsor_key
                 )
 
         versions = html.xpath(
@@ -372,7 +373,13 @@ class DEBillScraper(Scraper, LXMLMixin):
         for row in page["Data"]:
             self.legislators[str(row["PersonId"])] = row
             self.legislators_by_short[str(row["ShortName"])] = row
-            self.legislators_by_district[row["DistrictNumber"]] = row
+            # House and Senate both number their districts from 1, and a
+            # seat's former holder stays listed beside the current one
+            key = (row["ChamberId"], row["DistrictNumber"])
+            if key not in self.legislators_by_district or row[
+                "LegislatorDetailLink"
+            ].startswith("http"):
+                self.legislators_by_district[key] = row
 
     def scrape_fiscal_note(self, bill, link):
         media_type = self.mime_from_link(link)
@@ -427,13 +434,16 @@ class DEBillScraper(Scraper, LXMLMixin):
                 roll["TakenAtDateTime"], "%m/%d/%y %I:%M %p"
             ).strftime("%Y-%m-%d")
 
-            # TODO: What does this code mean?
-            vote_motion = roll["RollCallVoteType"]
-
             vote_passed = "pass" if roll["RollCallStatus"] == "Passed" else "fail"
             # VacantVoteCount is empty seats with no voter row, and
             # NotVotingCount already includes ConflictVoteCount
             other_count = int(roll["NotVotingCount"]) + int(roll["AbsentVoteCount"])
+            vote_pdf_url = (
+                "https://legis.delaware.gov"
+                "/json/RollCallController/GenerateRollCallPdf"
+                f"?rollCallId={vote_id}&chamberId={self.chamber_codes[vote_chamber]}"
+            )
+            vote_motion, vote_classification = self.scrape_vote_motion(vote_pdf_url)
             vote = VoteEvent(
                 chamber=vote_chamber,
                 start_date=vote_date,
@@ -441,13 +451,10 @@ class DEBillScraper(Scraper, LXMLMixin):
                 result=vote_passed,
                 bill=bill,
                 legislative_session=session,
-                classification=[],
+                classification=vote_classification,
             )
-            vote_pdf_url = (
-                "https://legis.delaware.gov"
-                "/json/RollCallController/GenerateRollCallPdf"
-                f"?rollCallId={vote_id}&chamberId={self.chamber_codes[vote_chamber]}"
-            )
+            # the vote requirement: SM (simple majority), 2/3, 3/4, 3/5
+            vote.extras["vote_requirement"] = roll["RollCallVoteType"]
             # Vote URL is just a generic search URL with POSTed data,
             # so provide a different link
             vote.add_source(vote_pdf_url)
@@ -478,6 +485,53 @@ class DEBillScraper(Scraper, LXMLMixin):
 
             yield vote
 
+    def scrape_vote_motion(self, pdf_url):
+        """
+        The roll call JSON has no motion; the PDF header names one when the
+        vote isn't on the bill itself ("Motion: Veto Override", "Reason Taken:
+        motion to recess ..."), and its subject line says what was voted on
+        ("HA 1 to HB 53", "HB 445 w/HA 1"), or it is a consent calendar.
+        """
+        try:
+            pdf = self.get(pdf_url, verify=False).content
+            lines = fitz.open("pdf", pdf)[0].get_text().splitlines()
+        except Exception as e:
+            self.warning(f"could not read roll call PDF {pdf_url}: {e}")
+            return "Passage", ["passage"]
+
+        subject = ""
+        for line in lines:
+            line = line.strip()
+            motion = re.match(r"(Motion|Reason Taken):\s*(.+)", line)
+            if motion:
+                text = motion.group(2)
+                if re.search(r"veto override", text, re.I):
+                    return text, ["veto-override"]
+                # "HCR 83 revote after reconsideration" is still passage,
+                # "motion to recess to read amendment" isn't
+                if re.search(r"passage|adopt|revote|consent", text, re.I):
+                    return text, ["passage"]
+                return text, []
+            # followed by the list of bills on it
+            if re.match(r"((House|Senate) )?Consent (Calendar|Agenda)", line):
+                return line, ["passage"]
+            if line.startswith(("Long Title:", "Vote requirement:")):
+                break
+            subject = line
+
+        if re.match(r"[HS]A \d+.* to ", subject):
+            return subject, ["amendment"]
+        return "Passage", ["passage"]
+
+    def parse_sponsor_link(self, sponsor_link):
+        # The caucus district URL stays the same when a seat changes hands
+        # (a bill co-sponsored by the former member still links to it), so
+        # match on the link text, which is the member's ShortName
+        short_name = sponsor_link.text_content().strip()
+        if short_name in self.legislators_by_short:
+            return short_name, "ShortName"
+        return self.parse_sponsor_url(sponsor_link.get("href"))
+
     def parse_sponsor_url(self, sponsor_url):
         sponsor_url = urljoin(self.base_url, sponsor_url)
         if sponsor_url.startswith(f"{self.base_url}/LegislatorDetail"):
@@ -487,7 +541,8 @@ class DEBillScraper(Scraper, LXMLMixin):
             return sponsor_id, "PersonId"
         for k, v in self.potential_sponsor_urls.items():
             if sponsor_url.startswith(f"https://{k}"):
-                return sponsor_url.replace(v, ""), "DistrictId"
+                chamber_id = 2 if k.startswith("house") else 1
+                return (chamber_id, sponsor_url.replace(v, "")), "DistrictId"
         self.warning(f"Could not parse sponsor url, skipping: {sponsor_url}")
         return None, None
 
@@ -495,7 +550,9 @@ class DEBillScraper(Scraper, LXMLMixin):
         self, bill, legislator_id, sponsor_type, sponsor_key="PersonId"
     ):
         if sponsor_key == "DistrictId":
-            sponsor = self.legislators_by_district[str(legislator_id)]
+            sponsor = self.legislators_by_district[legislator_id]
+        elif sponsor_key == "ShortName":
+            sponsor = self.legislators_by_short[legislator_id]
         elif sponsor_key == "PersonId":
             sponsor = self.legislators[str(legislator_id)]
         sponsor_name = sponsor["DisplayName"]
