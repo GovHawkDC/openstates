@@ -259,7 +259,7 @@ class Arkansas(State):
             "name": "2026 Fiscal Session",
             "start_date": "2026-04-08",
             "end_date": "2026-05-01",
-            "active": True,
+            "active": False,
         },
         {
             "_scraped_name": "First Extraordinary Session, 2026",
