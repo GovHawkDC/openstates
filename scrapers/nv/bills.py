@@ -7,8 +7,8 @@ from dataclasses import dataclass
 import dateutil.parser
 import lxml.html
 from openstates.scrape import Scraper, Bill, VoteEvent
-from .common import session_slugs
-from spatula import HtmlListPage, HtmlPage, CSS, XPath, SelectorError, SkipItem
+from .common import get_session_slug
+from spatula import HtmlListPage, HtmlPage, CSS, XPath, SelectorError
 from scrapelib import HTTPError
 
 TZ = pytz.timezone("PST8PDT")
@@ -123,15 +123,16 @@ class BillStub:
     source_url: str
     identifier: str
     session: str
+    session_slug: str
     subjects: list
 
 
 class SubjectMapping(Utf8HtmlMixin, HtmlPage):
-    example_input = {"session": "81"}
+    example_input = {"session": "81", "session_slug": "81st2021"}
 
     def get_source_from_input(self):
         session = self.input["session"]
-        slug = session_slugs[session]
+        slug = self.input["session_slug"]
         if "Special" in session:
             year = slug[4:8]
             url = f"https://www.leg.state.nv.us/App/NELIS/REL/{slug}/Bills/List"
@@ -172,12 +173,12 @@ class SubjectMapping(Utf8HtmlMixin, HtmlPage):
 
 
 class BillList(Utf8HtmlMixin, HtmlListPage):
-    example_input = {"session": "81"}
+    example_input = {"session": "81", "session_slug": "81st2021"}
     selector = CSS(".row a")
     dependencies = {"subject_mapping": SubjectMapping}
 
     def get_source_from_input(self):
-        slug = session_slugs[self.input["session"]]
+        slug = self.input["session_slug"]
         # PageSize 2**31 from their site
         return (
             f"https://www.leg.state.nv.us/App/NELIS/REL/{slug}/"
@@ -198,6 +199,7 @@ class BillList(Utf8HtmlMixin, HtmlListPage):
                 link,
                 identifier,
                 self.input["session"],
+                self.input["session_slug"],
                 list(self.subject_mapping[identifier]),
             )
         )
@@ -208,12 +210,13 @@ class BillTabDetail(Utf8HtmlMixin, HtmlPage):
         "https://www.leg.state.nv.us/App/NELIS/REL/81st2021/Bill/7262/Overview",
         "AB20",
         "81",
+        "81st2021",
         ["test subject"],
     )
 
     def get_source_from_input(self):
         bill_key = self.input.source_url.split("/")[-2]
-        slug = session_slugs[self.input.session]
+        slug = self.input.session_slug
         url = (
             f"https://www.leg.state.nv.us/App/NELIS/REL/{slug}/Bill/"
             f"FillSelectedBillTab?selectedTab=Overview&billKey={bill_key}"
@@ -224,7 +227,6 @@ class BillTabDetail(Utf8HtmlMixin, HtmlPage):
     def process_error_response(self, exception: Exception) -> None:
         message = f"Encountered error fetching Bill Overview for {self.input.identifier}, skipping {self.input.source_url}"
         self.logger.warning(message)
-        raise SkipItem(message)
 
     def get_column_div(self, name):
         # lots of places where we have a <div class='col-md-2 font-weight-bold'>
@@ -428,7 +430,6 @@ class ExhibitTabText(Utf8HtmlMixin, HtmlPage):
     def process_error_response(self, exception: Exception) -> None:
         message = f"Encountered error fetching Exhibits tab, skipping {self.source}"
         self.logger.warning(message)
-        raise SkipItem(message)
 
     def process_page(self):
         bill = self.input
@@ -515,6 +516,7 @@ class VoteList(Utf8HtmlMixin, HtmlPage):
             re.U | re.I,
         )
         date_re = re.compile(r"Date\s+(?P<date>.*)", re.U | re.I)
+        passed_re = re.compile(r"Passed\s+(?P<passed>Yes|No)\b", re.U | re.I)
         index = 0
 
         date_motion_counts = {}
@@ -529,6 +531,7 @@ class VoteList(Utf8HtmlMixin, HtmlPage):
 
             vote_options = {}
             start_date = None
+            passed = None
 
             for child_row in CSS("ul li", min_items=0).match(row):
                 content = child_row.text_content().strip()
@@ -543,6 +546,13 @@ class VoteList(Utf8HtmlMixin, HtmlPage):
                     start_date = date_match.groupdict()["date"]
                     start_date = parse_date(start_date)
 
+                passed_match = re.match(passed_re, content)
+                if passed_match:
+                    passed = passed_match.group("passed").lower() == "yes"
+
+            if passed is None:
+                passed = vote_options["yea"] > vote_options["nay"]
+
             # sometimes two votes with the same motion happen on the same day
             # hence we need to make motion text unique otherwise import fails
             date_motion = f"{start_date.date()}{summary}"
@@ -556,7 +566,7 @@ class VoteList(Utf8HtmlMixin, HtmlPage):
             vote = VoteEvent(
                 chamber=chamber,
                 motion_text=summary,
-                result="pass" if vote_options["yea"] > vote_options["nay"] else "fail",
+                result="pass" if passed else "fail",
                 classification="passage",
                 start_date=start_date,
                 bill=bill,
@@ -596,5 +606,6 @@ class VoteMembers(Utf8HtmlMixin, HtmlPage):
 class NVBillScraper(Scraper):
     def scrape(self, session=None):
         logging.getLogger("scrapelib").setLevel(logging.WARNING)
-        bill_list = BillList({"session": session})
+        session_slug = get_session_slug(self.jurisdiction, session)
+        bill_list = BillList({"session": session, "session_slug": session_slug})
         yield from bill_list.do_scrape()
