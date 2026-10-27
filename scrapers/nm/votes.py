@@ -1,3 +1,4 @@
+import hashlib
 import re
 from datetime import datetime
 from io import BytesIO
@@ -7,6 +8,8 @@ import scrapelib
 from lxml import html
 
 from openstates.scrape import Scraper, VoteEvent
+
+from .bills import session_slug
 
 # Senate vote header
 s_vote_header = re.compile(r"(YES)|(NO)|(ABS)|(EXC)|(REC)")
@@ -27,13 +30,14 @@ class NMVoteScraper(Scraper):
     def scrape_vote(self, chamber, session):
         """most document types (+ Votes) are in this common directory go
         through it and attach them to their related bills"""
-        session_path = self.session_slug(session)
+        session_path = session_slug(session)
 
         doc_path = "https://www.nmlegis.gov/Sessions/{}/votes/".format(session_path)
 
         self.info("Getting doc at {}".format(doc_path))
         content = self.get(doc_path).text
         tree = html.fromstring(content)
+        seen_pdfs = set()
 
         # all links but first one
         for fname in tree.xpath("//a/text()")[1:]:
@@ -58,7 +62,7 @@ class NMVoteScraper(Scraper):
             if ("SVOTE" in suffix and chamber == "upper") or (
                 "HVOTE" in suffix and chamber == "lower"
             ):
-                sv_doc = self.scrape_document(doc_path + fname)
+                sv_doc = self.scrape_document(doc_path + fname, bill_id, seen_pdfs)
                 if not sv_doc:
                     continue
 
@@ -72,14 +76,23 @@ class NMVoteScraper(Scraper):
                 else:
                     yield vote
 
-    def scrape_document(self, filelocation):
+    def scrape_document(self, filelocation, bill_id, seen_pdfs):
         """Downloads PDF file content and converts into PyMuPDF object."""
         try:
             response = self.get(url=filelocation)
-            doc = fitz.open("pdf", BytesIO(response.content))
         except scrapelib.HTTPError:
             self.warning("Request failed: {}".format(filelocation))
             return
+
+        # NM posts some byte-identical vote PDFs under more than one filename
+        # (e.g. HB0034HVOTE.PDF and HB034HVOTE.PDF), so skip repeats. Keyed by
+        # bill too, since one roll call PDF can cover several bills.
+        key = (bill_id, hashlib.md5(response.content).hexdigest())
+        if key in seen_pdfs:
+            self.info("Skipping duplicate vote PDF: {}".format(filelocation))
+            return
+        seen_pdfs.add(key)
+        doc = fitz.open("pdf", BytesIO(response.content))
 
         return doc
 
@@ -182,10 +195,6 @@ class NMVoteScraper(Scraper):
                 new_header.append(header_map.get(first_letter, "other"))
 
         return new_header
-
-    def session_slug(self, session):
-        session_type = "Special" if session.endswith("S") else "Regular"
-        return "{}%20{}".format(session[2:4], session_type)
 
     def build_vote(self, session, bill_id, url, vote_record, chamber, motion_text):
         # When they vote in a substitute they mark it as XHB
