@@ -1,3 +1,4 @@
+import copy
 import json
 import datetime
 import re
@@ -11,6 +12,21 @@ from . import session_metadata
 
 
 BASE_URL = "https://www.azleg.gov/"
+
+
+def _schema_with_informal_passage(schema):
+    """Backport Arizona's COW classification for older openstates-core."""
+    schema = copy.deepcopy(schema)
+    classifications = schema["properties"]["actions"]["items"]["properties"][
+        "classification"
+    ]["items"]["enum"]
+    if "informal-passage" not in classifications:
+        classifications.append("informal-passage")
+    return schema
+
+
+class AZBill(Bill):
+    _schema = _schema_with_informal_passage(Bill._schema)
 
 
 class AZBillScraper(Scraper):
@@ -39,7 +55,7 @@ class AZBillScraper(Scraper):
         bill_id = page["Number"]
         internal_id = page["BillId"]
         bill_type = self.get_bill_type(bill_id)
-        bill = Bill(
+        bill = AZBill(
             bill_id,
             legislative_session=session,
             chamber=chamber,
