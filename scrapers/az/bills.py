@@ -1,4 +1,3 @@
-import copy
 import json
 import datetime
 import re
@@ -12,21 +11,6 @@ from . import session_metadata
 
 
 BASE_URL = "https://www.azleg.gov/"
-
-
-def _schema_with_informal_passage(schema):
-    """Backport Arizona's COW classification for older openstates-core."""
-    schema = copy.deepcopy(schema)
-    classifications = schema["properties"]["actions"]["items"]["properties"][
-        "classification"
-    ]["items"]["enum"]
-    if "informal-passage" not in classifications:
-        classifications.append("informal-passage")
-    return schema
-
-
-class AZBill(Bill):
-    _schema = _schema_with_informal_passage(Bill._schema)
 
 
 class AZBillScraper(Scraper):
@@ -55,7 +39,7 @@ class AZBillScraper(Scraper):
         bill_id = page["Number"]
         internal_id = page["BillId"]
         bill_type = self.get_bill_type(bill_id)
-        bill = AZBill(
+        bill = Bill(
             bill_id,
             legislative_session=session,
             chamber=chamber,
@@ -116,6 +100,7 @@ class AZBillScraper(Scraper):
                     if note in seen_version_notes:
                         note = "{} ({})".format(note, doc["Id"])
                     seen_version_notes.add(doc["DocumentName"])
+                    classification = "amendment" if "amend" in type_.lower() else ""
 
                     if media_type == "text/html":
                         pdf_url = re.sub("(.docx)?.htm(l)?$", ".pdf", url.lower())
@@ -123,8 +108,14 @@ class AZBillScraper(Scraper):
                             note=note,
                             url=pdf_url,
                             media_type="application/pdf",
+                            classification=classification,
                         )
-                    bill.add_version_link(note=note, url=url, media_type=media_type)
+                    bill.add_version_link(
+                        note=note,
+                        classification=classification,
+                        url=url,
+                        media_type=media_type,
+                    )
                 else:
                     bill.add_document_link(
                         note=doc["DocumentName"], url=url, media_type=media_type
@@ -407,9 +398,16 @@ class AZBillScraper(Scraper):
                 )
 
                 for v in action["Votes"]:
-                    vote_type = {"Y": "yes", "N": "no", "NV": "not voting"}.get(
-                        v["Vote"], "other"
-                    )
+                    # "V" marks a vacant seat, listed under the member who
+                    # last held it; it's counted in "Vacant", not as a vote
+                    if v["Vote"] == "V":
+                        continue
+                    vote_type = {
+                        "Y": "yes",
+                        "N": "no",
+                        "NV": "not voting",
+                        "E": "excused",
+                    }.get(v["Vote"], "other")
                     vote.vote(vote_type, v["Legislator"]["FullName"])
                 vote.dedupe_key = f"{resp.url}{action['ReferralNumber']}"
                 yield vote
