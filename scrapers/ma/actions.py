@@ -106,7 +106,7 @@ _categorizer_rules = (
     Rule(["Committee of Conference appointed \\((?P<legislator>.+?)\\)"], []),
     # Conference committee — non-concurrence
     # Matches House/Senate non-concurrence actions.
-    Rule(["(?i)NON-concurred"], ["non-concurrence"]),
+    # Rule(["(?i)NON-concurred"], ["non-concurrence"]),
     # Conference committee — concurrence / resolution
     # Match conference appointment or report-accepted actions
     # that include "in concurrence".
