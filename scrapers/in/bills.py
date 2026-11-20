@@ -67,7 +67,7 @@ class INBillScraper(Scraper):
             url_segment = self._bill_prefix_map[bill_prefix]["url_segment"]
         except KeyError:
             raise AssertionError(
-                "Unknown bill type {}, don't know how to " "make url.".format(bill_id)
+                "Unknown bill type {}, don't know how to make url.".format(bill_id)
             )
 
         return url_template.format(session, url_segment, bill_number)
@@ -107,6 +107,8 @@ class INBillScraper(Scraper):
             # it returns a 302 redirect to the actual PDF url
             # AND the actual PDF url is sensitive to the incoming User Agent header
             vote_url = client.identify_redirect_url(r["link"] + "?format=pdf")
+            if not vote_url:
+                continue
             try:
                 headers = {
                     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0"
