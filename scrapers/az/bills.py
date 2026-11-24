@@ -255,7 +255,8 @@ class AZBillScraper(Scraper):
                     status["Committee"]["CommitteeShortName"] == "COW"
                     and category == "passage"
                 ):
-                    categories = ["informal-passage"]
+                    #categories = ["informal-passage"]
+                    categories = ["passage"]
                 else:
                     categories = [category]
                 if status["Committee"]["CommitteeShortName"] == "THIRD":
