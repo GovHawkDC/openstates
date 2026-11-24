@@ -1,7 +1,6 @@
 import re
 import pytz
 import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass
 import dateutil.parser
@@ -9,7 +8,6 @@ import lxml.html
 from openstates.scrape import Scraper, Bill, VoteEvent
 from .common import get_session_slug
 from spatula import HtmlListPage, HtmlPage, CSS, XPath, SelectorError
-from scrapelib import HTTPError
 
 TZ = pytz.timezone("PST8PDT")
 ACTION_CLASSIFIERS = (
@@ -194,7 +192,6 @@ class BillList(Utf8HtmlMixin, HtmlListPage):
         return (
             f"https://www.leg.state.nv.us/App/NELIS/REL/{slug}/"
             "HomeBill/BillsTab?selectedTab=List&Filters.PageSize=2147483647"
-            f"&_={time.time()}"
         )
 
     def process_item(self, item):
@@ -231,7 +228,6 @@ class BillTabDetail(Utf8HtmlMixin, HtmlPage):
         url = (
             f"https://www.leg.state.nv.us/App/NELIS/REL/{slug}/Bill/"
             f"FillSelectedBillTab?selectedTab=Overview&billKey={bill_key}"
-            f"&_={time.time()}"
         )
         return url
 
@@ -327,7 +323,7 @@ class BillTabDetail(Utf8HtmlMixin, HtmlPage):
         if not action_type:
             action_type = None
         else:
-            action_type = list(set(action_type))
+            action_type = sorted(set(action_type))
 
         act = bill.add_action(
             description=action,
@@ -417,16 +413,14 @@ class BillTabText(Utf8HtmlMixin, HtmlPage):
             title = row.text_content()
             link = row.get("href")
             bill.add_version_link(
-                title, link, media_type="application/pdf", on_duplicate="ignore"
+                title,
+                link,
+                classification="amendment" if "/Amendments/" in link else "",
+                media_type="application/pdf",
+                on_duplicate="ignore",
             )
         ex_url = self.source.url.replace("Text", "Exhibits")
-
-        try:
-            return ExhibitTabText(bill, source=ex_url)
-        except HTTPError:
-            self.warning(f"Failure on exhibit url {ex_url}")
-            am_url = self.source.url.replace("Text", "Amendments")
-            return AmendmentTabText(bill, source=am_url)
+        return ExhibitTabText(bill, source=ex_url)
 
 
 class ExhibitTabText(Utf8HtmlMixin, HtmlPage):
@@ -447,26 +441,7 @@ class ExhibitTabText(Utf8HtmlMixin, HtmlPage):
             bill.add_document_link(
                 title, link, media_type="application/pdf", on_duplicate="ignore"
             )
-        am_url = self.source.url.replace("Text", "Amendments")
-        return AmendmentTabText(bill, source=am_url)
-
-
-class AmendmentTabText(Utf8HtmlMixin, HtmlPage):
-    example_source = (
-        "https://www.leg.state.nv.us/App/NELIS/REL/82nd2023/Bill/"
-        "FillSelectedBillTab?selectedTab=Amendments&billKey=10039"
-    )
-
-    def process_page(self):
-        bill = self.input
-        for row in CSS("col-11 col-md").match(self.root, min_items=0):
-            title = row.text_content()
-            link = row.get("href")
-            bill.add_version_link(
-                title, link, media_type="application/pdf", on_duplicate="ignore"
-            )
-
-        fn_url = self.source.url.replace("Text", "FiscalNotes")
+        fn_url = self.source.url.replace("Exhibits", "FiscalNotes")
         return FiscalTabText(bill, source=fn_url)
 
 
@@ -479,8 +454,7 @@ class FiscalTabText(Utf8HtmlMixin, HtmlPage):
     def process_page(self):
         bill = self.input
         for row in CSS("ul.list-unstyled li a").match(self.root, min_items=0):
-            title = row.text_content()
-            title = f"Fiscal Note: {title}"
+            title = f"Fiscal Note: {row.text_content().strip()}"
             link = row.get("href")
             bill.add_document_link(
                 title, link, media_type="application/pdf", on_duplicate="ignore"
